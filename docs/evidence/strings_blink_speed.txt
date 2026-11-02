@@ -1,0 +1,48 @@
+=== SPEED vocabulary (whole strings) ===
+Medium
+Speed
+Speed setting
+
+=== speed in UI sentences ===
+153594:fast
+170837:Speed
+203336:Speed setting
+230304:Fast-Forward Button
+236989:Fast Reverse Button
+284867:Fast Down Button2
+292954:speed:
+315316:Fast Up Button
+330469:Slow start and slow end
+347810:speed
+
+=== 'Blink' UI strings (whole) ===
+Asynchrones Blinken von Farbe zu Farbe
+blink
+Blinken
+Blinkend
+Blinkende Taste
+Blinkender 
+Blinking transition
+BlinkMode
+BlinkScopicMode
+BlinkStrobeMode
+blinkTime
+es Licht blinkt
+feastAsyncBlink
+FeastAsyncBlink
+feastSyncBlink
+FeastSyncBlink
+Hintergrund blinkend
+hlen Sie den atmenden oder blinkenden Effekt einzelner oder mehrerer Lichter
+Stars blinking
+Sterne blinken
+
+=== blink-related option classes ===
+_blink
+_BlinkBreatheModeState
+_BlinkModeState
+_BlinkScopicModeState
+_BlinkStrobeModeState
+_iosBlinkCursorSimulation
+_startCursorBlink
+_stopCursorBlink

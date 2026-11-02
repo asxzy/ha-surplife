@@ -1,0 +1,1803 @@
+=== slot strings matching effect-name roots (non-ASCII allowed) ===
+   Warna
+   berwarna hijau.
+   from addStream
+   gradient
+   gradientes
+   meteor
+   start 
+   stream
+   warna
+   warna!
+  &Star;
+  &bigstar;
+  &sstarf;
+  &star;
+  &starf;
+  (start: 
+  (stream: 
+  , CleanStart=
+  , fillEnabled=
+  , readStream: 
+  , start: 
+  , startFrame=
+  -got-start-tag
+  -select_streams
+  -show_streams
+  -warni
+  .start
+  /async_jump.dart
+  /chaser.dart
+  /collision.dart
+  /cycle.dart
+  /cycle_page.dart
+  /fireworks.dart
+  /fireworks2.dart
+  /get_stream.dart
+  /icon_fill.svg
+  /meteor.dart
+  /rx_stream.dart
+  /shape_fill.dart
+  /streamer.dart
+  /sync_jump.dart
+  /volcano.dart
+  0_not_start
+  50898.filled
+  : start
+  :_hueStart@12460
+  :_initialStart@1
+  AioMeteorState
+  Ajustar
+  Alternate breath
+  AppLifecycle
+  AppLifecycle.
+  AppLifecycle._@5
+  Arco Rainbow
+  Async breathe
+  Async gradient
+  AsyncBreathMode
+  AsyncBreatheMode
+  AsyncJumpMode
+  AsyncStrobeMode
+  AtStart
+  AtStart@4048458
+  Ativar gradiente
+  Atur suhu warna
+  AutofillClient
+  AutofillClient@1
+  AutofillGroup
+  AutofillHints
+  Autostart
+  Autostart.
+  Batang Warna
+  Beberapa meteor
+  Beraneka warna
+  Berwarna-warni
+  BgStarWinkMode
+  Bicycle
+  Bitmap.fillColor
+  BlinkBreatheMode
+  BlinkStrobeMode
+  Blok Warna
+  Body streamu
+  Breath
+  Breathe
+  Breathe.png
+  BreatheMode
+  BreatheMode.
+  Breathing
+  Building Blocks
+  ByteStream
+  C1 Breath
+  C1&C2 Breath
+  C2 Breath
+  CHASE
+  CHASE1
+  COLLISION
+  COLLISIONE
+  Cahaya Warna
+  Cahaya meteor
+  Carp Streamer
+  CastStream
+  Chase
+  Chase & Melting
+  ChaseLightening
+  ChaseMelting
+  ChaseMeltingMode
+  ChaseModeOptions
+  ChaseTwinkle
+  ChaseTwinkleMode
+  ChaserMode
+  Collision
+  CollisionMode
+  Collisione
+  Collisions@68172
+  Color Collision
+  Color Jump Flash
+  Color collision
+  Color gradient
+  Colorful Breath
+  Colorful Jump
+  Colorful Meteor
+  Colorful Strobe
+  Colorful breath
+  Colorful jump
+  Colorful strobe
+  Colorful waves
+  Colorwaves
+  Comet
+  Comet light
+  CometLightWidget
+  CometMode
+  CometModeOptions
+  Cometa
+  ConnectStart@111
+  Contrarrestar
+  Cresta meteorica
+  Custard
+  Cyan-Blue Jump
+  Cycle
+  Cycle 
+  Cycle simple
+  Cycle unique
+  CycleMode
+  CycleModeOptions
+  CycleObserver@53
+  CyclePage
+  CyclePageState@3
+  Czas startu
+  DeferStream
+  Dinamika warna
+  Doccia Meteore
+  DownloadStart
+  DragStartDetails
+  DragStarted@6191
+  Dream Fireworks
+  Dream Meteor
+  Efeito Gradiente
+  Efeito gradiente
+  Efekt gradientu
+  EscapeStartState
+  EventStream
+  Explosive Star
+  ExrWavelet
+  FILL
+  FIREWORKS
+  FabStartOffsetX
+  Failed to start
+  Fantasie-Meteor
+  Fantasy Meteor
+  Fantazi Meteor
+  FeastAsyncBreath
+  FeastAsyncJump
+  FeastSyncBreath
+  FeastSyncJump
+  FenceStartWidget
+  Fill
+  Fill breath
+  Fill gradient
+  Fill transition
+  Fill(color: 
+  FillColor@334279
+  FillColor@405266
+  FillContent
+  FillContent.
+  FillOrder
+  Filling Button
+  Filling method
+  FillingJumpMode
+  FireWorkMode
+  FireWorks B
+  FireWorks2Mode
+  Fireworks
+  Fireworks 1D
+  Fireworks 1D B
+  Fireworks B
+  FireworksMode
+  FireworksView
+  FireworksWidget
+  FireworksWidget.
+  Five color jump
+  Flowing
+  Flowing Water
+  FlowingBetween
+  FlutterMicStream
+  Font gradient
+  Freqwave
+  GameButtonStart
+  Ganti warna
+  GetLifeCycle
+  GetLifeCycle.
+  GetLifeCycleBase
+  GetStream
+  GetStream.
+  Glowing Star
+  GoveeRainbowMode
+  Gradien warna
+  Gradient
+  Gradient Button
+  Gradient Effect
+  Gradient Meteor
+  Gradient Overlay
+  Gradient Rainbow
+  Gradient circle
+  Gradient switch
+  Gradient turn on
+  Gradient.linear
+  Gradient.png
+  Gradient.radial
+  Gradient.sweep
+  Gradient::Create
+  Gradient@1028745
+  Gradient@4575359
+  Gradient@4957253
+  GradientBrush
+  GradientButton
+  GradientColor
+  GradientFill
+  GradientList@879
+  GradientRotation
+  GradientStroke
+  GradientStroke.
+  GradientTime@138
+  GradientType
+  GradientType.
+  GradientUnitMode
+  Gradient_Rainbow
+  Gradiente
+  Gradiente acceso
+  Gradiente de cor
+  Gradientenmeteor
+  Gradyan Meteor
+  Gradyan Meteoru
+  HandleDragStart@
+  HtmlInputStream
+  HtmlInputStream.
+  Hujan Meteor
+  Hujan meteor
+  ImageStream
+  ImageStream@7117
+  InputStream
+  InputStream.
+  InputStreamBase
+  JUMP
+  Jatuhkan warna
+  Jump
+  Jump Flow
+  Jump.png
+  JumpActionType
+  JumpActionType.
+  JumpMode
+  JumpMode.
+  JumpModeOptions
+  JumpModeState@19
+  JumpTypeDto
+  Jumping Rainbow
+  Jumping_Rainbow
+  Kalibrasi Warna
+  Kartu Warna
+  Kilat Warna
+  Kolorowy meteor
+  Kombinasi Warna
+  Kompensasi Warna
+  Koordinat warna
+  Lampu Meteor RGB
+  Lifecycle
+  Lifecycle.
+  LifecycleCreator
+  LifecycleServer
+  LifecycleServer.
+  LifecycleState@1
+  LifecycleUtil
+  LightsStream
+  LinearGradient
+  List.filled
+  Listar bucle
+  Luce cometa
+  Luce meteora RGB
+  Luce meteorica
+  Luz de cometa
+  Luz de meteorito
+  Luz de meteoro
+  Luz del cometa
+  Luz do cometa
+  Mehrere Meteore
+  Meteor
+  Meteor Fantasi
+  Meteor Fantazja
+  Meteor Gradien
+  Meteor Hangat
+  Meteor Mimpi
+  Meteor Shower
+  Meteor light
+  Meteor periodik
+  Meteor shower
+  Meteor2
+  MeteorCCTAioPage
+  MeteorCollision
+  MeteorMode
+  MeteorMode.
+  MeteorShowerMode
+  Meteora
+  Meteora calda
+  Meteora colorata
+  Meteore multiple
+  Meteoric crest
+  Meteorik tepe
+  Meteorit
+  Meteorito
+  Meteorlicht
+  Meteoro
+  Meteoro Fantasia
+  Meteoro Quente
+  Meteoro colorido
+  Meteorregen
+  Meteorschauer
+  Model Warna
+  Motorcycle
+  MoveStart
+  MultiStarFlash
+  Multiple meteors
+  Nastartujte
+  Neu starten
+  NeverStream
+  NeverStream.
+  Nfc#startSession
+  Night With Stars
+  No Bicycles
+  Nombre de cycles
+  Number of cycles
+  Office Building
+  Offline-Warnung
+  Okresowe meteory
+  OrStartCamera@27
+  OtaStart
+  OtaStart 
+  OutputStream
+  OutputStream.
+  OutputStreamBase
+  PathFillType
+  PathFillType.
+  Pemrosesan warna
+  Pengaturan warna
+  Pengolahan warna
+  Penuh Warna
+  Penuh warna
+  Periodic meteors
+  Peti Warna
+  PhotoStartWidget
+  Pilih warna
+  Pilihan warna
+  PolystarContent
+  PolystarContent.
+  PolystarShape
+  Pont Rainbow
+  PressStart@29023
+  ProcessStartMode
+  Process_Start
+  Puente Rainbow
+  Puncak meteorik
+  QuickJumpBean
+  RGB Meteor Light
+  RGB-Meteorlicht
+  RadialGradient
+  Rainbow
+  Rainbow B
+  Rainbow Bridge
+  Rainbow Column
+  Rainbow Flag
+  Rainbow Ripples
+  Rainbow Slide
+  Rainbow Stripes
+  Rainbow Stripes2
+  Rainbow water
+  RecycleContext
+  RecycleContext.
+  Red-Green Strobe
+  Restart
+  Restartujte
+  Roda Warna
+  STROBE
+  S_JUMP
+  S_STROBE
+  Sala de estar
+  ScaleStart
+  Sea Wave
+  Segmented meteor
+  SetIsGradient@10
+  Setiap warna: 
+  ShapeFill
+  ShapeFillParser
+  Shooting Star
+  ShowDialogCycle
+  Single Cycle
+  Skala Warna
+  Skema Warna
+  Skema warna
+  Sliding meteor
+  SocketCycle
+  SocketCycle.
+  SocketCyclePage
+  SocketCyclePage.
+  SocketCycleState
+  Sound Wave Pulse
+  Sound waves
+  SourceStream@139
+  SpinKitWave
+  Star
+  Star Of Ocean
+  Star of David
+  Star shining
+  Star-Struck
+  Star;
+  StarBorder
+  StarFlickerMode
+  StarMode
+  StarModeState
+  StarModeState.
+  Star_icon.png
+  Stark
+  Starlit sky
+  Starry
+  Starry Naight B
+  Starry Night Sky
+  Starry Sky
+  Starry night sky
+  Starry sky
+  Stars
+  Stars blinking
+  Stars twinkling
+  Stars wink
+  StarsModeOptions
+  StarsStrobeMode
+  StarsStrobeMode.
+  Starship
+  Start
+  Start Brightness
+  Start Identify
+  Start Time
+  Start adjust
+  Start at
+  Start resetting
+  Start the game
+  Start time
+  Start up
+  Start up time
+  Start writing
+  Start-up
+  Start: 
+  Start@213111801
+  StartBrightness@
+  StartCamera@2725
+  StartColor
+  StartDashState
+  StartDownload@83
+  StartEndButton
+  StartFlashMode
+  StartFlashMode.
+  StartInitBiz
+  StartOptions
+  StartScan
+  StartState
+  StartTagToken
+  StartTagToken.
+  StartTime@108024
+  StartTime@869033
+  StartView
+  StartWidget
+  Starte das Spiel
+  Starthelligkeit
+  Starting Time
+  Startzeit
+  Static Fill
+  Static Gradient
+  StaticFillMode
+  Stream
+  Stream setting
+  Stream.error
+  Stream.multi
+  Stream.periodic
+  Stream.value
+  Stream@139215529
+  Stream@213403685
+  Stream@547843606
+  Stream@609085385
+  StreamBuilder
+  StreamConsumer
+  StreamController
+  StreamGroup
+  StreamGroup.
+  StreamIterator
+  StreamSink
+  StreamView
+  StreamedResponse
+  Streamer
+  StreamerMode
+  Streampunkte
+  Strobe
+  Strobe 
+  Strobe.png
+  Strobe2
+  StrobeData@88390
+  StrobeMode
+  StrobeMode.
+  StrobeModeState
+  Suhu warna
+  Superluminal
+  Superluminale
+  Superlumineux
+  SweepGradient
+  Sync gradient
+  SyncBreatheMode
+  SyncGradientMode
+  SyncJumpMode
+  SyncStrobeMode
+  Tabrakan Warna
+  Tabrakan warna
+  Tap to start
+  Terapkan Warna
+  The stars
+  ToStream@1392155
+  Traummeteor
+  Treetop Star
+  TreetopStarData
+  TreetopStarPage
+  TreetopStarPage.
+  TreetopStarState
+  TwinkleStar
+  TwinkleStarMode
+  Twinkling Stars
+  Twinkling stars
+  Two-way gradient
+  Ubah Warna
+  ValueStream
+  ValueStreamError
+  Volcano
+  VolcanoMode
+  VolcanoMode.
+  WAVE
+  Warm Meteor
+  Warm Pulse Chase
+  Warmer Meteor
+  Warn
+  WarnMode
+  WarnModeOptions
+  Warna
+  Warna 
+  Warna Acak
+  Warna Analog
+  Warna Dasar
+  Warna Dinamis
+  Warna Festival
+  Warna Flash
+  Warna Persegi
+  Warna Saya
+  Warna Statis
+  Warna Teks
+  Warna Triadik
+  Warna batas
+  Warna campuran
+  Warna huruf
+  Warna khusus
+  Warna klasik
+  Warna liburan
+  Warna saya
+  Warna statis
+  Warna tema
+  Warna tepi
+  Warna terang
+  Warnen
+  Warning
+  Warnung
+  Water Wave
+  Wave
+  Wave B
+  Wave flow
+  Wave@10068046960
+  Wave@10097375474
+  WaveMode
+  WaveMode.
+  WaveModeOptions
+  WavesCommand@302
+  WavesCommand@437
+  WhiteStarFlash
+  Winkstar01
+  Wymarzony meteor
+  Zweiwegegradient
+  _CyclePageState@
+  _List.filled
+  _Meteor
+  _RouteLifecycle.
+  _StreamIterator
+  _autostart@12193
+  _breath
+  _breath@45491387
+  _breath_mode
+  _breath_symphony
+  _breathe
+  _btn_start
+  _building_block
+  _building_blocks
+  _chase
+  _checkStart@5484
+  _collision
+  _colorful_breath
+  _colorful_jump
+  _colorful_strobe
+  _comet
+  _cycles
+  _fireworks
+  _gradient
+  _gradient@389749
+  _gradientColor@7
+  _gradientNames@7
+  _gradient_meteor
+  _initAsyncStar
+  _initSyncStar
+  _internalStart@1
+  _jump
+  _light_star
+  _list_cycle
+  _listenToStream@
+  _meteor
+  _meteor_mode
+  _meteors
+  _meteors_mode
+  _modes/fireworks
+  _needsAutofill@1
+  _onDragStart: 
+  _onStartTime@138
+  _rainbow
+  _rainbow_bridge
+  _renderWave@1099
+  _renderWave@6483
+  _returnAsyncStar
+  _send_start
+  _setStartTime@93
+  _sing_cycle
+  _star
+  _stars
+  _stars_symphony
+  _stars_twinkle
+  _stars_wink
+  _start
+  _start@0150898
+  _start@14069316
+  _start@409083489
+  _startIndex@9040
+  _startIsTopLeft@
+  _startIsolate@10
+  _startRecording@
+  _startScan
+  _startle
+  _static_fill
+  _static_gradient
+  _stream
+  _stream.dart
+  _stream_tab
+  _streamer
+  _strobe
+  _strobe_fixed
+  _volcano
+  _warning
+  _wave
+  _waves_mode
+  _yieldAsyncStar
+  _yieldSyncStar
+  a jumlah warna:
+  a satu warna
+  a-warni
+  activationStart
+  activation_start
+  addGradient
+  addStream
+  addWarning
+  agStart@41142046
+  agState.start
+  ager.start
+  ai_voice_start_v
+  aksFromStart@536
+  alternateBreath
+  andleDragStart@1
+  andleDragStart@3
+  apTimerStart@301
+  applyFill
+  asStream
+  asyncBreath
+  asyncBreathe
+  asyncGradient
+  asyncJump
+  asyncStarBody
+  asyncStrobe
+  atDocumentStart
+  ateIsGradient@10
+  ateStart@3906301
+  ateStartTime@138
+  ateStartTime@932
+  ateStream
+  ation wave
+  ation_async_jump
+  aultFillColor@44
+  ault_collision
+  ault_fireworks
+  ault_rainbow
+  ault_stars
+  ault_startle
+  ault_streamer
+  autofill
+  autofillClient
+  autofillHints
+  ay_gradient
+  ay_gradient_mode
+  bcp_breathe
+  bcp_breathing
+  bcp_collision
+  bcp_comet_light
+  bcp_cycle_timing
+  bcp_cycles
+  bcp_dream_meteor
+  bcp_fill
+  bcp_fill_mode
+  bcp_fireworks
+  bcp_gradient
+  bcp_jump
+  bcp_meteor
+  bcp_mode_meteor
+  bcp_rainbow
+  bcp_sea_wave
+  bcp_stair_jump
+  bcp_star
+  bcp_star_shining
+  bcp_starry_sky
+  bcp_stars_wink
+  bcp_starship
+  bcp_start
+  bcp_start_adjust
+  bcp_start_time
+  bcp_start_up
+  bcp_stream_setup
+  bcp_strobe
+  bcp_the_stars
+  bcp_warn
+  been started
+  bgColorGradient
+  bgStarWink
+  bigstar;
+  bleConnectStart
+  bottomStart: 
+  breath
+  breath.dart
+  breathAnime
+  breathAnimeS
+  breathCtrlS
+  breathList
+  breath_mode
+  breathe
+  breathing
+  bridgeFireworks
+  bufferingStart
+  buildStart
+  buildStream
+  building
+  building 
+  buildingBlocks
+  c onStart failed
+  cBreathe
+  cBreathe.png
+  cBreatheMode
+  cGradient.png
+  cJump
+  cJump.png
+  cJumpMode
+  cStrobe
+  cStrobe.png
+  cStrobeMode
+  cWavesCommand@30
+  c_breathe
+  c_gradient
+  c_jump
+  c_strobe
+  ceStream@1392155
+  changeStartColor
+  chase
+  chaseColors
+  chaseFirecracker
+  chaseLightening
+  chaseMelting
+  chaseTwinkle
+  ckStart@54842347
+  clockwise_fill
+  closeGradient
+  collision
+  collision2
+  colorJump
+  colorfulBreath
+  colorfulBreathe
+  colorfulWaves
+  comet
+  cometLight
+  comet_light
+  con_start.png
+  core/start.dart
+  createStream
+  cycle
+  cycleCount
+  cycleState
+  cycleState: 
+  cycleState@41373
+  cycleSwitch
+  cycle_null
+  cycles
+  d start
+  dDeviceStart@111
+  dStart@101153484
+  dStartAnimation@
+  dStream
+  d_meteor
+  d_meteor_mode
+  dateStartTime@93
+  de estar vazio.
+  decodeStream
+  deltaStart
+  derWave@10975035
+  derWave@64832401
+  der_stream
+  di impostarlo a 
+  didStartScroll
+  dient_meteor
+  dinamika warna
+  ding_star
+  dleDragStart@120
+  dleDragStart@418
+  dleStartParams@1
+  dom_cycle
+  doubleCollision
+  double_collision
+  downstream
+  dyn:get:stream
+  dynamicModeJump
+  dynamicWave
+  e cycles
+  e.segmentStart
+  e/Collision.png
+  e/Fireworks.png
+  e/Rainbow.png
+  e/Stars.png
+  e/Warning.png
+  eCollision@68172
+  eCollisions@6817
+  eCycle
+  eCycleBase@58740
+  eFillColor@44210
+  eGradientList@59
+  eIsGradient@9938
+  eLongPressStart@
+  eStart
+  eStart@390630125
+  eStart@547639595
+  eStartSpeed@2707
+  eStartTime@13783
+  eStartTime@13891
+  eStartTime@93202
+  eStarted
+  e_start
+  eastWarnDialog@1
+  eckDragStart@301
+  eckIsFilled@5149
+  ectStart@1112452
+  ecycle.dart
+  ecycleMessage@64
+  ecycleState@1216
+  ecycleState@9778
+  ed Star
+  enableGradient
+  enableJump
+  endToStart
+  ent_strobe
+  erWave@648324012
+  er_fill.dart
+  esStream
+  essStart@2902325
+  estar vazio
+  estartAnimation@
+  estartTimer@5374
+  estartTimer@5380
+  estarting_app
+  etJumpData@88390
+  etStartTime@1080
+  etStartTime@8516
+  etStartTime@8667
+  evenColor_Meteor
+  exploding_star
+  explosionStar
+  explosiveStar
+  explosive_star
+  explosive_star2
+  fc_async_breath
+  fc_async_jump
+  fc_async_strobe
+  fc_jumping
+  fc_light_wave
+  fc_mode_cycle
+  fc_shining_star
+  fc_sound_waves
+  fc_starlight
+  fc_start
+  fc_sync_breath
+  fc_sync_gradient
+  fc_sync_jump
+  fc_sync_strobe
+  fc_waves
+  fcl_breathe
+  fcl_chase
+  fcl_collision
+  fcl_comet
+  fcl_cycle_text
+  fcl_cycles
+  fcl_fireworks
+  fcl_jump
+  fcl_meteor
+  fcl_rainbow
+  fcl_stars_wink
+  fcl_static_fill
+  fcl_streamer
+  fcl_strobe
+  fcl_volcano
+  fcl_warning
+  fcl_wave
+  fcp_bg_star_wink
+  fcp_breathe
+  fcp_chase
+  fcp_collision
+  fcp_comet
+  fcp_comet_light
+  fcp_cycle
+  fcp_cycle_flash
+  fcp_cycle_strobe
+  fcp_cycle_text
+  fcp_cycles
+  fcp_dream_meteor
+  fcp_fireworks
+  fcp_gradient
+  fcp_iStart_start
+  fcp_jump
+  fcp_meteor
+  fcp_rainbow
+  fcp_sbl_chase
+  fcp_sbl_strobe
+  fcp_sbl_wave
+  fcp_single_cycle
+  fcp_star
+  fcp_starlit_sky
+  fcp_starry
+  fcp_stars_wink
+  fcp_start_up
+  fcp_static_fill
+  fcp_streamer
+  fcp_strobe
+  fcp_treetop_star
+  fcp_volcano
+  fcp_warn
+  fcp_warning
+  fcp_wave
+  feastAsyncBreath
+  feastAsyncJump
+  feastSyncBreath
+  feastSyncJump
+  fill
+  fill-opacity
+  fill-rule
+  fill.dart
+  fill: 
+  fillBitWindow
+  fillColor
+  fillColor: 
+  fillCropHeight
+  fillCropWidth
+  fillEnabled
+  fillId
+  fillPolygon
+  fillRange
+  fillRect
+  fillTransparent
+  fillType
+  fillValue
+  fillWhole
+  fill_parser.dart
+  filled
+  filled: true
+  filling
+  fillingBreathe
+  fillingGradient
+  fillingJump
+  fills
+  findLineStart
+  firework
+  fireworkLamp
+  fireworkLight
+  fireworks
+  fireworks2
+  fireworks3
+  fireworksLights
+  fireworks_tree
+  flowingBetween
+  flutterRestart
+  formStream@53591
+  forwardStream
+  frame start: 
+  frequent_strobe
+  fromStream
+  ful_breath
+  ful_breath_mode
+  ful_meteor
+  ful_waves_mode
+  g an addStream
+  g stars
+  g/icon_fill.svg
+  gStars
+  gStarsFixed
+  gStarsOptions
+  gStart@691446734
+  g_star
+  g_stars.dart
+  game_sound_waves
+  gapStart
+  geStartColor@593
+  ge_stream.dart
+  get:addWarning
+  get:autofillId
+  get:bcp_breathe
+  get:bcp_cycles
+  get:bcp_fill
+  get:bcp_gradient
+  get:bcp_jump
+  get:bcp_meteor
+  get:bcp_rainbow
+  get:bcp_sea_wave
+  get:bcp_star
+  get:bcp_starship
+  get:bcp_strobe
+  get:bcp_warn
+  get:dynamicWave
+  get:eventsStream
+  get:fc_start
+  get:fcl_rainbow
+  get:fcl_strobe
+  get:fcp_gradient
+  get:fillColor
+  get:gradientList
+  get:gradients
+  get:isGradient
+  get:jumpType
+  get:mc_breathe
+  get:mc_chase
+  get:mc_collision
+  get:mc_comet
+  get:mc_cycles
+  get:mc_fireworks
+  get:mc_gradient
+  get:mc_jump
+  get:mc_meteor
+  get:mc_rainbow
+  get:mc_sbl_chase
+  get:mc_sbl_wave
+  get:mc_star
+  get:mc_starry
+  get:mc_start
+  get:mc_start_up
+  get:mc_streamer
+  get:mc_strobe
+  get:mc_volcano
+  get:mc_warn
+  get:mc_warning
+  get:mc_wave
+  get:md_jump
+  get:msm_jump
+  get:rowSpanStart
+  get:starDuration
+  get:start
+  get:startAddress
+  get:startMinSec
+  get:startTrimCmd
+  get:startsWith
+  get:stateStream
+  get:stream
+  get:web_restart
+  getColorGradient
+  getFileStream
+  getFillColor
+  getFillColor@334
+  getFillColor@405
+  getGradient
+  getGradientColor
+  getGradientPath
+  getGradientText
+  getGradientValue
+  getStartPercent
+  getStartTime
+  getVolcanoColor
+  gnment.start
+  goveeRainbow
+  gradient
+  gradient.dart
+  gradient@3410435
+  gradientChanged
+  gradientColor
+  gradientColors
+  gradientDuration
+  gradientEndColor
+  gradientIndex
+  gradientList
+  gradientMeteor
+  gradientPaint
+  gradientSize
+  gradientTime
+  gradientUnfilter
+  gradientUnits
+  gradientUpdate
+  gradient_content
+  gradient_mode
+  gradient_title
+  gradiente
+  gradientowych
+  gradientunits
+  gw.set.scanStart
+  gw.startPair
+  hGradient@612801
+  h_gradient.svg
+  handleDragStart
+  handleDragStart@
+  handleScaleStart
+  hapus warna ini?
+  hasWarn
+  howGradient@4957
+  htStartView
+  htStartWidget
+  i impostarlo
+  i.startScan
+  iStar
+  iStartDocked
+  iStartFloat
+  iStartTop
+  icWavesCommand@2
+  iceStart@1112452
+  icon_breath
+  icon_breathing
+  icon_breathing_2
+  icon_gradient
+  icon_jump
+  icon_jump_2
+  icon_strobe
+  icon_strobe_2
+  ifecycle.dart
+  ifecycle@1320426
+  ifecycleState@11
+  ing cycles
+  ingBreathe.png
+  ingGradient.png
+  ingJump.png
+  ing_cycle.png
+  ing_star.webp
+  ing_stream.dart
+  init:_hueStart@1
+  init:breathCtrlS
+  init:breathList
+  init:chaseColors
+  init:isGradient
+  init:startLock
+  init:startTime
+  isBuildingOffset
+  isGradient
+  isHideGradient
+  isJumpAPSelect
+  isRemoveGradient
+  isStart
+  ist_cycle.png
+  it:_stream@14118
+  itStart@12503518
+  itWaveState@1431
+  itialStart@12460
+  iverFillViewport
+  iver_fill.dart
+  jatuhkan warna
+  jump
+  jump.dart
+  jumpActionType
+  jumpGroup
+  jumpImageSetting
+  jumpNativePage
+  jumpText
+  jumpTo
+  jumpToItem
+  jumpToPage
+  jumpType
+  kLongPressStart@
+  keepStreamAlive
+  lStrobeState@110
+  l_breathe
+  layGradient@6060
+  le start
+  le/breath.json
+  le/gradient.json
+  le/jump.json
+  le/stream.json
+  leDragStart@4114
+  leDragStart@4683
+  leScaleStart@571
+  leStart@14406680
+  leTapTrackStart@
+  lerpGradient
+  licycleCallback
+  lifecycleEffect
+  linearGradient
+  lineargradient
+  ling_breathe
+  ling_gradient
+  ling_jump
+  listCycle
+  listenToStream
+  listenToUpstream
+  loadFailedNoJump
+  localJumpTo
+  log_cycle.dart
+  lorGradient@6184
+  losive_star
+  luz del cometa
+  mStart@536242446
+  mageStream@13955
+  mageStream@71161
+  mainWinkstar
+  marker-start
+  mationStarted@68
+  mc_async_breathe
+  mc_bg_star_wink
+  mc_breathe
+  mc_chase
+  mc_chase_melting
+  mc_chase_twinkle
+  mc_collision
+  mc_comet
+  mc_comet_light
+  mc_cycle
+  mc_cycle_flash
+  mc_cycle_strobe
+  mc_cycle_text
+  mc_cycles
+  mc_dream_meteor
+  mc_fireworks
+  mc_font_gradient
+  mc_gradient
+  mc_iStart_start
+  mc_jump
+  mc_jump_symphony
+  mc_meteor
+  mc_meteor_light
+  mc_meteor_shower
+  mc_rainbow
+  mc_sbl_chase
+  mc_sbl_strobe
+  mc_sbl_wave
+  mc_single_cycle
+  mc_star
+  mc_star_of_ocean
+  mc_starlit_sky
+  mc_starry
+  mc_stars_twinkle
+  mc_stars_wink
+  mc_start
+  mc_start_up
+  mc_starting_time
+  mc_static_fill
+  mc_streamer
+  mc_strobe
+  mc_sync_gradient
+  mc_treetop_star
+  mc_two_collision
+  mc_volcano
+  mc_warn
+  mc_warning
+  mc_wave
+  mc_wave_symphony
+  md_jump
+  md_open_gradient
+  md_restart_ble
+  md_start_mobile
+  mentLifecycle@13
+  messageStream
+  meteor
+  meteorCollision
+  meteorFireworks
+  meteorShower
+  meteor_lamp_tab0
+  meteor_lamp_tab1
+  meteor_symphony
+  meteors
+  meteors_mode
+  meteors_symphony
+  mfc_start_create
+  mfc_start_time
+  mfc_start_write
+  micStream
+  monkeyFireworks
+  moveToStart
+  mpostare
+  msc_breathe
+  msc_fireworks
+  msc_strobe
+  msc_warning
+  msm_jump
+  multiStarFlash
+  multipleMeteors
+  nCycles@10939501
+  nDragStart@68153
+  nStart
+  nStart@101153484
+  nStartPlay@28262
+  nStartPlay@28550
+  nStartUpdate@117
+  nSteStartTime@93
+  nZoomStart@13313
+  nZoomStartEvent@
+  n_btn_start
+  n_start
+  n_start.mp3
+  n_start_tips
+  na-warni
+  nabledStream
+  nameStartChar
+  nc_breathe
+  nc_gradient
+  nc_jump
+  nc_strobe
+  ndWaveModeSet
+  ndWaveVolume
+  ndi impostarlo
+  nectStart@111245
+  needTrackStart
+  ng or a Stream.
+  ngPressStart@290
+  ngStars.png
+  ng_stars
+  ningToStream@139
+  nit:_start@12460
+  nkling_stars
+  nstream
+  nt Pulse Chase
+  ntStream
+  nted_meteor
+  nted_meteor_mode
+  n|starString
+  o start!!
+  oStart
+  ockwave-flash
+  ocokan warna
+  octet-stream
+  ode estar vazio.
+  ofill.dart
+  ofillScope@10721
+  olveFillColor@44
+  omStart@13313287
+  omStartEvent
+  om_cycle
+  onAppStart
+  onBindingsStart
+  onCycles
+  onCycles@2668309
+  onDelayGradient
+  onDelayGradient@
+  onDownloadStart
+  onDragStart
+  onDragStarted
+  onGradientUpdate
+  onJump
+  onJump@103152485
+  onJump@134471805
+  onJumpGroup
+  onJumpSmartTimer
+  onLifecycle
+  onLinearGradient
+  onLongPressStart
+  onMoveStart
+  onPageBuildStart
+  onPageStarted
+  onPanStart
+  onPathStart
+  onPatternStart
+  onRadialGradient
+  onScaleStart
+  onSetIsGradient
+  onSetStartTime
+  onSetStartTime@6
+  onStart
+  onStartDownload
+  onStartFixes
+  onStartInit
+  onStartLocation
+  onStartMusic
+  onStartMusic@843
+  onStartPlay
+  onStartPlay@2826
+  onStartProcess@1
+  onStartRecording
+  onStartScan
+  onStartSetMusic
+  onStartTime
+  onStartTime@1382
+  onSteStartTime
+  onTapTrackStart
+  onUpdateGradient
+  onal.bottomStart
+  onal.centerStart
+  onal.topStart
+  on|star
+  ooting_stars
+  opOrStartCamera@
+  openGradient
+  orGradient: 
+  orful_breathe
+  ortsRunStart
+  paint start
+  panZoomStart
+  parseRawFillRule
+  patternFill
+  pdateStartSpeed@
+  periodicMeteors
+  ple_meteors
+  ple_meteors_mode
+  positiveGradient
+  preview Start
+  processStartTag
+  processStarted
+  pus warna
+  quent_strobe
+  questAutofill@96
+  quickJump
+  r en gradiente
+  r startPlayer()
+  rStartCamera@487
+  rWave@1097503521
+  rWave@1099228571
+  r_500_not_start
+  r_collision
+  r_wavelet.dart
+  radialGradient
+  radialgradient
+  radient_Rainbow
+  ragStart@4663487
+  random_cycle
+  rasterStart
+  rcePressStarted@
+  rdwrapUpstream@1
+  reathing_Rainbow
+  recycle
+  reeStartView
+  renderWave@10979
+  renderWave@10992
+  requent_strobe
+  requestAutofill
+  restart
+  restartCreatePic
+  restartListener
+  restartMain
+  restartServer
+  retractStart@536
+  reverseGradient
+  rfulBreathe.png
+  rmStream@5359124
+  ronous breathing
+  ronous jump
+  ronous strobe
+  rorStreamSink@62
+  rrorStreamSink@6
+  rwarna-warni
+  rx_stream
+  sFromStart@53624
+  sStartWidget
+  segment_strobe
+  segmentedMeteor
+  selectStartDur
+  sendStart
+  sendStartCommand
+  set:fillColor
+  set:fillType
+  set:gradient
+  set:gradientTime
+  set:jumpType
+  set:start
+  set:startAddress
+  set:startTime
+  set:startToEnd
+  setCycleWidget
+  setFillInData
+  setFillInData2
+  setStartTime
+  short_streamline
+  sicWavesCommand@
+  singleCycle
+  skema warna
+  socketCyclePage
+  soundWaves
+  ssageStream
+  sstarf;
+  stApi.startScan
+  star vazio
+  star;
+  starBurstMusic
+  starBurstMusic2
+  starFlicker
+  stare il nome
+  stare il timer
+  stare ora? 
+  starf;
+  stars
+  starsFlash
+  starsTwinkle
+  start
+  start connect 
+  start cotrol sbl
+  start failed
+  start sbl error 
+  start scan
+  start show scan
+  start write file
+  start write txt
+  start:
+  startActivation
+  startActivation@
+  startActivity
+  startAddress
+  startAngle: 
+  startAnimation
+  startAnimation@9
+  startAutoplay
+  startBatchBind
+  startBind
+  startBleManager
+  startBleOta
+  startBrightness
+  startBriturnCore
+  startCCT
+  startCharacter
+  startClean
+  startClient
+  startColor
+  startConnect
+  startConnect@120
+  startDecode
+  startDeviceOta
+  startDiagnostic
+  startDiagnostic 
+  startDownload
+  startDownload@14
+  startDrag
+  startDuration
+  startEdit
+  startElement
+  startEncode
+  startFix
+  startFixes 
+  startFlash
+  startFlight
+  startGame
+  startIdentify
+  startImageStream
+  startIndex
+  startIndex@90402
+  startListening@1
+  startLoad
+  startLocation
+  startLock
+  startMeshClient
+  startMeshOta
+  startMicrophone
+  startName
+  startNextTask
+  startOTA
+  startOffset
+  startOpacity
+  startOta
+  startPage
+  startPickColor
+  startPlayer
+  startPlayer()
+  startPort
+  startPosition
+  startPreview@340
+  startPreview@358
+  startProcess
+  startRecorder
+  startRecording
+  startRemoteOta
+  startScan
+  startScanDynamic
+  startScroll@5155
+  startSend
+  startSession
+  startSimulation@
+  startSpeed
+  startSync
+  startTagA
+  startTagBody
+  startTagButton
+  startTagCaption
+  startTagCloseP
+  startTagCol
+  startTagColgroup
+  startTagForm
+  startTagFrameset
+  startTagFromHead
+  startTagHead
+  startTagHeading
+  startTagHr
+  startTagHtml
+  startTagIFrame
+  startTagImage
+  startTagInput
+  startTagIsIndex
+  startTagListItem
+  startTagMath
+  startTagMeta
+  startTagNobr
+  startTagOpt
+  startTagOptgroup
+  startTagOption
+  startTagOther
+  startTagRowGroup
+  startTagRpRt
+  startTagScript
+  startTagSelect
+  startTagSvg
+  startTagTable
+  startTagTextarea
+  startTagTitle
+  startTagTr
+  startTagXmp
+  startThumbIcon
+  startTime
+  startTimer
+  startTimerFrames
+  startToEnd
+  startUpdate
+  startValue
+  startVodPlay
+  startVoice@41373
+  startX
+  startY
+  start_dim
+  start_init
+  start_with.dart
+  started
+  startedProcesses
+  starten
+  startoffset
+  startsWith
+  startsWithAny
+  staticFill
+  staticGradient
+  stenToStream@139
+  stopImageStream
+  stream
+  stream.dart
+  stream@141182501
+  streamConsumer
+  streamLightColor
+  streamMatrixCtrl
+  streamNumber
+  streamer
+  streamline1
+  streamline2
+  streamline3
+  streamline4
+  streamline5
+  streamline6
+  streamline7
+  strobe
+  superluminal
+  supportGradient
+  switch_gradient
+  syncBreath
+  syncBreathe
+  syncGradient
+  syncJump
+  syncStrobe
+  systemFill
+  t in stream.
+  t-stream
+  tAutofill
+  tCycleCount@1103
+  tFillColor@44210
+  tGradientList@96
+  tGradientTime@85
+  tLifecycle@13204
+  tMessageStream
+  tStart@536242446
+  tStartCommand
+  tStartWidget
+  tStream
+  tTwoStartWidget
+  tTwoStartWidget.
+  tab_firework
+  tag - gradient: 
+  takeCameraStream
+  takeStream
+  tambahkan warna
+  targetAddStream
+  te start: 
+  teCollision@6817
+  teGradient
+  teIsGradient@994
+  teLifecycle@1531
+  teStartTime@9320
+  teStream
+  tempStartX
+  tempStartY
+  teteskan warna
+  threeDFirework
+  tic_fill
+  tic_gradient
+  tionStarted@6825
+  toByteStream
+  toFill
+  toStream
+  topStart: 
+  trackTimerStart
+  tractStart@53624
+  treetopStar
+  treetopStarPage
+  tsRunStart
+  twinkleStar
+  twoWayGradient
+  uent_strobe
+  uh warna
+  uildStartHandle@
+  uistare
+  umping_Rainbow
+  und to a stream
+  undWaveVolumeCmd
+  upDateIsGradient
+  updateDataStream
+  updateIsStart
+  updateIsStart@25
+  updateStart
+  updateStartColor
+  updateStartSpeed
+  updateStartTime
+  upstream
+  urceStream@13955
+  ustar
+  utoStart@1620583
+  utofillScope@107
+  viceStart@111245
+  volcano
+  vsyncStart
+  wStart@271836084
+  warn
+  warnSwitchChange
+  warna campuran
+  warna pertama.
+  warna tercapai
+  warna-warni
+  warni
+  warning
+  warningDialog
+  warpStartInit
+  wave
+  wave.dart
+  waveData
+  waves
+  waves_mode
+  web_restart
+  whiteStarFlash
+  wifibleFillLight
+  will_start
+  witchGradient@61
+  withFillType
+  wrapDownstream@1
+  writeFill
+  writeInputStream
+  y started
+  yEventStream
+  yGradient@288917
+  ync_breathe.dart
+  ync_jump.dart
+  ync_strobe.dart

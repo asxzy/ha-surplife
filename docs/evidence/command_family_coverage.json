@@ -1,0 +1,429 @@
+{
+  "families": [
+    "E1 21",
+    "E1 22",
+    "E1 23",
+    "E1 26",
+    "E0 05",
+    "E0 06"
+  ],
+  "note": "Raw byte scan, case-insensitive. `offsets` are byte offsets into the named artifact. False positives are NOT filtered here. Known false positives, all verified by reading the surrounding bytes: (1) 'e121' in the Dart App binary at 76466698 is the symbol '#ffiClosure121'; (2) 'e006' in the Dart App binary at 84415031 is the localisation key 'common_e006'; (3) 'e122'/'e123' hits in PNG/TTF files are image/font pixel or glyph data. Only wifi_dp_cmd.json (and its HIKARIYA twin) contain real command opcodes; the genuine ones are e001, e002, e006, e008, e00a, e00d.",
+  "coverage": {
+    "js_bundle": {
+      "E1 21": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 22": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 23": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 26": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 05": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 06": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      }
+    },
+    "wifi_devices.json": {
+      "E1 21": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 22": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 23": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 26": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 05": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 06": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      }
+    },
+    "wifi_dp_cmd.json": {
+      "E1 21": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 22": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 23": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 26": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 05": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 06": {
+        "status": "present",
+        "offsets": [
+          2546
+        ],
+        "hit_count": 1
+      },
+      "_all_cmdForms": {
+        "state_upload": "818A8B96",
+        "bright_value_v2": "3b010000{value}00{value}{delay}{delay}{delay}{gradient}{gradient}",
+        "switch_led": "71{open}0f",
+        "switch_led_v2": "3b{open}0000000000{gradient}{gradient}{gradient}{delay}{delay}",
+        "symp_app_volume": "74{volume}",
+        "symp_get_mic_info": "720072",
+        "symp_scene_v2": "42{model}{speed}{bright}",
+        "twinkle_data": "3A{exeType}{exeValue}{exeValue}{exeValue}{lightTime}{slakeTime}{count}{finishState}{transitionTime}",
+        "music_data_v2": "36{exeType}{exeValue}{exeValue}{exeValue}{volume}{transitionTime}{transitionTime}",
+        "get_timer_list": "222a2b",
+        "get_custom": "525a5b",
+        "get_time": "111a1b",
+        "get_mic_info": "7200",
+        "get_mic_info_v2": "7500",
+        "get_symp_fixed_data": "444a4b",
+        "get_symp_config_v2": "631221f0",
+        "sdd_get_colour_data": "b0babb",
+        "set_time": "1014{year}{month}{day}{hour}{minute}{sec}{week}00",
+        "get_lver": "41542b4c5645520d",
+        "reset": "41542b52454c440d",
+        "candle_data": "39{exeType}{exeValue}{exeValue}{exeValue}{speed}{bright}{extent}",
+        "scene_data_v2": "38{model}{speed}{bright}",
+        "temp_value_v2": "3bb1000000{cct}{bright}00001e0000",
+        "function_inquiry": "2b2c2d",
+        "switch_led_v3": "e001{preview}3b{open}0000000000{gradient}{gradient}{gradient}{delay}{delay}",
+        "scene_data_v3": "e002{preview}{model}{speed}{bright}",
+        "fall_asleep_inquire": "e00a",
+        "wake_up_inquire": "e008",
+        "get_timer_list_v2": "e006",
+        "state_upload_v2": "ea818a8b",
+        "countdown": "e00d"
+      }
+    },
+    "wifi_dp_response.json": {
+      "E1 21": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 22": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 23": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 26": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 05": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 06": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      }
+    },
+    "wifi_device_panel.json": {
+      "E1 21": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 22": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 23": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 26": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 05": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 06": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      }
+    },
+    "HIKARIYA/wifi_dp_cmd.json": {
+      "E1 21": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 22": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 23": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 26": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 05": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 06": {
+        "status": "present",
+        "offsets": [
+          2546
+        ],
+        "hit_count": 1
+      },
+      "_all_cmdForms": {
+        "state_upload": "818A8B96",
+        "bright_value_v2": "3b010000{value}00{value}{delay}{delay}{delay}{gradient}{gradient}",
+        "switch_led": "71{open}0f",
+        "switch_led_v2": "3b{open}0000000000{gradient}{gradient}{gradient}{delay}{delay}",
+        "symp_app_volume": "74{volume}",
+        "symp_get_mic_info": "720072",
+        "symp_scene_v2": "42{model}{speed}{bright}",
+        "twinkle_data": "3A{exeType}{exeValue}{exeValue}{exeValue}{lightTime}{slakeTime}{count}{finishState}{transitionTime}",
+        "music_data_v2": "36{exeType}{exeValue}{exeValue}{exeValue}{volume}{transitionTime}{transitionTime}",
+        "get_timer_list": "222a2b",
+        "get_custom": "525a5b",
+        "get_time": "111a1b",
+        "get_mic_info": "7200",
+        "get_mic_info_v2": "7500",
+        "get_symp_fixed_data": "444a4b",
+        "get_symp_config_v2": "631221f0",
+        "sdd_get_colour_data": "b0babb",
+        "set_time": "1014{year}{month}{day}{hour}{minute}{sec}{week}00",
+        "get_lver": "41542b4c5645520d",
+        "reset": "41542b52454c440d",
+        "candle_data": "39{exeType}{exeValue}{exeValue}{exeValue}{speed}{bright}{extent}",
+        "scene_data_v2": "38{model}{speed}{bright}",
+        "temp_value_v2": "3bb1000000{cct}{bright}00001e0000",
+        "function_inquiry": "2b2c2d",
+        "switch_led_v3": "e001{preview}3b{open}0000000000{gradient}{gradient}{gradient}{delay}{delay}",
+        "scene_data_v3": "e002{preview}{model}{speed}{bright}",
+        "fall_asleep_inquire": "e00a",
+        "wake_up_inquire": "e008",
+        "get_timer_list_v2": "e006",
+        "state_upload_v2": "ea818a8b",
+        "countdown": "e00d"
+      }
+    },
+    "data.mdb": {
+      "E1 21": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 22": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 23": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 26": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 05": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 06": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      }
+    },
+    "Dart App binary": {
+      "E1 21": {
+        "status": "present",
+        "offsets": [
+          76466698
+        ],
+        "hit_count": 1
+      },
+      "E1 22": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 23": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 26": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 05": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 06": {
+        "status": "present",
+        "offsets": [
+          84415031
+        ],
+        "hit_count": 1
+      }
+    }
+  },
+  "model_string_search": {
+    "js_bundle": {
+      "model": {
+        "hit_count": 0,
+        "offsets": []
+      },
+      "model_info": {
+        "hit_count": 0,
+        "offsets": []
+      },
+      "model_prefix": {
+        "hit_count": 0,
+        "offsets": [],
+        "distinct_strings": []
+      },
+      "protocol_hex": {
+        "hit_count": 0,
+        "offsets": []
+      }
+    },
+    "wifi_devices.json": {
+      "model": {
+        "hit_count": 0,
+        "offsets": []
+      },
+      "model_info": {
+        "hit_count": 0,
+        "offsets": []
+      },
+      "model_prefix": {
+        "hit_count": 0,
+        "offsets": [],
+        "distinct_strings": []
+      },
+      "protocol_hex": {
+        "hit_count": 0,
+        "offsets": []
+      }
+    },
+    "data.mdb": {
+      "model": {
+        "hit_count": 0,
+        "offsets": []
+      },
+      "model_info": {
+        "hit_count": 0,
+        "offsets": []
+      },
+      "model_prefix": {
+        "hit_count": 0,
+        "offsets": [],
+        "distinct_strings": []
+      },
+      "protocol_hex": {
+        "hit_count": 0,
+        "offsets": []
+      }
+    },
+    "Dart App binary": {
+      "model": {
+        "hit_count": 0,
+        "offsets": []
+      },
+      "model_info": {
+        "hit_count": 0,
+        "offsets": []
+      },
+      "model_prefix": {
+        "hit_count": 3,
+        "offsets": [
+          75562672,
+          77854848,
+          79570000
+        ],
+        "distinct_strings": [
+          "AK001-ZJ2",
+          "AK001-ZJ21",
+          "AK001-ZJ215"
+        ]
+      },
+      "protocol_hex": {
+        "hit_count": 0,
+        "offsets": []
+      }
+    }
+  }
+}

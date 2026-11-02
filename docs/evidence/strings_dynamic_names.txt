@@ -1,0 +1,105 @@
+=== all *DynamicEffect base names (effect library classes) ===
+_ChristmasLightsDynamicEffectState
+_colorDynamicsWidget
+_CustomDynamicsItemState
+_customDynamicsType
+_DynamicEffectState
+_DynamicEffectTwoPainter
+_DynamicEffectTwoState
+_DynamicEffectViewPainter
+_DynamicEffectViewState
+_onAddCustomDynamics
+_onInitDynamicEffectList
+_onSendCustomDynamics
+_onSendMeshCustomDynamics
+_onSendRgbControllerCustomDynamics
+_onUpdateDynamicEffect
+_sendCustomDynamics
+_setCustomDynamics
+_setMeshCustomDynamics
+
+=== count ===
+      18
+
+=== 'Wink' / 'Accumulate' / 'Flow' whole strings ===
+Accumulate
+AccumulateDynamicEffect
+Flow
+FlowAdapter
+FlowDelegate
+Flower Field
+Flower Parade
+Flower Playing Cards
+FlowerBud
+Flowing
+Flowing Water
+FlowingBetween
+FlowingBetweenOptions
+FlowingColorStrobe
+FlowingColorStrobeFixedOptions
+FlowingColorStrobeOptions
+FlowPaintingContext
+Static
+Static color
+Static Color
+Static colorful
+Static Dimming
+Static Fill
+Static Gradient
+Static Light
+Static mode
+Static template
+StaticAction
+StaticActionCreator
+StaticAndSceneControlAction
+StaticAndSceneControlComponent
+StaticAndSceneControlConnector
+StaticAndSceneControlState
+StaticColorfulStrobe
+StaticColorfulStrobeOptions
+StaticComponentState
+StaticDynamicEffect
+StaticFillMode
+StaticFillModeOptions
+StaticGradientMode
+StaticGradientModeOptions
+StaticImageAnimationEffect
+Statick
+StaticMessageWidget
+StaticModel
+StaticModelBiz
+Statico
+StaticPage
+StaticProgressBar
+StaticState
+StaticTemplateAction
+StaticTemplateComponent
+StaticTemplateConnector
+StaticTemplateState
+Twinkling Marquee
+Twinkling stars
+Twinkling Stars
+Wink
+WinkDynamicEffect
+Winkel
+Winking Face
+Winking Face With Tongue
+
+=== all *Colorful*Mode classes ===
+      16
+_ColorfulAlwaysOnModeState
+_ColorfulAmplificationModeState
+_ColorfulBreatheModeState
+_ColorfulBreathModeState
+_ColorfulFlashesState
+_ColorfulFlickerModeState
+_ColorfulMarqueeModeState
+_ColorfulRingLightState
+_ColorfulRingStartLightState
+_ColorfulTwinklingStarsState
+_ColorfulWavesModeState
+_getColorfulList
+_getIsColorfulIcon
+_onSymphonyColorfulDataChanged
+_onSymphonyColorfulSettingDataChanged
+_StaticColorfulStrobeState

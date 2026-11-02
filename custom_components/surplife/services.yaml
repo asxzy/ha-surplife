@@ -1,0 +1,177 @@
+set_scribble:
+  name: Set per-LED pattern
+  description: Apply a per-LED (scribble) colour pattern.
+  target:
+    entity:
+      integration: surplife
+      domain: light
+  fields:
+    pattern:
+      name: Pattern
+      description: >-
+        Per-LED spec, space separated. Each token is one LED or a run such as
+        "20xred". Colours may be a name, "#rrggbb", "r,g,b", or "w80" for warm
+        white at level 80. Add "/slow", "/fast" for blink. Short specs are
+        padded with dark LEDs.
+      required: true
+      example: "20xred 15xblue/fast"
+      selector:
+        text:
+    effect:
+      name: Effect
+      description: Per-LED effect name or ID 0-8.
+      selector:
+        select:
+          options:
+            - static
+            - flowing
+            - twinkling
+            - stars_wink
+            - accumulate
+    direction:
+      name: Direction
+      default: l2r
+      selector:
+        select:
+          options:
+            - value: l2r
+              label: Left to right
+            - value: r2l
+              label: Right to left
+    density:
+      name: Density
+      default: 80
+      selector:
+        number:
+          min: 0
+          max: 100
+    speed:
+      name: Speed
+      default: 100
+      selector:
+        number:
+          min: 0
+          max: 100
+    enter:
+      name: Enter scribble mode
+      description: Send the mode-entry command first. Leave on unless the strip is already in scribble mode.
+      default: true
+      selector:
+        boolean:
+
+set_segments:
+  name: Set segments
+  description: Apply static colours to the 20 fixed segments.
+  target:
+    entity:
+      integration: surplife
+      domain: light
+  fields:
+    colors:
+      name: Colours
+      description: Up to 20 colours. Missing trailing segments are turned off.
+      required: true
+      selector:
+        color_rgb:
+          multiple: true
+
+set_timer:
+  name: Set timer
+  description: Write one of the six hardware timer slots.
+  target:
+    entity:
+      integration: surplife
+      domain: light
+  fields:
+    slot:
+      name: Slot
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 6
+          mode: box
+    time:
+      name: Time
+      required: true
+      selector:
+        time:
+    action:
+      name: Action
+      default: "on"
+      selector:
+        select:
+          options:
+            - value: "on"
+              label: Turn on
+            - value: "off"
+              label: Turn off
+            - value: color
+              label: Set colour
+    color:
+      name: Colour
+      description: Only used when the action is "Set colour".
+      selector:
+        color_rgb:
+    repeat:
+      name: Repeat
+      description: >-
+        "everyday", "weekdays", "weekend", "once", or a comma-separated day
+        list such as "mon,wed,fri".
+      default: everyday
+      selector:
+        text:
+    active:
+      name: Active
+      default: true
+      selector:
+        boolean:
+
+clear_timer:
+  name: Clear timer
+  description: Disable one hardware timer slot.
+  target:
+    entity:
+      integration: surplife
+      domain: light
+  fields:
+    slot:
+      name: Slot
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 6
+          mode: box
+
+sync_clock:
+  name: Sync clock
+  description: Push Home Assistant's local time to the controller.
+  target:
+    entity:
+      integration: surplife
+      domain: light
+
+apply_preset:
+  name: Apply preset
+  description: >-
+    Apply a bundled holiday preset. Target several controllers at once to keep
+    them in sync — this is the local replacement for the app's cloud grouping.
+  target:
+    entity:
+      integration: surplife
+      domain: light
+  fields:
+    preset:
+      name: Preset
+      required: true
+      selector:
+        select:
+          options:
+            - halloween
+            - christmas
+            - thanksgiving
+            - canada_day
+            - valentines
+            - new_years
+            - warm_white

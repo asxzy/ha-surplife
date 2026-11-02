@@ -18,7 +18,7 @@ from .constants import (
     SCRIBBLE_EFFECT_NAMES,
     TimerAction,
 )
-from .discovery import DiscoveredDevice, async_discover, discover
+from .discovery import DiscoveredDevice, async_discover, discover, is_supported
 from .scribble import ScribbleLED
 from .state import SurplifeState
 from .timers import Timer
@@ -39,4 +39,5 @@ __all__ = [
     "TimerAction",
     "async_discover",
     "discover",
+    "is_supported",
 ]

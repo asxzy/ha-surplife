@@ -1,0 +1,60 @@
+=== color_segment_* full list (sorted numerically) ===
+color_segment_0
+color_segment_1
+color_segment_2
+color_segment_3
+color_segment_4
+color_segment_5
+color_segment_6
+color_segment_7
+color_segment_8
+color_segment_9
+color_segment_102
+color_segment_112
+color_segment_122
+color_segment_132
+color_segment_142
+color_segment_152
+color_segment_162
+color_segment_172
+color_segment_182
+color_segment_192
+--- count ---
+      20
+--- max ---
+192
+
+=== any color_segment_2x / _3x (beyond 19)? ===
+102
+112
+122
+132
+142
+152
+162
+172
+182
+192
+(empty above = none beyond 19)
+
+=== segment limit / density strings ===
+171393:Gesamtzahl der Lampen (Anzahl der IC-Lampen pro Segment x Anzahl der Segmente)
+230645:Die Gesamtzahl der Segmente darf 
+234962:Die Anzahl der Punkte in jedem Segment darf nicht weniger als 
+242814:Die Anzahl der Punkte in jedem Segment kann nicht kleiner sein als 
+254012:Segment Density
+256816:nge des RGB-IC-Lichtstreifens oder der Lichterkette ein. Die Gesamtzahl der Lichtperlen = Anzahl der IC-Lichter pro Segment * Anzahl der Segmente, &quot;Anzahl der IC-Lichter pro Segment&quot; ist die Effektl
+304699:Anzahl der Segmente
+338193:Die Anzahl der Punkte in jedem Segment darf nicht kleiner als 
+
+=== '20' adjacent to segment/count in slot names ===
+20AQ
+208LAd>P
+20s$s
+20J$J
+202(  
+20J0,
+20/J8
+20zA
+20, 
+20Az

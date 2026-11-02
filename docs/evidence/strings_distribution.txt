@@ -1,0 +1,89 @@
+=== 'distribution' / 'Distribution' vocabulary ===
+153701:DistributionStartAction.
+154302:Try hotspot distribution
+155010:Are you sure you want to exit the distribution network?
+156167:packages/magichome2_control_page/assets/animation/distribution.json
+156558:More distribution network problems
+158384:distributionMutilPage
+158697:DistributionLaunchPage
+159453:package:magichome2_control_page/src/pages/device_control_page/symphony_home/symphony/symphony_distribution/distribution_dynamic_page/dynamic_effect_two.dart
+161291:onSendSymphonyDistributionFrameCmd
+161535:package:magichome2_control_page/src/pages/device_control_page/symphony_home/symphony/symphony_distribution/distribution_state.dart
+161633:package:magichome2_control_page/src/pages/device_control_page/symphony_home/symphony/symphony_distribution/distribution_modify_page/action.dart
+162730:sendSymphonyDistributionFrameCmd2
+163982:md_need_use_hotspot_distribution_network
+164698:package:magichome2_control_page/src/pages/device_control_page/symphony_home/symphony/symphony_distribution/distribution_dynamic_page/view.dart
+167529:DistributionMutilPageActionCreator
+170130:/distribution.json
+170237:DistributionCameraState.
+171460:_onSendSymphonyDistributionCmd@6090507089
+172089:package:magichome2_control_page/src/pages/device_control_page/symphony_home/symphony/symphony_distribution/distribution_modify_page/view.dart
+175172:DistributionDynamicPage
+176360:package:magichome2_control_page/src/pages/device_control_page/symphony_home/symphony/symphony_distribution/distribution_dynamic_page/effect.dart2
+182535:DistributionDynamicPage.
+183408:distributionModifyPage
+184079:DistributionDynamicState
+188060:package:magichome2_control_page/src/pages/device_control_page/symphony_home/symphony/symphony_distribution/distribution_utils.dart
+188623:onSendSymphonyDistributionCmd
+192941:_onSendSymphonyDistributionPreviewCmd@60905070892
+194477:seau de distribution bluetooth, il doit 
+194622:DistributionStartState
+197186:CommandSymphonyDistributionPreviewParams
+198325:package:magichome2_control_page/src/pages/device_control_page/symphony_home/symphony/symphony_distribution/distribution_start_page/effect.dart
+199255:distribution_switch
+202157:DistributionLaunchState
+202362:TextLeadingDistribution.
+202933:DistributionMutilPageAction.
+208793:, leadingDistribution: 
+209714:seau de distribution
+209757:DistributionModifyAction.
+213707:package:magichome2_control_page/src/pages/device_control_page/symphony_home/symphony/symphony_distribution/distribution_dynamic_page/page.dart
+214611:sendSymphonyDistributionPlayCmd
+
+=== 'blocking' / 'Blocking' ===
+198520:buildHEXSymphonyColorBlockingFT
+230267:_onSendSymphonyColorBlockingFTCmd@6090507089
+249110:CommandSymphonyColorBlockingFTParams
+258022:onSendSymphonyColorBlockingFTCmd2
+289265:BLOCKING_FUNCTION_ERROR_RESPONSE2
+294333:sendSymphonyColorBlockingFTCmd
+
+=== 'SymphonyDistribution*' base names ===
+_onSendSymphonyDistributionCmd
+_onSendSymphonyDistributionFrameCmd
+_onSendSymphonyDistributionHeaderCmd
+_onSendSymphonyDistributionPlayCmd
+_onSendSymphonyDistributionPreviewCmd
+_onSendSymphonyDistributionQueryCmd
+
+=== distribution UI strings (whole, capitalized) ===
+ Punkte pro Segment
+Anzahl der Segmente
+buildFeastSegmentColorCmd
+buildHEXSymphonyColorBlockingFT
+buildHEXSymphonyDistributionCmd
+buildHEXSymphonyDistributionFrameCmd
+buildHEXSymphonyDistributionHeaderCmd
+buildHEXSymphonyDistributionPlayCmd
+buildHEXSymphonyDistributionPreviewCmd
+colorSegmentIndex
+CommandSymphonyColorBlockingFTParams
+CommandSymphonyDistributionFrameParams
+CommandSymphonyDistributionHeaderParams
+CommandSymphonyDistributionParams
+CommandSymphonyDistributionPlayParams
+CommandSymphonyDistributionPreviewParams
+CommandSymphonyDistributionQueryParams
+Die Anzahl der Punkte in jedem Segment darf nicht kleiner als 
+Die Anzahl der Punkte in jedem Segment darf nicht weniger als 
+Die Anzahl der Punkte in jedem Segment kann nicht kleiner sein als 
+Die Gesamtzahl der Segmente darf 
+DistributionCameraAction
+DistributionCameraActionCreator
+DistributionCameraPage
+DistributionCameraState
+DistributionDynamicAction
+DistributionDynamicPage
+DistributionDynamicState
+DistributionLaunchAction
+DistributionLaunchActionCreator

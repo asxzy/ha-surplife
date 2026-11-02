@@ -1,0 +1,182 @@
+############ TIMER ############
+=== timer UI strings (capitalized phrases) ===
+335552:Custom
+287028:Custom 
+221064:Custom color and brightness
+209920:Custom color daub brush
+267820:Custom colors
+256567:Custom Count
+332831:Custom duration
+257976:Custom Dynamic
+289211:Custom effect name
+170034:Custom effects
+257011:Custom Effects
+232686:Custom Layout
+258638:Custom mode
+216360:Custom Mode
+271216:Custom music
+290219:Custom music can only be played on the current phone
+188039:Custom Plan
+335079:Custom Smudge
+337121:Custom solidify
+209205:Custom text duplication
+288632:Custom time
+312709:Custom voice wake up animation
+242887:Custom wake up voice
+189027:CustomAlertDialog
+179054:CustomAnimationSlider
+330967:CustomAppBar
+308788:CustomArgument
+299632:CustomAssetBundleLoader
+188600:CustomBgBean
+233204:CustomBottomSheetColorAction
+331192:CustomBottomSheetColorActionCreator
+302854:CustomBottomSheetColorComponent
+226744:CustomBottomSheetColorConnector
+261693:CustomBottomSheetColorState
+233912:CustomBottomSheetColorSymphonyAction
+338276:CustomBottomSheetColorSymphonyActionCreator
+205668:CustomBottomSheetColorSymphonyComponent
+350752:CustomBottomSheetColorSymphonyState
+226663:CustomBouncingScrollPhysics
+268391:CustomBubbleWithTriangle
+193895:CustomCheckbox
+290174:CustomCheckBox
+341757:CustomClampingScrollPhysics
+161356:CustomClipper
+277926:CustomCodeState
+298146:CustomColorList
+303448:CustomColorSelector
+240051:CustomColorSelectTabViewAction
+325026:CustomColorSelectTabViewActionCreator
+286879:CustomColorSelectTabViewPage
+335900:CustomColorSelectTabViewState
+304603:CustomColorSymphonyType
+201987:CustomColorTab
+265267:CustomColorType
+183691:CustomColumns
+244710:CustomCropShape
+159319:CustomDirectionWidget
+175987:CustomDuration
+228224:CustomDynamicBean
+203421:CustomDynamicBizData
+
+=== timer base names ===
+_buildSmartTimerView
+_cancelAndRestartTimer
+_cancelTimer
+_checkGoOnTimer
+_checkTimerTask
+_consecutiveTapTimerStart
+_consecutiveTapTimerStop
+_consecutiveTapTimerTimeout
+_createPeriodicTimer
+_createTimer
+_createTimerHandler
+_FeastRoundTimerState
+_getTimerName
+_handleTimer
+_lastZeroTimer
+_maybeStartFadeoutTimer
+_onClearTimers
+_onInitTimerInfo
+_onJumpSmartTimer
+_onShowTimerDialog
+_onTimer
+_onTimerSwitchChanged
+_onUpdateAllTimer
+_onUpdateAquaticTimerItem
+_onUpdateIsAllTimerSame
+_onUpdateTimerList
+_onUpdateTimerSwitch
+_openTimer
+_resumeProgressTimer
+_rootCreatePeriodicTimer
+_rootCreateTimer
+_runTimers
+_sentinelTimer
+_setCheckFoundDeviceTimer
+_setTimer
+_shutdownTimerHandler
+_startAutoDockTimer
+_startCheckVersionTimer
+_startDoubleTapTimer
+_startHideTimer
+_startIncrementTimer
+_startLoopTimer
+_startMoveTimer
+_startOrStopCursorTimerIfNeeded
+_startProgressTimer
+_startRefreshTimer
+_startTimer
+_startTotalTimer
+_stopDeadlineTimer
+_stopDoubleTapTimer
+_stopProgressTimer
+_stopTimer
+_SwiperTimerMixin
+_timer
+_Timer
+_timerCallback
+_TimerHeap
+_timerMillisecondClock
+_timerProgressWidget
+_updateTimer
+
+=== timing base names ===
+__nativeSetNeedsReportTimings
+_BiorhythmTimingIndicator2State
+_executeTimingsCallbacks
+_FrameTimingInfo
+_gotoTimingPage
+_nativeSetNeedsReportTimings
+_onMenuTiming
+_onQueryMeshTiming
+_onQueryNewTiming
+_onQueryOldTiming
+_onQuerySocketTiming
+_onSendQueryTimingCommand
+_onSendSetTimingCommand
+_onSetTiming
+_onShowTiming
+_onTiming
+_onTimingClick
+_onUpdateTimingBizState
+_reportTimings
+_setNeedsReportTimings
+_setupTimingPattern
+
+=== 'six' / '6 slot' corroboration ===
+156277:_startProgressTimer@11366293759
+158850:_Timer@1026248
+177428:_startProgressTimer@11363485968
+180615:_SwiperTimerMixin@2862212615
+180930:_onTimer@8817407486
+183358:_sentinelTimer@1026248
+184408:_Timer@1026248.periodic
+185670:_checkGoOnTimer@12962042897
+203812:_createTimer@1026248
+205103:_onTimer@8776287760
+207300:_startRefreshTimer@3899145967
+217264:_onTimer@2862212615
+219232:init:_lastZeroTimer@1026248
+219662:_runTimers@1026248
+234113:_Timer@1026248.
+240426:_stopProgressTimer@11363485968
+253925:_onTimer@8812164722
+263798:_TimerHeap@1026248
+267384:_updateTimer@1923484613
+267654:_startRefreshTimer@5920396066
+
+=== weekday enum-ish ===
+175287:formatDayOfWeek
+176941:parseDayOfWeek
+215591:get:weekday
+225280:_shortWeekdayRegExp@1512487914
+241100:init:_longWeekdayRegExp@1512487914
+249273:_longWeekdayRegExp@1512487914
+259856:_weekDay@01508982
+279304:weekday
+300762:init:_shortWeekdayRegExp@1512487914
+308781:get:weekDayInfo
+314318:Reply within 24 hours on weekdays

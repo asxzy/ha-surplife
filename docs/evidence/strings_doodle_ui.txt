@@ -1,0 +1,43 @@
+=== scribble/doodle page + UI strings (English) ===
+Custom Smudge
+Customized smearing
+Doodle
+Graffiti
+Graffiti Wall
+
+=== 'ic_doodle*' / 'doodle*' asset paths ===
+icon/ic_diy_doodle_mode
+icon/ic_doodle_mapping
+icon/ic_doodle_strip
+icon/ic_main_doodle
+icon/ic_main_doodle_selected
+
+=== doodle slot names ===
+  DIY_DOODLE
+  Doodle
+  EditDoodlePage
+  diy_doodle
+  doodle
+  doodle error: 
+  doodleEditView
+  doodleView
+  fc_doodle
+  fcp_doodle
+  get:fc_doodle
+  get:mc_doodle
+  isDoodle
+  itDoodlePage@593
+  mc_doodle
+
+=== 'accumulate' slot names ===
+  Accumulate
+  Accumulation
+  AccumulationMode
+  Accumulator
+  _accumulation
+  accumulation
+  bcp_accumulate
+  ccumulate@498374
+  eAccumulator@951
+  fcp_accumulate
+  mc_accumulate

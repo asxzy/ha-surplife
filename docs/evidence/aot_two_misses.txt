@@ -1,0 +1,40 @@
+=== 'Stars wink' (lowercase w) raw offset + context ===
+72494944:Stars wink
+--- context ---
+.surplife.net/app/icon/FeastEffectsLab/imgUrl-539.png
+2Ò
+Stars wink
+2Ò
+P 
+Torna indietro
+2ã
+2â
+'Y
+
+=== 'Stars blinking' raw offset + context ===
+73695200:Stars blinking
+PresetScene1314Tabs
+2Ò
+}¸¨
+Parse error
+2Ò
+¸ 
+Stars blinking
+2â
+¸87
+2Ó
+¸@
+RenderAnimatedOpacity
+2Õ
+¸ð+|
+package:
+
+=== 'Gradient Overlay' raw offset (confirmed) + context ===
+85109856:Gradient Overlay
+
+=== raw hexdump around 85109856 (40 bytes) ===
+00000000: 3131 3432 3034 3632 0000 32d2 0500 1604  11420462..2.....
+00000010: 370f 2000 0000 0000 0000 4772 6164 6965  7. .......Gradie
+00000020: 6e74 204f 7665 726c 6179 32d4 0500 1604  nt Overlay2.....
+00000030: 6f00 4800 0000 0000 0000 566f 6963 6543  o.H.......VoiceC
+00000040: 6f6e 7472 6f6c                           ontrol

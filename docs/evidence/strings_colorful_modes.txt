@@ -1,0 +1,155 @@
+=== all 'Colorful*' capitalized phrases (candidate segment-mode names) ===
+Colorful
+Colorful and always bright
+Colorful breath
+Colorful Breath
+Colorful Diffusion
+Colorful Fade
+Colorful gradient
+Colorful horse racing
+Colorful jump
+Colorful Jump
+Colorful Meteor
+Colorful shooting stars
+Colorful Sports
+Colorful Standard
+Colorful strobe
+Colorful Strobe
+Colorful waves
+ColorfulAlwaysOnMode
+ColorfulAmplificationMode
+ColorfulBreatheMode
+ColorfulBreathMode
+ColorfulBreathOptions
+ColorfulFlashes
+ColorfulFlashesOptions
+ColorfulFlickerMode
+ColorfulMarqueeMode
+ColorfulMarqueeOptions
+ColorfulRingLight
+ColorfulRingStartLight
+ColorfulStatic
+ColorfulTwinklingStars
+ColorfulTwinklingStarsFixedOptions
+ColorfulTwinklingStarsOptions
+ColorfulWavesMode
+ColorfulWavesOptions
+
+=== all 'bcp_colorful*' / 'mc_colorful*' / 'fcp_colorful*' keys ===
+bcp_colorful
+bcp_colorful_m
+bcp_colorful_regular
+bcp_colorful_sports
+bcp_colorful2
+fcp_colorful
+fcp_colorful_m
+fcp_colorful_regular
+fcp_colorful_sports
+fcp_colorful_static
+fcp_colorful_v
+fcp_colorful2
+fcp_colorful3
+fcp_colorful4
+mc_colorful
+mc_colorful_m
+mc_colorful_regular
+mc_colorful_sports
+mc_colorful_static
+mc_colorful_twinkling_stars_fixed
+mc_colorful_v
+mc_colorful2
+mc_colorful22
+mc_colorful3
+mc_colorful32
+mc_colorful4
+mc_colorful42
+
+=== 'Segmented*ModeState' (segment-mode effect implementations) ===
+_SegmentationAsyncBreatheModeState
+_SegmentationAsyncJumpModeState
+_SegmentationAsyncStrobeModeState
+_SegmentedBuildingBlocksModeState
+_SegmentedFlashModeState
+_SegmentedMeteorModeState
+
+=== all *ModeState base names (effect state classes) ===
+_AccumulationModeState
+_AlternateBreathModeState
+_AsyncBreatheModeState
+_AsyncBreathModeState
+_AsyncGradientModeState
+_AsyncJumpModeState
+_AsyncStrobeModeState
+_BeamModeState
+_BgStarWinkModeState
+_BilliantModeState
+_BlinkBreatheModeState
+_BlinkModeState
+_BlinkScopicModeState
+_BlinkStrobeModeState
+_BlossomModeState
+_BreatheModeState
+_BridgeFireworksModeState
+_BridgeModeState
+_BrightnessChangeModeState
+_ChangeColorModeState
+_ChaseLighteningModeState
+_ChaseMeltingModeState
+_ChaserFirecrackerModeState
+_ChaserModeState
+_ChaseTwinkleModeState
+_CollisionModeState
+_ColorAsyncFlickerModeState
+_ColorfulAlwaysOnModeState
+_ColorfulAmplificationModeState
+_ColorfulBreatheModeState
+_ColorfulBreathModeState
+_ColorfulFlickerModeState
+_ColorfulMarqueeModeState
+_ColorfulWavesModeState
+_CometModeState
+_CoverModeState
+_CycleModeState
+_DoubleCollisionModeState
+_DrumsModeState
+_EnergyModeState
+_ExplosionModeState
+_FallingSnow2ModeState
+_FallingSnowModeState
+_FillingBreatheModeState
+_FillingGradientModeState
+_FillingJumpModeState
+_FireflyModeState
+_FireWorkModeState
+_FireWorks2ModeState
+_FireworksModeState
+_FlameModeState
+_FlashLampModeState
+_FlickerModeModeState
+_FlickerModeState
+_FlickerTransformModeState
+_GalaxyModeState
+_GorgeousModeState
+_GoveeHoorayModeState
+_GoveeNewYearModeState
+_GoveeRainbowModeState
+_GoveeStackingModeState
+_GoveeTwilightModeState
+_GradientMeteorFireworksModeState
+_GradientMeteorModeState
+_HorseModeState
+_HrShineModeState
+_IntervalModeState
+_JumpModeState
+_LampStarBurstMusicModeState
+_LighteningMeltingModeState
+_MarqueeModeState
+_MeltingModeState
+_MeltingTwinkleModeState
+_MeteorFireworksModeState
+_MeteorModeState
+_MeteorShowerModeState
+_MonkeyFireworksModeState
+_MotionModeState
+_MultiAccumulationModeState
+_MultipleMeteorsModeState

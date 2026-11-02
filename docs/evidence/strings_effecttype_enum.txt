@@ -1,0 +1,21 @@
+=== EffectType / EffectMode enum names ===
+_changeTestEffectType
+_getSmearEffectTypeList
+_onSelectEffectMode
+_onSetSmearEffectType
+_onUpdateAnimationEffectType
+_onUpdateSmearEffectType
+_updateTestEffectType
+
+=== slot names == *EffectType/*EffectMode ===
+  MusicEffectMode
+  SensorEffectType
+  SmearEffectType
+  SmearEffectType.
+  TestEffectType
+  TestEffectType.
+  selectEffectMode
+  smearEffectType
+  tEffectMode@1018
+  tEffectType@9308
+  tEffectType@9310

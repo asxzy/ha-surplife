@@ -1,0 +1,82 @@
+distinct: 157890
+
+=== effect names ===
+  1   Wave                 YES  81666912
+  2   Meteor               YES  81931104
+  3   Streamer             YES  86561056
+  4   Building Blocks      YES  81122160
+  5   Flowing Water        YES  84922976
+  6   Chase                YES  73088608
+  7   Horse Racing         YES  82977872
+  8   Cycle                YES  72460816
+  9   Breathe              YES  84795584
+  10  Jump                 YES  82326592
+  11  Strobe               YES  84052976
+  12  Twinkling Stars      YES  85253728
+  13  Stars Wink           NO   -
+  14  Stars wink           YES  72494944
+  15  Warning              YES  79343040
+  16  Collision            YES  74239056
+  17  Fireworks            YES  84578512
+  18  Comet                YES  84747840
+  19  Gradient Meteor      YES  82315776
+  20  Volcano              YES  78413392
+  21  Superluminal         YES  74790784
+  22  Rainbow Bridge       YES  72627152
+  23  Gradient Overlay     YES  85109856
+  24  Static Gradient      YES  84434960
+  25  Static Fill          YES  83673984
+
+=== segments ===
+ count: 20 -> ['color_segment_0', 'color_segment_1', 'color_segment_2', 'color_segment_3', 'color_segment_4', 'color_segment_5', 'color_segment_6', 'color_segment_7', 'color_segment_8', 'color_segment_9', 'color_segment_10', 'color_segment_11', 'color_segment_12', 'color_segment_13', 'color_segment_14', 'color_segment_15', 'color_segment_16', 'color_segment_17', 'color_segment_18', 'color_segment_19']
+
+=== timer slots ===
+  ['aquatic_timer1', 'timer2', 'aquatic_timer0']
+
+=== CustomEffectFT ===
+ count: 54 ['CustomEffectFT1', 'CustomEffectFT10', 'CustomEffectFT11', 'CustomEffectFT12', 'CustomEffectFT13', 'CustomEffectFT14'] ... ['CustomEffectFTType', 'CustomEffectFTType.', 'CustomEffectFTView']
+
+=== doodle templates present in AOT? ===
+  blink          True
+  asyncBlink     False
+  breath         True
+  asyncBreath    True
+  gradient       True
+  asyncGradient  True
+  jump           True
+  asyncJump      True
+  flash          True
+  stream         True
+  fireflyA       False
+
+=== doodle URLs ===
+  ['http://resource.surplife.net/app/feast_base/doodle/asyncBlink.json', 'http://resource.surplife.net/app/feast_base/doodle/gradient.json', 'http://resource.surplife.net/app/feast_base/doodle/fireflyA.json', 'http://resource.surplife.net/app/feast_base/doodle/flash.json', 'http://resource.surplife.net/app/feast_base/doodle/asyncJump.json', 'http://resource.surplife.net/app/feast_base/doodle/breath.json', 'http://resource.surplife.net/app/feast_base/doodle/asyncGradient.json', 'http://resource.surplife.net/app/feast_base/doodle/jump.json', 'http://resource.surplife.net/app/feast_base/doodle/stream.json', 'http://resource.surplife.net/app/feast_base/doodle/blink.json', 'http://resource.surplife.net/app/feast_base/doodle/asyncBreath.json']
+
+=== UI words ===
+  Doodle                 YES
+  Graffiti               YES
+  Graffiti Wall          YES
+  Custom Smudge          YES
+  Customized smearing    YES
+  Static                 YES
+  Accumulate             YES
+  Twinkling Stars        YES
+  Twinkling stars        YES
+  Flowing                YES
+  Flowing Water          YES
+  Stars blinking         YES
+  Everyday               YES
+  Repeat                 YES
+  Weekday                NO
+  Weekend                NO
+  Once                   NO
+  Monday                 YES
+  Sunday                 YES
+  Speed                  YES
+  Speed setting          YES
+  Medium                 YES
+  BlinkMode              YES
+  Segment                YES
+  Segment Density        YES
+  Colorful               YES
+  Colorful Strobe        YES

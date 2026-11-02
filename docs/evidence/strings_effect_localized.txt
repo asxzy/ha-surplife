@@ -1,0 +1,32 @@
+=== prefix matches (handles merged-with-length-byte) for the 2 misses ===
+--- Stars Wink ---
+--- Gradient Overlay ---
+85109856:Gradient Overlay
+
+=== localized effect names (de/fr/es/it/pt) around effect cluster ===
+Stern zwinkern           84922940:Stern zwinkern 
+Sterne zwinkern          73401792:Sterne zwinkern 
+Regenbogenbrücke         tr: Illegal byte sequence
+80196000:Regenbogenbr
+Laufendes Wasser         86085264:Laufendes Wasser 
+Bausteine                80308109:Bausteine 82634128:Bausteine 
+Feuerwerk                72412595:Feuerwerk 73174200:Feuerwerk 
+Vulkan                   74926576:Vulkan 80442896:Vulkan 
+Komet                    77029904:Komet 77389168:Komet 
+Überlichtgeschwindigkeit 
+arc-en-ciel              74453669:arc-en-ciel 76882148:arc-en-ciel 
+fil d'eau                
+feux d'artifice          73725760:feux d'artifice 85538412:feux d'artifice 
+volcan                   72778772:volcan 73230804:volcan 
+comète                   tr: Illegal byte sequence
+81649147:com
+arcobaleno               77662294:arcobaleno 80904271:arcobaleno 
+fuochi d'artificio       82247389:fuochi d'artificio 83448277:fuochi d'artificio 
+vulcano                  
+cometa                   78046471:cometa 78633256:cometa 
+arco-íris                tr: Illegal byte sequence
+86345029:arco-
+fogos de artifício       tr: Illegal byte sequence
+74532012:fogos de artif
+vulcão                   
+cometa                   78046471:cometa 78633256:cometa 

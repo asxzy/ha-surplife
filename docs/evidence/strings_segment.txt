@@ -1,0 +1,94 @@
+############ SEGMENT ############
+=== 'segment' (base names) ===
+_computePathSegments
+_currentFlashSegments
+_initSegmentBaseColors
+_mayContainDotSegments
+_onUpdateSegmentDimmerSwitch
+_onUpdateSupportSegments
+_parseSegmentHeader
+_randomSelectFlashSegments
+_removeDotSegments
+_segment
+_SegmentationAsyncBreatheModeState
+_SegmentationAsyncJumpModeState
+_SegmentationAsyncStrobeModeState
+_segmentBaseColors
+_SegmentedBuildingBlocksModeState
+_SegmentedFlashModeState
+_SegmentedMeteorModeState
+_SegmentedTabControl
+_SegmentedTabControlState
+_segmentSelectAll
+_sendSegmentationCommand
+_showSegmentDimmerSwitch
+_updateSegmentSelect
+
+=== 'colorful' ===
+153485:colorfulAmplification
+153768:package:magichome2_control_page/src/pages/view/music_preview/common_music_mode/static_colorful_strobe.dart
+153822:mc_colorful2
+154382:SymphonyColorfulSettingState
+155314:mc_colorful3
+157775:package:magichome2_control_page/src/pages/device_control_page/symphony_home/curtain_light/colorful_ft/page.dart
+158696:Colorful Breath
+159934:package:magichome2_control_page/src/pages/view/music_preview/common_music_mode/colorful_twinkling_stars.dart
+160126:SymphonyColorfulSettingsConnector
+160486:package:biz_control_page/src/task_settings_component/device_task_settings/symphony_colorful_setting_component/state.dart
+162935:http://resource.surplife.net/app/icon/SymphonyControl/defaultMode/ColorfulShootingStars.png
+163874:_SymphonyControllerStaticBizState&Object&SymphonyColorfulCommandHandlerMixin&StateCommandHandlerMixin@48574639772
+163921:fcp_colorful3
+164315:http://resource.surplife.net/app/icon/SymphonyControl/defaultMode/ColorfulJump.png
+164374:SymphonyColorfulSettingComponent2
+165461:package:magichome2_control_page/src/pages/view/music_preview/common_music_mode/colorful_amplification_mode.dart
+165803:bcp_colorful_m
+166067:Colorful Meteor
+166308:fcp_colorful2
+167368:sendColorFulMultiColorCmd
+169503:_StaticColorfulStrobeState@11026001625
+169987:get:mc_colorful32
+171132:bcp_mode_default_colorful_jump
+171485:__GamePianoColorsState&State&TickerProviderStateMixin&SymphonyCommandHandlerMixin&SymphonyColorfulCommandHandlerMixin@48650059542
+171976:ColorfulAlwaysOnMode
+172368:bcp_colorful_sports
+172651:get:bcp_mode_colorful_always_on
+172910:_onSymphonyColorfulDataChanged@10486279304
+173867:get:bcp_ambient_colorful
+173949:bcp_mode_colorful_flicker
+174401:colorfulStatic
+175544:SymphonyColorfulCommandHandlerMixin
+175590:sendP3IIStaticColorfulRandom
+176186:package:magichome2_control_page/src/pages/device_control_page/symphony_home/curtain_light/colorful_ft/state.dart2
+176554:bcp_mode_default_colorful_breath2
+176679:package:magichome2_control_page/src/pages/device_control_page/symphony_home/curtain_light/colorful/ipl_brightness_component/action.dart
+177997:package:magichome2_control_page/src/pages/entity_tasks_page/create_task_settings_page/symphony_colorful_setting_component/reducer.dart
+178145:mc_sbl_colorful_waves_mode
+178216:get:bcp_mode_colorful_marquee
+179011:StaticColorfulStrobe
+
+=== 'zone' / 'partition' ===
+155247:ZoneDelegate
+158406:Alle Zonen
+166400:partitionLength
+168028:Cliquez dans cette zone pour modifier le texte.
+168983:nomination des zones
+169324:Tutte le zone
+169880:Zone naming
+173825:La zone NFC d&#39;un t
+179668:Zonenbenennung
+188064:Partition Display
+199496:quipement dans la zone 
+201061:Veuillez observer la zone 
+203528:lectionner la zone
+220308:get:zoneClient
+231167:Denominazione delle zone
+246323:Partitionnement
+252678:Zone de localisation
+257042:Affichage de partition
+257416:The time zone of your device is inconsistent with the time zone of the current mobile phone. You need to update the time zone of your device. Are you sure to update?
+264392:hlen Sie eine Zone
+
+=== literal '20' near segment constants ===
+
+=== Chinese 分区 ===
+0

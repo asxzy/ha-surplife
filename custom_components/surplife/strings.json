@@ -1,0 +1,160 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add Surplife controller",
+        "description": "Discovered controllers are listed below. To add one manually, choose \"Enter an IP address\" and type the address of the controller.",
+        "data": {
+          "host": "Controller"
+        }
+      },
+      "manual": {
+        "title": "Enter an IP address",
+        "description": "Enter the IP address of the Surplife controller. A DHCP reservation is strongly recommended so the address does not change.",
+        "data": {
+          "host": "IP address",
+          "name": "Name"
+        }
+      },
+      "confirm": {
+        "title": "Confirm controller",
+        "description": "Found {model} at {host} with firmware {firmware}. Add it?"
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not reach the controller at that address.",
+      "not_supported": "That address answered, but it is not a Surplife 0xB6 controller.",
+      "unknown": "Unexpected error talking to the controller."
+    },
+    "abort": {
+      "already_configured": "This controller is already set up.",
+      "no_devices_found": "No controllers answered the discovery broadcast. Enter an IP address manually."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Surplife controller options",
+        "data": {
+          "scan_interval": "Poll interval (seconds)"
+        }
+      }
+    }
+  },
+  "services": {
+    "set_scribble": {
+      "name": "Set per-LED pattern",
+      "description": "Apply a per-LED (scribble) colour pattern.",
+      "fields": {
+        "pattern": {
+          "name": "Pattern",
+          "description": "Per-LED spec, e.g. \"20xred 15x0,0,255\" or \"10xw80\"."
+        },
+        "effect": {
+          "name": "Effect",
+          "description": "Per-LED effect name or ID 0-8."
+        },
+        "direction": {
+          "name": "Direction"
+        },
+        "speed": {
+          "name": "Speed"
+        },
+        "density": {
+          "name": "Density"
+        },
+        "enter": {
+          "name": "Enter scribble mode",
+          "description": "Send the mode-entry command first. Leave on unless the strip is already in scribble mode."
+        }
+      }
+    },
+    "set_segments": {
+      "name": "Set segments",
+      "description": "Apply static colours to the 20 fixed segments.",
+      "fields": {
+        "colors": {
+          "name": "Colours",
+          "description": "Up to 20 colours. Missing trailing segments are turned off."
+        }
+      }
+    },
+    "set_timer": {
+      "name": "Set timer",
+      "description": "Write one of the six hardware timer slots.",
+      "fields": {
+        "slot": {
+          "name": "Slot"
+        },
+        "time": {
+          "name": "Time"
+        },
+        "action": {
+          "name": "Action"
+        },
+        "color": {
+          "name": "Colour",
+          "description": "Only used when the action is \"Set colour\"."
+        },
+        "repeat": {
+          "name": "Repeat",
+          "description": "Day list such as \"mon,tue,wed\", or \"everyday\", \"weekdays\", \"weekend\", \"once\"."
+        },
+        "active": {
+          "name": "Active"
+        }
+      }
+    },
+    "clear_timer": {
+      "name": "Clear timer",
+      "description": "Disable one hardware timer slot.",
+      "fields": {
+        "slot": {
+          "name": "Slot"
+        }
+      }
+    },
+    "sync_clock": {
+      "name": "Sync clock",
+      "description": "Push Home Assistant's local time to the controller."
+    },
+    "apply_preset": {
+      "name": "Apply preset",
+      "description": "Apply a bundled holiday preset. Target several controllers to keep them in sync \u2014 this is the local replacement for the app's cloud grouping.",
+      "fields": {
+        "preset": {
+          "name": "Preset"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "led_count": {
+        "name": "LED count"
+      },
+      "mode": {
+        "name": "Mode"
+      },
+      "timers": {
+        "name": "Timers"
+      }
+    },
+    "select": {
+      "effect": {
+        "name": "Effect"
+      },
+      "direction": {
+        "name": "Direction"
+      }
+    },
+    "button": {
+      "sync_clock": {
+        "name": "Sync clock"
+      },
+      "refresh": {
+        "name": "Refresh"
+      }
+    }
+  }
+}

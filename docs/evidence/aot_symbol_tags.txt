@@ -1,0 +1,96 @@
+=== CORRECTED: Dart AOT symbol tag pattern  _name@<decimal> ===
+count of ^[A-Za-z_][A-Za-z0-9_$]*@[0-9]+$ : 24908
+
+=== count of any string containing @ followed by >=6 digits ===
+28014
+
+=== first 40 matches ===
+TEh@9
+Dh@9
+TDl@9
+Dh@9
+TDl@9
+Dh@9
+TDl@9
+TEd@9
+TEh@9
+TEl@9
+TEp@9
+Dh@9
+TDl@9
+TEd@9
+TEh@9
+TEl@9
+TEp@9
+TEd@9
+TEh@9
+TEl@9
+TEd@9
+TAh@9
+TEd@9
+TEh@9
+TFl@9
+TEp@9
+TEx@9
+TCd@9
+TCh@9
+TCl@9
+TDp@9
+TEd@9
+TAh@9
+Tdd@9
+Tdh@9
+Tdl@9
+Tdp@9
+Tdt@9
+Tdx@9
+TGp@9
+
+=== 40 random matches from the middle ===
+_ChildEntry@650430177
+_SegmentationAsyncStrobeModeState@1948130565
+_onLoadSuccess@3093149574
+_maybePerformCleanup@14069316
+_GetItImplementation@6917396718
+_buildChild@13952401534
+_layoutText@246149678
+_onUserEventListener@5796019936
+_onColorLongPress@3791225530
+_CaptureAll@143220367
+_onSubscribed@12772351111
+_onChangeIsBlendRotation@3720057215
+_onAdd@4728163521
+_LEDCommandMiddleware@70463217262
+_onSetTab@9679072934
+_onLoadFailure@9472293438
+_last_error_message@5314142964
+_onCopy@13780065624
+_onJump@13426355963
+_onUpdateIndex@5035406045
+_onInit@3849357036
+_onUpdateColorList@3794119528
+_unpackPointerDataPacket@15065589
+_loadDataByHttp@5798357643
+_MeltingModeState@11083312888
+_onGotoHomeManager@11817264676
+_onEdit@4669005409
+_onInitFirm@8768300284
+_$sBLDeviceDetailDtoSerializer@5528297546
+_init@94920749852
+_onAction@8982066588
+_StreamSinkTransformer@4048458
+_AppBarTitleBox@316187611
+_onSendCCTCommand@6036489653
+_onUpdateSpeed@10218131716
+_FeastDeviceControlPageRouterState@5909231286
+_onUpdateCarouselList@35031728832
+_previousVelocityAt@303010635
+_nextHistory@5920396066
+_yuvToB@7112473238
+_animationChanged@352517151
+
+=== distribution: how many unique names (strip @hash) ===
+   13760
+
+=== how many unique @hash values (should equal count if 1:1) ===
+    5977

@@ -1,0 +1,6 @@
+max distinct-name-cluster within 4 KiB window: 4 at (80897238, 80898919)
+
+=> If this is 1-2, there is NO contiguous id->name table in the AOT.
+
+=== offsets spread (min/max) ===
+72403497 86859552 spread bytes: 14456055

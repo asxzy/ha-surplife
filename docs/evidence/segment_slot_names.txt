@@ -1,0 +1,141 @@
+=== slot names containing 'Distribution' ===
+  DistributionCmd
+
+=== slot names containing 'Colorful' ===
+  Colorful
+  Colorful Breath
+  Colorful Fade
+  Colorful Jump
+  Colorful Meteor
+  Colorful Sports
+  Colorful Strobe
+  Colorful breath
+  Colorful flashes
+  Colorful jump
+  Colorful strobe
+  Colorful waves
+  ColorfulFlashes
+  ColorfulFlashes.
+  ColorfulModeType
+  ColorfulStatic
+  IsColorfulIcon@1
+  WdhColorfulPage
+  WdhColorfulPage.
+  WdhColorfulState
+  cColorfulList
+  e/Colorful.png
+  tColorfulList@10
+  wdhColorfulPage
+
+=== slot names matching /segment/i ===
+   de segments)
+   der Segmente)
+   por segmento
+   segmentado
+   segmentato
+  C per segmento
+  Color segmentado
+  Hustota segmentu
+  IC por segmento
+  Mehrere Segmente
+  Mehrsegment
+  Multi-segment
+  Multi-segmento
+  Multi-segments
+  Multisegmento
+  Multissegmento
+  PathSegmentData
+  PathSegmentData{
+  Segment
+  Segment 
+  Segment Density
+  Segment Stacking
+  Segment aus
+  SegmentSelect@59
+  SegmentTab
+  Segment_Stacking
+  Segmentace
+  Segmentacja
+  Segmentasi
+  Segmentasyon
+  Segmentation
+  Segmentazione
+  Segmentdichte
+  Segmented meteor
+  Segmentierung
+  Segmento
+  Segmento 
+  Segments@1005630
+  Segmentstapelung
+  VP8SegmentHeader
+  Wielosegmentowy
+  _segment@7112473
+  _segmentation
+  ashSegments@1103
+  colorSegmentList
+  color_segment/
+  color_segment_0
+  color_segment_1
+  color_segment_10
+  color_segment_11
+  color_segment_12
+  color_segment_13
+  color_segment_14
+  color_segment_15
+  color_segment_16
+  color_segment_17
+  color_segment_18
+  color_segment_19
+  color_segment_2
+  color_segment_3
+  color_segment_4
+  color_segment_5
+  color_segment_6
+  color_segment_7
+  color_segment_8
+  color_segment_9
+  crona segmentada
+  e Cor Segmentado
+  e IC par segment
+  e.segmentStart
+  emitSegment
+  f segments)
+  fcl_segment
+  fcp_segment
+  fcp_segmentation
+  get:mc_segment
+  get:pathSegments
+  ht per segment
+  isSegment
+  lor_segment_bg_1
+  mc_segment
+  mc_segmentation
+  n tersegmentasi
+  olor_segment_bg_
+  onSegmentTap
+  or segmentados
+  parseSegment
+  parseSegments
+  pathSegments
+  rsegmentasi
+  s IC par segment
+  segment
+  segmentColorList
+  segmentLength
+  segmentSelectAll
+  segment_strobe
+  segmentado
+  segmentati
+  segmentation
+  segmentato
+  segmentedFlash
+  segmentedMeteor
+  segmenti
+  segmento 
+  segmentos
+  segmentsCount
+  specific segment
+  tersegmentasi
+  tivi segmentati
+  totalSegments
+  waitAllSegment

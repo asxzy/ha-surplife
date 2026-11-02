@@ -1,0 +1,42 @@
+=== 'Stars Wink' variants ===
+Star Wink          0
+Stars wink         1
+Star wink          0
+Stars Winking      0
+Star Twinkle       0
+Stars blinking     1
+Stars Blinking     0
+Twinkle Star       0
+Star Wink Mode     0
+
+=== 'Gradient Overlay' variants ===
+Gradient Overlay     0
+Gradient overlay     0
+Overlay              1
+Overlay Gradient     0
+
+=== exact hit counts for all 24 (fixed, whole-string) ===
+Wave                 1
+Meteor               1
+Streamer             1
+Building Blocks      1
+Flowing Water        1
+Chase                1
+Horse Racing         1
+Cycle                1
+Breathe              1
+Jump                 1
+Strobe               1
+Twinkling Stars      1
+Stars Wink           0
+Warning              1
+Collision            1
+Fireworks            1
+Comet                1
+Gradient Meteor      1
+Volcano              1
+Superluminal         1
+Rainbow Bridge       1
+Gradient Overlay     0
+Static Gradient      1
+Static Fill          1

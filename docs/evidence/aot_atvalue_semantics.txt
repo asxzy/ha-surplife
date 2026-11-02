@@ -1,0 +1,20 @@
+distinct @values: 6491
+total tagged names: 26973
+
+--- @1026248  (56 names) ---
+    ['_', '_Capability', '_RawReceivePort', '_ReceivePortImpl', '_RemoteRunner', '_SendPort', '_Timer', '_TimerHeap', '_TransferableTypedDataImpl', '_advanceWakeupTime', '_bubbleDown', '_bubbleUp', '_cancelWakeup', '_closeInternal', '_createTimer', '_createTimerHandler', '_currentIsolate', '_delayEntrypointInvocation', '_equals', '_exit', '_getCurrentIsolate', '_getIsolateScheduleImmediateClosure', '_getPortAndCapabilitiesOfCurrentIsolate', '_getStartMainIsolateFunction', '_get_hashcode']
+
+--- @0150898  (315 names) ---
+    ['UnmodifiableListMixin', '_', '_AbstractType', '_AllMatchesIterable', '_AllMatchesIterator', '_Array', '_ArrayIterator', '_AssertionError', '_BigIntImpl', '_CompileTimeError', '_CyclicInitializationError', '_DataUri', '_DeferredNotLoadedError', '_Double', '_Enum', '_Exception', '_ExecuteMatch', '_ExecuteMatchSticky', '_ExternalOneByteString', '_ExternalTwoByteString', '_FinalizerImpl', '_FunctionType', '_GeneratorIterable', '_GrowableList', '_ImmutableList']
+
+--- @126183791  (107 names) ---
+    ['TextInputClient', 'TextSelectionDelegate', 'WidgetsBindingObserver', '_CodePointBoundary', '_CompositionCallback', '_CopySelectionAction', '_DeleteTextAction', '_DiscreteKeyFrameSimulation', '_Editable', '_GlyphHeights', '_KeyFrame', '_RenderCompositionCallback', '_ScribbleCacheKey', '_ScribbleFocusable', '_ScribbleFocusableState', '_ScribblePlaceholder', '_SelectAllAction', '_UpdateTextSelectionAction', '_UpdateTextSelectionVerticallyAction', '_actions', '_adjustedSelectionWhenFocused', '_allowPaste', '_breaksSurrogatePair', '_bringIntoViewBySelectionState', '_characterBoundary']
+
+--- @6184256651  (82 names) ---
+    ['AutomaticKeepAliveClientMixin', 'SingleTickerProviderStateMixin', 'TickerProviderStateMixin', '_BeamModeState', '_BlinkBreatheModeState', '_BlinkModeState', '_BreatheModeState', '_BridgeModeState', '_ChaserFirecrackerModeState', '_ChaserModeState', '_ColorfulBreathModeState', '_ColorfulMarqueeModeState', '_ColorfulWavesModeState', '_CometModeState', '_CoverModeState', '_CycleModeState', '_DoubleCollisionModeState', '_DoubleRotateState', '_ExplosionModeState', '_FireworksModeState', '_FlameModeState', '_FlashLampModeState', '_GoveeHoorayModeState', '_GoveeNewYearModeState', '_GoveeRainbowModeState']
+
+--- @5932303660  (29 names) ---
+    ['IntlMixin', '_addOrEditDynamicColors', '_changeBackgroundBrightness', '_changeBackgroundColor', '_changeBrushMode', '_changeDirection', '_changeEndColor', '_changeOverallEffect', '_changePaintMode', '_changeSelectedDiy', '_changeSpeed', '_changeStartColor', '_cleanMatrixColors', '_cloudAddDiy', '_getStreamPointColorsCompressData', '_gotoEditDoodlePage', '_initParams', '_matrixNext', '_matrixPrev', '_onSelectDynamicMode', '_onSmearViewTypeChanged', '_paintPointsChanged', '_removeDynamicColors', '_sendCommand', '_updateHistory']
+
+names appearing with >1 distinct @value: 2975 of 14532
+examples: [('_onAction', 1159), ('_onInit', 869), ('_notInlinedMessages', 359), ('_onLoadFailure', 162), ('_initState', 161), ('_dispose', 157), ('SingleTickerProviderStateMixin', 154), ('_onDispose', 146)]

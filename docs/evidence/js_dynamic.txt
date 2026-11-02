@@ -1,0 +1,6 @@
+=== output.json size/head ===
+-rw-r--r--  1 root  wheel  114 Mar 22  2026 /Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/zg_app_builtin_assest/assets/js_bundle/output.json
+{"basename":"60_surplife.js","name":"surplife","version":"60","outputFileName":"60_surplife","time":1773452462111}
+=== customDynamics in JS bundle ===
+
+=== dynamic/effect keys in JS ===

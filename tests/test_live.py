@@ -1,8 +1,11 @@
 """Live integration check against a real controller.
 
-Not part of the normal suite — it needs hardware on the LAN. Run explicitly::
+Not part of the normal suite — it needs hardware on the LAN. The HA test plugin
+blocks sockets by default, so allow the device explicitly::
 
-    SURPLIFE_HOST=192.168.1.50 python3 -m pytest tests/test_live.py -v
+    SURPLIFE_HOST=192.168.1.50 \\
+        .venv/bin/python -m pytest tests/test_live.py -v \\
+        --allow-hosts=192.168.1.50
 
 The test leaves the controller powered off, which is the state it starts in.
 """
@@ -21,11 +24,34 @@ from custom_components.surplife.protocol import (
 )
 
 HOST = os.environ.get("SURPLIFE_HOST")
-pytestmark = pytest.mark.skipif(not HOST, reason="set SURPLIFE_HOST to run live tests")
+
+pytestmark = pytest.mark.skipif(
+    not HOST, reason="set SURPLIFE_HOST to run live tests"
+)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(autouse=True)
+def _allow_real_network():
+    """Undo the Home Assistant socket guard for these tests only.
+
+    ``pytest_homeassistant_custom_component`` runs ``pytest_runtest_setup``,
+    which calls ``socket_allow_hosts(["127.0.0.1"])`` and ``disable_socket()``
+    for *every* test, so a pytest marker cannot win. An autouse fixture runs
+    after that hook, which makes this the one place able to re-open the guard.
+    """
+    import pytest_socket
+
+    pytest_socket.enable_socket()
+    pytest_socket.socket_allow_hosts([HOST, "255.255.255.255"])
+    yield
+
+
+@pytest.fixture
 def client():
+    """One connection per test.
+
+    Connecting per test is cheap and keeps each test independent.
+    """
     with SurplifeClient(HOST) as instance:
         yield instance
 

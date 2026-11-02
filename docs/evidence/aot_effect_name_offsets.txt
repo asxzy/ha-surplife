@@ -1,0 +1,25 @@
+=== exact-string byte offsets in AOT (grep -abo) ===
+Wave                 72414743:Wave 72432083:Wave 72598359:Wave 72604071:Wave 73004722:Wave 
+Meteor               72403497:Meteor 72418432:Meteor 72476953:Meteor 72552012:Meteor 72593195:Meteor 
+Streamer             72484288:Streamer 73397665:Streamer 73692033:Streamer 74514736:Streamer 75445905:Streamer 
+Building Blocks      81122160:Building Blocks 
+Flowing Water        84922976:Flowing Water 
+Chase                72446336:Chase 72499057:Chase 72761041:Chase 73088608:Chase 73871216:Chase 
+Horse Racing         82977872:Horse Racing 
+Cycle                72460816:Cycle 72726406:Cycle 73474538:Cycle 73707555:Cycle 73954365:Cycle 
+Breathe              72426679:Breathe 72862032:Breathe 72914227:Breathe 73311638:Breathe 73731922:Breathe 
+Jump                 72642626:Jump 72789745:Jump 72873552:Jump 72925009:Jump 72932294:Jump 
+Strobe               72618646:Strobe 72635188:Strobe 73460015:Strobe 73848032:Strobe 73960208:Strobe 
+Twinkling Stars      85253728:Twinkling Stars 
+Stars Wink           
+Warning              73246548:Warning 75851351:Warning 76778261:Warning 76976275:Warning 77210256:Warning 
+Collision            72418438:Collision 72819046:Collision 73600806:Collision 74239056:Collision 75879144:Collision 
+Fireworks            72403503:Fireworks 72480144:Fireworks 72484296:Fireworks 72701280:Fireworks 72773119:Fireworks 
+Comet                73140624:Comet 74281537:Comet 75717185:Comet 76520081:Comet 77388097:Comet 
+Gradient Meteor      78720263:Gradient Meteor 82315776:Gradient Meteor 
+Volcano              72405201:Volcano 74413168:Volcano 77243553:Volcano 77750691:Volcano 78364672:Volcano 
+Superluminal         74790784:Superluminal 78607456:Superluminal 
+Rainbow Bridge       72627152:Rainbow Bridge 
+Gradient Overlay     85109856:Gradient Overlay 
+Static Gradient      84434960:Static Gradient 
+Static Fill          83673984:Static Fill 

@@ -1,0 +1,28 @@
+=== total build*Command count ===
+280
+(recompute from source of truth)
+     280
+
+=== build*Command names that are NOT 16-byte-slot clean (verify each raw) ===
+total distinct: 305
+clean standalone: 286
+NOT standalone (suspect): 19
+   buildAquaticManualSettingCommand
+   buildChristmasCCStaticHexCommand
+   buildCurtainLightMusicHEXCommand
+   buildEffectFrameHeaderHEXCommand
+   buildGetIndicatorLightHexCommand
+   buildMeshCommand
+   buildOctaMusicPlayBackHexCommand
+   buildPCLCarouselListQueryCommand
+   buildQueryProgramImageHEXCommand
+   buildScreenLightAnimationCommand
+   buildSendDelayGradientHEXCommand
+   buildSetIndicatorLightHEXCommand
+   buildSetIndicatorLightHexCommand
+   buildSetWiFiConfigurationCommand
+   buildSigMeshMusicColorHEXCommand
+   buildSigMeshWiringTypeHexCommand
+   buildSingleFrameCommand
+   buildVideoSingleFrameCommand
+   buildWifiCommand

@@ -1,0 +1,96 @@
+=== TIMER UI phrases (case-insensitive, whole-string, timer/schedule related) ===
+170150:timer
+173495:Add Schedule
+184410:Plan niestandardowy
+190634:schedule
+200352:Plan personnalis
+201616:timing
+234739:Timer Clock
+248410:Timing Management
+254979:tasks
+266396:Schedule full
+277982:task
+303364:Timer
+330592:TIMER
+337211:Timer unselected2
+346528:Timing
+361528:Schedule
+
+=== Everyday / weekday / weekend / once ===
+Everyday     1
+Every day    0
+Every Day    0
+Weekday      0
+Weekend      0
+Once         0
+Repeat       1
+Every Monday 0
+Monday       1
+Tuesday      1
+Wednesday    1
+Thursday     1
+Friday       1
+Saturday     1
+Sunday       1
+Mon          0
+Tue          0
+Wed          0
+Thu          0
+Fri          0
+Sat          0
+Sun          0
+
+=== 'Monday'..'Sunday' full-string occurrences with context ===
+161604:Tuesday
+166249:Friday
+244682:Monday
+251007:Saturday
+284121:Sunday
+308726:Thursday
+322221:Wednesday
+
+=== timer slot / loop count ===
+191879:Number of cycles2
+275603:Number of cycles for a single step
+
+=== 'Timer' capitalized whole strings ===
+ Timer hinzuf
+AquaticTimerModeDetailAction
+aquaticTimerModeDetailPage
+AquaticTimerModeDetailPage
+AquaticTimerModeDetailState
+buildGenTimerQueryHEXCommand
+buildGetSwitchChannelTimerHexCommand
+buildQuerySigTimerHEXCommand
+buildSetSwitchChannelTimerHexCommand
+buildTimerQueryHEXCommand
+buriedSetTimer
+BuriedSetTimer
+ceilingCCTTimer
+CeilingCCTTimerBizAction
+CeilingCCTTimerBizActionCreator
+CeilingCCTTimerBizComponent
+CeilingCCTTimerBizConnector
+CeilingCCTTimerBizState
+ChannelTimerTasksAction
+ChannelTimerTasksActionCreator
+ChannelTimerTasksComponent
+ChannelTimerTasksConn
+ChannelTimerTasksState
+ChannelTimerTasksState init
+clearTimers
+connectTimer
+createPeriodicTimer
+createTimer
+CurtainTimerBizAction
+CurtainTimerBizComponent
+CurtainTimerBizConnector
+CurtainTimerBizState
+Der Timer konnte nicht eingestellt werden
+DeviceTimerTaskItem
+executeTimerTasks
+FeastRoundTimer
+FeastTimerTasksComponent
+formatAsTimer
+getTimerConfig
+getTimerView

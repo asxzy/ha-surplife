@@ -1,0 +1,17 @@
+=== packet template placeholders in AOT ({r}{g}{b} style) ===
+(empty = none)
+
+=== any '{r}' '{g}' '{b}' tokens at all ===
+0
+0
+
+=== JS bundle templates (for contrast) ===
+"31{r}{g}{b}00000f"
+"31{r}{g}{b}0000f00f"
+"31{r}{g}{b}00f00f"
+
+=== cmdForm / hex template strings in AOT ===
+       1
+
+=== sanity: does AOT contain the JS bundle text? (cross-check) ===
+0

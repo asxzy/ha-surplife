@@ -1,0 +1,167 @@
+############ SCRIBBLE / DOODLE / DIY / PER-LED ############
+=== 'scribble' (case-insens) ===
+154139:_ScribblePlaceholder@126183791
+186295:get:scribbleInProgress
+192843:ScribbleClient
+207895:_ScribbleFocusableState@126183791.
+211902:unregisterScribbleElement
+220815:_ScribbleCacheKey@126183791
+237831:isInScribbleRect2
+276951:_ScribbleFocusableState@126183791
+286433:_ScribbleFocusable@126183791
+292118:scribble
+301531:registerScribbleElement
+311820:TextInputClient.scribbleInteractionFinished
+322584:onScribbleFocus
+328359:TextInputClient.scribbleInteractionBegan
+350766:Scribble
+
+=== 'doodle' ===
+161494:fc_doodle
+167779:http://resource.surplife.net/app/feast_base/doodle/gradient.json2
+168507:_FeastChristmasLightDoodleComponentState@5991288347.
+170111:FeastChristmasLightDoodleComponentState.
+178146:package:feast_control_page/src/pages/feast_christmas_light_page/components/doodle/edit_doodle_page/view.dart
+179501:package:feast_control_page/src/common/widget/doodle/feast_smear_view.dart
+180714:http://resource.surplife.net/app/feast_base/doodle/stream.json
+196920:http://resource.surplife.net/app/feast_base/doodle/asyncBlink.json
+198339:_FeastChristmasLightDoodleComponentLogic&GetxController&GetTickerProviderStateMixin&IntlMixin@5932303660
+201350:mc_doodle
+202827:Feast doodle getJson
+206317:doodleView
+207942:package:feast_control_page/src/common/widget/doodle/feast_drawing_painter.dart
+213876:icon/ic_doodle_strip
+220295:FeastChristmasLightDoodleComponent
+221656:_FeastChristmasLightDoodleComponentLogic&GetxController&GetTickerProviderStateMixin&IntlMixin&FeastSeriesHandlerMixin@59323036602
+221704:icon/ic_diy_doodle_mode
+224698:doodle page reload
+227309:http://resource.surplife.net/app/feast_base/doodle/jump.json
+229735:icon/ic_main_doodle_selected
+
+=== 'graffiti' ===
+156164:Kreative Graffiti
+157837: graffiti, la modalit
+171841:es, les modes Graffiti, Musique, Sc
+188991:Graffiti cr
+197235:Graffiti
+202927:Graffiti Wall
+210099: el modo de graffiti, el modo musical, la escena y el modo bricolaje se actualizar
+210848:Kreatywne graffiti
+224632:Setelah diidentifikasi, mode graffiti, mode musik, adegan dan mode DIY akan ditingkatkan ke efek lampu stereo!
+225689:Sobald die Form erkannt wurde, werden Graffiti-Modus, Musik-Modus, Szenen-Modus und DIY-Modus auf 3D-Lichteffekte aufgewertet!
+227791:s o reconhecimento, o modo graffiti, o modo m
+229048:Muro di graffiti2
+277565:After recognition, the graffiti mode, music mode, scene, and DIY mode will all be upgraded to 3D lighting effects!
+284105:Graffiti creativi
+284364:Mur de graffitis2
+287898:get:mc_graffiti_wall
+301843:get:bcp_graffiti2
+304055:Uma vez identificados, os modos Graffiti, M
+306539:Nach der Erkennung werden Graffiti-Modus, Musik-Modus, Szene und DIY-Modus auf Stereo-Licht aktualisiert!
+311788: graffiti
+
+=== 'diy' (base names + UI strings) ===
+153195:_onDiySingleP6SettingDataChanged@4951475343
+153258:showAddDiyDialog2
+153712:PCLDiyAnimationSettingBizComponent
+153738:tag--- getMultiDiyList 
+153739:package:magichome2_control_page/src/pages/device_control_page/symphony_home/curtain_light/diy/video/color_edit_page/view.dart
+153785:_manageDeleteDiy@5930422976
+153870:currentDiyCategoryId
+153989:_onUpdateDiyList@2227320548
+154578:changeDiyMode
+154793:_onSaveDiyList@8812164722
+155055:_DiyListBarState@1375354817
+155397:CommandCurtainLightDiyPlayParams2
+156083:icon/ic_diy_ai_hover
+156142:package:biz_control_page/src/symphony/pixel_car_light_biz_component/diy_animation_detail_biz_component/color_mixing_page/state.dart
+156160:_onNewDiyMode@10229518175
+156251:package:biz_control_page/src/symphony/pixel_car_light_biz_component/diy_animation_detail_biz_component/color_mixing_page/reducer.dart
+156281:get:fc_my_diy
+156321:package:biz_control_page/src/symphony/pixel_car_light_biz_component/diy_paint_detail_biz_component/view.dart
+156404:_onSendDiyFileCommand@42144776272
+156549:TextDiyPage
+156667:PCLDiyPaintDetailPage
+156935:createDiyPage
+156939:FeastDiyEditMenuTypeExtension|get#typeName
+157135:CommandCurtainLightDiyColorCardPreviewParams
+157567:_onDeleteDiyList@8786448556
+157736:DiySharePage.
+157800:onUpdateDiyVoiceMatchData
+157844:getDefaultDiyRGBList
+158093:_onSendDiyColorCard@6052320048
+158603:DiyDeviceIconBean.fromCloudJson
+158650:buildFeastSkyDiyScene
+158881:_onSendDiyDeviceMicMode@4214477627
+159045:Pixel2dDiyAnimationFileSettingComponent
+159210:DiyAnimationOperation.
+159411:pclDiyAnimationDetailBiz
+159667:CommandCurtainLightNewDiyFrameInfoParams
+159698:PCLDiyAnimationDetailBizActionCreator
+160151:CurtainDiyPage.
+160448:/app/smart/custom/diy/del/info
+160922:newDiyMode
+161042:package:biz_control_page/src/symphony/christmas_light/text_diy_biz_component/action.dart
+161043:Mein DIY
+161051:package:biz_control_page/src/symphony/christmas_light/text_diy_biz_component/text_style_component/component.dart2
+161088: dans la liste DIY
+161128:_onCurtainDiyPicDataChanged@10486279304
+161185:package:biz_control_page/src/symphony/pixel_car_light_biz_component/diy_paint_detail_biz_component/effect.dart
+161561:package:magichome2_control_page/src/pages/device_control_page/symphony_home/curtain_light/diy/video/color_edit_page/reducer.dart2
+161599:PixelCarLightDiyListAction.
+161609:Aplikasi akan menggunakan kamera perangkat seluler Anda untuk mengidentifikasi bentuk LED. Setelah teridentifikasi, Mode Grafiti, Mode Musik, Mode Pemandangan, dan Mode DIY akan ditingkatkan ke efek pencahayaan 3D! Untuk identifikasi yang akurat, silakan ambil foto perangkat Anda sesuai kebutuhan.
+161722:setDiyCollectPrefer
+161888:FeastDiy.fromCloud
+161974:CurtainDiyPicSettingState
+162225:diySharePage
+162481:DiyAnimationState
+162831:_onDiyMultiP6SettingDataChanged@10486279304
+163009:FeastChristmasLightDiyComponent
+163010:DiyShareAction.
+163222:package:magichome2_control_page/src/pages/entity_tasks_page/task_item_components/curtain_light_diy_pic_components/view.dart
+163638:_onUpdateDiyList@8814083524
+163754:PCLDiyPaintSettingBizComponent.
+
+=== 'per led' / 'per-led' / 'perLed' ===
+
+=== 'smear' (paint/daub) ===
+153149:smear_gradient_unselected
+153288:SmearPaintEditBizComponent
+153530:package:biz_control_page/src/symphony/voice_control_symphony_biz_component/component/smear_biz_component/page/edit_custom_smear_page/effect.dart2
+153548:SmearSettingView2
+153600:SmearPointSettingConnector get paintMode:
+153660:packages/zengge_assets_library/assets/custom/wdh_custom/images/svg/icon_wdh_smear.svg
+153821:cmdSmearSingleEffectType
+155104:buildSmearHEXV2CommandisRotate
+155951:package:biz_control_page/src/symphony/voice_control_ii_biz_component/component/voice_control_ii_smear_biz_component/page/edit_smear_page/background_color_dialog_page/effect.dart
+156800:_CustomLightStripSmearBaseState@5810273030.
+157027:package:biz_control_page/src/symphony/voice_control_symphony_biz_component/component/smear_biz_component/page/edit_custom_smear_page/custom_bottom_sheet_color_component/action.dart
+157522:_CreateSmearV2Page&Page&TickerProviderMixin@10091347845.
+158130:onUpdateSmearEffectType
+159420:LightStripSmearModel
+159702:package:biz_control_page/src/symphony/christmas_light/smear_template_biz_component/state.dart
+159723:getFeastSmearModeList
+160049:SmearPaintEditBizActionCreator
+160079:package:biz_control_page/src/symphony/cl2_biz_component/cl2_paint_biz_component/smear_paint_detail_component/state.dart
+160097:package:magichome2_control_page/src/pages/device_control_page/symphony_home/symphony/symphony_smear_v2_page/reducer.dart
+160286:SmearPoint
+160735:Customized smearing
+160747:package:magichome2_control_page/src/pages/device_control_page/symphony_home/symphony/symphony_smear_v2_page/create_smear_v2_page/smear_point_color_select_component/view.dart
+160834:_VoiceControlIISmearBizComponent&Component&TickerProviderMixin@4428360610
+161039:bcp_curtain_smear_title
+161099:SmearIIWidget
+161530:package:biz_control_page/src/symphony/voice_control_ii_biz_component/component/voice_control_ii_smear_biz_component/bean/edit_menu_type.dart
+162055:word_image/muti_smear
+162930:EditCustomSmearAction
+163029:_updateSmearPoints@5920396066
+163684:SmearTemplateBizComponent.
+163723:_SmearAnimationRotateViewState@4549138726
+163823:SmearParamsDynamicType
+164501:package:biz_control_page/src/symphony/voice_control_symphony_biz_component/component/smear_biz_component/page/edit_smear_page/background_color_dialog_page/action.dart
+164844:assets/chromabrightcustom/smear_revocation.png
+165338:_onUpdateSmearColorRatioType@4760085383
+165710:bcp_clear_custom_smear
+166006:_SmearIIWidgetState@859520778
+166233:package:magichome2_control_page/src/pages/device_control_page/symphony_home/symphony/symphony_smear_v2_page/state.dart
+166544:package:biz_control_page/src/symphony/voice_control_symphony_biz_component/component/smear_biz_component/page/edit_custom_smear_page/reducer.dart
+166772:SmearColorRatioType

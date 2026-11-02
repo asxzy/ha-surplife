@@ -1,0 +1,93 @@
+=== hexdump/strings around 0x4500000 (~72417000) effect cluster ===
+--- offsets 72403400..72404500 ---
+¸7*
+_onDispose@2677049847
+_GradientMeteorFireworksModeState@6488390586.
+Tear-Off Calendar
+customDynamics
+Nobody
+_onUpdate@7362446430
+After troubleshooting the following situations, follow the steps to restart the device and add it again
+· Check whether the device is close to the router and whether there are any barriers or walls in between
+· Check whether the network is unobstructed and whether the WiFi secret is correct
+· Restart the smart device (power off-power on)
+Sélectionner l&#39;appareil
+"\f"
+è7Ü
+package:biz_control_page/src/symphony/voice_control_symphony_biz_component/page/select_color_page/reducer.dart
+ÂÑÉ 
+±tÇ
+¥ÇXÎ|¹ 
+ðÅ°¬XÕ8Á
+½W=
+k0o0Í
+
+--- offsets 81122100..81122250 (Building Blocks) ---
+stival de fuegos artificiales
+2Ô
+package:flutter/src/material/range_slider.dart
+2Ò
+Building Blocks
+2Ò
+×D<
+PinyinException
+2â
+×¤7
+^=
+2â
+¥ÇXÎ 
+¬Ç$Á
+2Ò
+×Ü;
+EEE, dd-MM.
+2Ó
+×|2.
+_singleFrame@7765396335
+
+--- offsets 84922950..84923100 (Flowing Water) ---
+Hintergrund Stern zwinkern
+2Ò
+é¾-
+Flowing Water
+2Ó
+2"
+DeviceRgbGamePage
+2Ò
+é¶%
+pen
+2Ó
+é.(4
+AmbientSyncColorComponent.
+2å
+!é
+2Õ
+-é&
+Das 
+
+--- offsets 85253700..85253900 (Twinkling Stars) ---
+2Ò
+Twinkling Stars
+2ã
+2â
+ÊsZt5
+2Ò
+MqttConnection.
+2Ó
+?&*
+_emptyView@4794404984
+2Ò
+w=
+,end:
+2ã
+! 
+
+--- offsets 85109820..85110000 (Gradient Overlay) ---
+gActionButtonTransitionState@411420462
+2Ò
+Gradient Overlay2Ô
+VoiceControlSymphonySelectColorState
+2ã
+¿q=
+2×
+package:biz_control_page/src/symphony/christmas_light/edit_template_biz_component/state.dart
+2Ô

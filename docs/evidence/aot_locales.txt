@@ -1,0 +1,30 @@
+=== intl locale dart files compiled into AOT ===
+generated/intl/messages_all.dart
+generated/intl/messages_ar_SA.dart
+generated/intl/messages_cs_CZ.dart
+generated/intl/messages_de_DE.dart
+generated/intl/messages_en.dart
+generated/intl/messages_es_ES.dart
+generated/intl/messages_fr_FR.dart
+generated/intl/messages_hi_IN.dart
+generated/intl/messages_id_ID.dart
+generated/intl/messages_it_IT.dart
+generated/intl/messages_ja_JP.dart
+generated/intl/messages_ko_KR.dart
+generated/intl/messages_pl_PL.dart
+generated/intl/messages_pt_PT.dart
+generated/intl/messages_ru_RU.dart
+generated/intl/messages_th_TH.dart
+generated/intl/messages_tr_TR.dart
+generated/intl/messages_vi_VN.dart
+generated/intl/messages_zh_CN.dart
+generated/intl/messages_zh_Hant_TW.dart
+generated/intl/messages_zh.dart
+
+=== count of locales ===
+      21
+
+=== LocalizationsDelegate classes (which packages ship l10n) ===
+
+=== any .arb files in assets? ===
+(none above = none)

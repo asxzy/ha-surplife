@@ -1,0 +1,18 @@
+=== timer COUNT corroboration attempts (all negative checks included) ===
+maxTimer       0
+timerCount     0
+timerNum       0
+maxTiming      0
+timingCount    0
+MAX_TIMER      0
+timerLimit     0
+maxSchedule    0
+sixTimers      0
+timersLength   0
+
+=== 'timer' + small-int list patterns ===
+(none = no static slot array in strings)
+
+=== Number of cycles / loop count UI ===
+191879:Number of cycles2
+275603:Number of cycles for a single step

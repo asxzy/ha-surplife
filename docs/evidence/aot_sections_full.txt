@@ -1,0 +1,142 @@
+=== AOT segment/section inventory (full) ===
+  segname __TEXT
+  sectname __text
+   segname __TEXT
+      size 0x0000000003443da0
+  sectname __const
+   segname __TEXT
+      size 0x00000000024ad490
+  sectname __unwind_info
+   segname __TEXT
+      size 0x0000000000000068
+  segname __DATA
+  sectname __bss
+   segname __DATA
+      size 0x0000000000000030
+  segname __LINKEDIT
+
+=== linked dylibs ===
+/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/App:
+	@rpath/App.framework/App (compatibility version 0.0.0, current version 0.0.0)
+	/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1351.0.0)
+
+=== is there any .dSYM / symbol companion anywhere in the bundle? ===
+(end)
+
+=== Flutter engine framework present? ===
+AFNetworking.framework
+Alamofire.framework
+App.framework
+AppAuth.framework
+apple_maps_flutter.framework
+asset_delivery.framework
+audio_session.framework
+auto_orientation.framework
+camera_avfoundation.framework
+CocoaAsyncSocket.framework
+connectivity_plus.framework
+CryptoSwift.framework
+device_info.framework
+DKImagePickerController.framework
+DKPhotoGallery.framework
+emoji_picker_flutter.framework
+FBAEMKit.framework
+FBLPromises.framework
+FBSDKCoreKit_Basics.framework
+FBSDKCoreKit.framework
+FBSDKLoginKit.framework
+ffmpegkit.framework
+file_picker.framework
+FirebaseAppCheckInterop.framework
+FirebaseAuth.framework
+FirebaseCore.framework
+FirebaseCoreInternal.framework
+flutter_archive.framework
+flutter_blue_plus_darwin.framework
+flutter_geocoder.framework
+flutter_icmp_ping.framework
+flutter_image_compress_common.framework
+flutter_isolate.framework
+flutter_keyboard_visibility.framework
+flutter_login_facebook.framework
+flutter_matter.framework
+flutter_native_image.framework
+flutter_native_timezone.framework
+flutter_qjs.framework
+flutter_secure_storage.framework
+flutter_sound_core.framework
+flutter_video_info.framework
+Flutter.framework
+fluttertoast.framework
+get_settings.framework
+GoogleDataTransport.framework
+GoogleSignIn.framework
+GoogleToolboxForMac.framework
+GoogleUtilities.framework
+GTMAppAuth.framework
+GTMSessionFetcher.framework
+image_crop_plus.framework
+image_gallery_saver_plus.framework
+image_gallery_saver.framework
+image_picker_ios.framework
+install_referrer.framework
+ios_platform_images.framework
+ios_speech_recognition.framework
+JSONModel.framework
+just_audio.framework
+Kingfisher.framework
+libavcodec.framework
+libavdevice.framework
+libavfilter.framework
+libavformat.framework
+libavutil.framework
+libswresample.framework
+libswscale.framework
+libwebp.framework
+location_service_check.framework
+location.framework
+Mantle.framework
+Masonry.framework
+MBProgressHUD.framework
+mmkv_ios.framework
+MMKV.framework
+MMKVCore.framework
+nanopb.framework
+native_flutter_fonts.framework
+native_font_data.framework
+network_info_plus.framework
+nfc_manager.framework
+nsd_ios.framework
+NSDate_Calendar.framework
+NSDate_Helper.framework
+objectbox_flutter_libs.framework
+ObjectBox.framework
+package_info_plus.framework
+path_provider_foundation.framework
+permission_request.framework
+photo_manager.framework
+Reachability.framework
+RecaptchaInterop.framework
+SDWebImage.framework
+SDWebImageWebPCoder.framework
+seedpoint.framework
+sensors_plus.framework
+shared_preferences_foundation.framework
+sqflite.framework
+SwiftyGif.framework
+the_apple_sign_in.framework
+Toast.framework
+TXFFmpeg.framework
+TXSoundTouch.framework
+url_launcher_ios.framework
+video_compress.framework
+video_player_avfoundation.framework
+video_thumbnail.framework
+wakelock_plus.framework
+webview_flutter_wkwebview.framework
+zengge_media_plugin.framework
+zengge_speech_plugin.framework
+zg_lz4_compress.framework
+zg_music_converter.framework
+ZGMatter.framework
+ZIPFoundation.framework

@@ -1,0 +1,26 @@
+=== LC_FUNCTION_STARTS present? ===
+      cmd LC_FUNCTION_STARTS
+  cmdsize 16
+  dataoff 93290616
+ datasize 227152
+
+=== dSYM siblings anywhere ===
+(none above = none)
+
+=== __symbols / __oslogstring sections ===
+  sectname __text
+  sectname __const
+  sectname __unwind_info
+  sectname __bss
+
+=== uuid ===
+UUID: 094FB2E0-8A21-3291-BED5-D6EAC010FB5A (arm64) /Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/App
+
+=== do tags look address-correlated? check if any tag number < 2^32 and plausible ===
+1
+1
+1
+...
+141502065932
+141683830682
+142062295642

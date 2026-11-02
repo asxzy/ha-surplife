@@ -1,0 +1,5 @@
+records with 16-byte slot: 92014
+distinct: 74640
+
+CustomEffectFT distinct: 41
+['CustomEffectFT1', 'CustomEffectFT10', 'CustomEffectFT11', 'CustomEffectFT12', 'CustomEffectFT13', 'CustomEffectFT14', 'CustomEffectFT15', 'CustomEffectFT16', 'CustomEffectFT17', 'CustomEffectFT18', 'CustomEffectFT19', 'CustomEffectFT2', 'CustomEffectFT20', 'CustomEffectFT21', 'CustomEffectFT22', 'CustomEffectFT23', 'CustomEffectFT24', 'CustomEffectFT25', 'CustomEffectFT26', 'CustomEffectFT27', 'CustomEffectFT28', 'CustomEffectFT29', 'CustomEffectFT3', 'CustomEffectFT30', 'CustomEffectFT31', 'CustomEffectFT32', 'CustomEffectFT33', 'CustomEffectFT34', 'CustomEffectFT35', 'CustomEffectFT36', 'CustomEffectFT37', 'CustomEffectFT38', 'CustomEffectFT39', 'CustomEffectFT4', 'CustomEffectFT40', 'CustomEffectFT41', 'CustomEffectFT5', 'CustomEffectFT6', 'CustomEffectFT7', 'CustomEffectFT8', 'CustomEffectFT9']

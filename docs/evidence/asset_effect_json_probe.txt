@@ -1,0 +1,25 @@
+=== json assets with effect/mode/colorful/segment in the NAME ===
+/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/flutter_dynamic_effect/assets/animation/text_animation_enterText.json
+/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/flutter_dynamic_effect/assets/animation/text_animation_flicker.json
+/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/flutter_dynamic_effect/assets/animation/text_animation_breathe.json
+/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/flutter_dynamic_effect/assets/animation/text_animation_snowflake.json
+/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/flutter_dynamic_effect/assets/animation/text_animation_up.json
+/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/flutter_dynamic_effect/assets/animation/text_animation_rotation.json
+/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/flutter_dynamic_effect/assets/animation/frame_effect_2.json
+/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/flutter_dynamic_effect/assets/animation/text_animation_fixed.json
+/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/flutter_dynamic_effect/assets/animation/text_animation_laser.json
+/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/flutter_dynamic_effect/assets/animation/frame_effect_3.json
+/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/flutter_dynamic_effect/assets/animation/frame_effect_0.json
+/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/flutter_dynamic_effect/assets/animation/text_animation_downOnce.json
+/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/flutter_dynamic_effect/assets/animation/text_animation_bigToNormal.json
+/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/flutter_dynamic_effect/assets/animation/text_animation_fadeFromLToR.json
+/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/flutter_dynamic_effect/assets/animation/text_animation_right.json
+/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/flutter_dynamic_effect/assets/animation/text_animation_left.json
+/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/flutter_dynamic_effect/assets/animation/frame_effect_1.json
+/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/flutter_dynamic_effect/assets/animation/text_animation_fold.json
+/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/flutter_dynamic_effect/assets/animation/text_animation_fadeFromTToB.json
+/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/flutter_dynamic_effect/assets/animation/text_animation_down.json
+/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/flutter_dynamic_effect/assets/animation/text_animation_smallToBig.json
+
+=== do any text assets contain 'effectId' or an id→name table? ===
+(end)

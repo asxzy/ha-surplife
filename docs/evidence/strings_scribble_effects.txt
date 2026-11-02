@@ -1,0 +1,129 @@
+=== all feast_base/doodle URLs ===
+http://resource.surplife.net/app/feast_base/doodle/asyncBlink.json
+http://resource.surplife.net/app/feast_base/doodle/asyncBreath.json
+http://resource.surplife.net/app/feast_base/doodle/asyncGradient.json
+http://resource.surplife.net/app/feast_base/doodle/asyncJump.json
+http://resource.surplife.net/app/feast_base/doodle/blink.json
+http://resource.surplife.net/app/feast_base/doodle/breath.json
+http://resource.surplife.net/app/feast_base/doodle/fireflyA.json2
+http://resource.surplife.net/app/feast_base/doodle/flash.json
+http://resource.surplife.net/app/feast_base/doodle/gradient.json2
+http://resource.surplife.net/app/feast_base/doodle/jump.json
+http://resource.surplife.net/app/feast_base/doodle/stream.json
+
+=== all resource.surplife.net URLs mentioning effect/dynamic ===
+http://resource.surplife.net/app/feast_base/doodle/asyncBlink.json
+http://resource.surplife.net/app/feast_base/doodle/asyncBreath.json
+http://resource.surplife.net/app/feast_base/doodle/asyncGradient.json
+http://resource.surplife.net/app/feast_base/doodle/asyncJump.json
+http://resource.surplife.net/app/feast_base/doodle/blink.json
+http://resource.surplife.net/app/feast_base/doodle/breath.json
+http://resource.surplife.net/app/feast_base/doodle/fireflyA.json2
+http://resource.surplife.net/app/feast_base/doodle/flash.json
+http://resource.surplife.net/app/feast_base/doodle/gradient.json2
+http://resource.surplife.net/app/feast_base/doodle/jump.json
+http://resource.surplife.net/app/feast_base/doodle/stream.json
+http://resource.surplife.net/app/feast_base/feast_mode/icon_feast.png
+http://resource.surplife.net/app/feast_base/feast_mode/icon_music_feast.png
+http://resource.surplife.net/app/feast_base/feast_mode/icon_scene_feast.png
+http://resource.surplife.net/app/feast_base/feast_mode/icon_stage_feast.png
+http://resource.surplife.net/app/feast_base/feast_mode/music/1.png
+http://resource.surplife.net/app/feast_base/feast_mode/music/10.png
+http://resource.surplife.net/app/feast_base/feast_mode/music/11.png
+http://resource.surplife.net/app/feast_base/feast_mode/music/12.png
+http://resource.surplife.net/app/feast_base/feast_mode/music/14.png
+http://resource.surplife.net/app/feast_base/feast_mode/music/15.png
+http://resource.surplife.net/app/feast_base/feast_mode/music/17.png
+http://resource.surplife.net/app/feast_base/feast_mode/music/18.png
+http://resource.surplife.net/app/feast_base/feast_mode/music/2.png
+http://resource.surplife.net/app/feast_base/feast_mode/music/3.png
+http://resource.surplife.net/app/feast_base/feast_mode/music/4.png
+http://resource.surplife.net/app/feast_base/feast_mode/music/5.png
+http://resource.surplife.net/app/feast_base/feast_mode/music/6.png
+http://resource.surplife.net/app/feast_base/feast_mode/music/7.png
+http://resource.surplife.net/app/feast_base/feast_mode/music/8.png
+http://resource.surplife.net/app/feast_base/feast_mode/music/9.png
+http://resource.surplife.net/app/feast_base/feast_mode/stage/1.gif
+http://resource.surplife.net/app/feast_base/feast_mode/stage/10.gif
+http://resource.surplife.net/app/feast_base/feast_mode/stage/11.gif
+http://resource.surplife.net/app/feast_base/feast_mode/stage/12.gif
+http://resource.surplife.net/app/feast_base/feast_mode/stage/2.gif
+http://resource.surplife.net/app/feast_base/feast_mode/stage/3.gif
+http://resource.surplife.net/app/feast_base/feast_mode/stage/4.gif
+http://resource.surplife.net/app/feast_base/feast_mode/stage/5.gif
+http://resource.surplife.net/app/feast_base/feast_mode/stage/6.gif
+
+=== scribble effect names: static / flowing / twinkling / accumulate (exact strings) ===
+static         1
+flowing        0
+twinkling      0
+stars wink     0
+accumulate     0
+Static         1
+Flowing        1
+Twinkling      0
+Accumulate     1
+
+=== capitalized UI-ish: 'Static', 'Flowing', 'Twinkling', 'Accumulate' contexts ===
+159280:StaticProgressBar
+162942:StaticState
+168423:Twinkling Marquee
+168470:StaticAndSceneControlConnector
+168939:StaticTemplateComponent
+168978:Accumulate
+170022:StaticModelBiz
+172091:Statick
+179011:StaticColorfulStrobe
+191284:FlowingColorStrobeOptions
+198092:StaticImageAnimationEffect
+198093:FlowingColorStrobe
+201572:Statico
+201763:StaticTemplateConnector
+206304:Static Dimming
+206700:Static Color
+207199:Statick
+207837:Static
+222325:StaticFillModeOptions
+229320:StaticTemplateAction
+
+=== BLINK vocab ===
+157285:Blinkender 
+160915:_BlinkModeState@6184256651
+163290:_BlinkScopicModeState@16064708662
+165589:FeastAsyncBlink
+165946:Sterne blinken
+166907:package:flutter_dynamic_effect/dynamic_effect/feast/feast_sync_blink.dart
+167471:_BlinkBreatheModeState@6184256651
+168787:bcp_sbl_stars_blinking
+171414:feastSyncBlink
+172764:Stars blinking
+186073:webLinkUrl
+194648:BlinkModeOptions2
+196920:http://resource.surplife.net/app/feast_base/doodle/asyncBlink.json
+198012:es Licht blinkt
+199269:BlinkScopicMode
+199677:BlinkBreatheMode2
+199941:Blinkend
+216488:Blinking transition
+219792:BlinkMode
+219965:package:biz_control_page/src/widget/symphony_scene_preview_widgets/preview_modes/blink.dart
+227869:Bitte beobachten Sie den beleuchteten Bereich, suchen Sie die blinkende Lampenperle und 
+228515:icon_blink
+230320:BlinkStrobeMode
+235236:hlen Sie den atmenden oder blinkenden Effekt einzelner oder mehrerer Lichter
+246900:_BlinkModeState@1954165278
+255245:http://resource.surplife.net/app/icon/SymphonyControl/music/blink.png
+261276:blink
+266655:t, es gibt keinen blinkenden Lichtstreifen auf dem Lichtstreifen)
+267992:_blink@4549138726
+269393:blinkTime
+279604:Blinken
+280679:feastAsyncBlink
+281639:_blink@4550108208
+286004:FeastSyncBlink
+295212:_BlinkModeState@1606470866
+298306:Funkeln, Burst: Das Licht blinkt einmal und erlischt dann f
+304737:Asynchrones Blinken von Farbe zu Farbe
+311655:Blinkende Taste
+321107:package:flutter_dynamic_effect/dynamic_effect/feast/feast_async_blink.dart
+327938:get:bcp_sbl_stars_blinking

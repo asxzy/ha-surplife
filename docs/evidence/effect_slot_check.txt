@@ -1,0 +1,42 @@
+id name                  in-16B-slot  slot-offsets
+1  Wave                  YES          [81666912]
+2  Meteor                YES          [78720272, 80588672, 81931104]
+3  Streamer              YES          [86561056]
+4  Building Blocks       YES          [81122160]
+5  Flowing Water         YES          [84922976]
+6  Chase                 YES          [73088608]
+7  Horse Racing          YES          [82977872]
+8  Cycle                 YES          [72460816, 76282128]
+9  Breathe               YES          [84795584]
+10 Jump                  YES          [82326592]
+11 Strobe                YES          [84052976]
+12 Twinkling Stars       YES          [85253728]
+13 Stars Wink            no           []
+14 Warning               YES          [79343040]
+15 Collision             YES          [74239056, 81327744]
+16 Fireworks             YES          [84578512]
+17 Comet                 YES          [84747840]
+18 Gradient Meteor       YES          [82315776]
+19 Volcano               YES          [78413392]
+20 Superluminal          YES          [74790784]
+21 Rainbow Bridge        YES          [72627152]
+22 Gradient Overlay      YES          [85109856]
+23 Static Gradient       YES          [84434960]
+24 Static Fill           YES          [83673984]
+
+=== case variants present as raw bytes ===
+'Stars Wink'         raw=0 slot=0
+'Stars wink'         raw=1 slot=1
+'stars wink'         raw=0 slot=0
+'Stars Blink'        raw=0 slot=0
+'Stars blinking'     raw=1 slot=1
+'Star Wink'          raw=0 slot=0
+
+=== all slot names starting with 'Stars' ===
+['Stars', 'Stars blinking', 'Stars twinkling', 'Stars wink', 'StarsModeOptions', 'StarsStrobeMode', 'StarsStrobeMode.', 'Starship']
+
+=== all slot names starting with 'Twinkl' ===
+['Twinkl', 'Twinkle', 'Twinkle ', 'TwinkleShine', 'TwinkleShineMode', 'TwinkleStar', 'TwinkleStarMode', 'Twinkling Stars', 'Twinkling stars']
+
+=== all slot names containing 'Gradient' ===
+['Efeito Gradiente', 'Gradient', 'Gradient Button', 'Gradient Effect', 'Gradient Meteor', 'Gradient Overlay', 'Gradient Rainbow', 'Gradient circle', 'Gradient switch', 'Gradient turn on', 'Gradient.linear', 'Gradient.png', 'Gradient.radial', 'Gradient.sweep', 'Gradient::Create', 'Gradient@1028745', 'Gradient@4575359', 'Gradient@4957253', 'GradientBrush', 'GradientButton', 'GradientColor', 'GradientFill', 'GradientList@879', 'GradientRotation', 'GradientStroke', 'GradientStroke.', 'GradientTime@138', 'GradientType', 'GradientType.', 'GradientUnitMode', 'Gradient_Rainbow', 'Gradiente', 'Gradiente acceso', 'Gradiente de cor', 'Gradientenmeteor', 'LinearGradient', 'RadialGradient', 'SetIsGradient@10', 'Static Gradient', 'SweepGradient', 'SyncGradientMode', 'addGradient', 'asyncGradient', 'ateIsGradient@10', 'bgColorGradient', 'cGradient.png', 'closeGradient', 'eGradientList@59', 'eIsGradient@9938', 'enableGradient', 'fillingGradient', 'get:isGradient', 'getColorGradient', 'getGradient', 'getGradientColor', 'getGradientPath', 'getGradientText', 'getGradientValue', 'hGradient@612801', 'howGradient@4957', 'ingGradient.png', 'init:isGradient', 'isGradient', 'isHideGradient', 'isRemoveGradient', 'layGradient@6060', 'lerpGradient', 'linearGradient', 'lorGradient@6184', 'onDelayGradient', 'onDelayGradient@', 'onGradientUpdate', 'onLinearGradient', 'onRadialGradient', 'onSetIsGradient', 'onUpdateGradient', 'openGradient', 'orGradient: ', 'positiveGradient', 'radialGradient', 'reverseGradient', 'staticGradient', 'supportGradient', 'syncGradient', 'tGradientList@96', 'tGradientTime@85', 'teGradient', 'teIsGradient@994', 'twoWayGradient', 'upDateIsGradient', 'witchGradient@61', 'yGradient@288917']

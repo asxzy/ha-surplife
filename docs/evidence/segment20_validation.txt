@@ -1,0 +1,7 @@
+slot-parsed color_segment_* : 20
+['color_segment_0', 'color_segment_1', 'color_segment_2', 'color_segment_3', 'color_segment_4', 'color_segment_5', 'color_segment_6', 'color_segment_7', 'color_segment_8', 'color_segment_9', 'color_segment_10', 'color_segment_11', 'color_segment_12', 'color_segment_13', 'color_segment_14', 'color_segment_15', 'color_segment_16', 'color_segment_17', 'color_segment_18', 'color_segment_19']
+
+max index: 19
+
+raw (digit-terminated) indices: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 102, 112, 122, 132, 142, 152, 162, 172, 182, 192]
+count: 20 max: 192

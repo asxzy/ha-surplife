@@ -1,0 +1,2644 @@
+{
+  "_meta": {
+    "target": {
+      "model": "AK001-ZJ21413",
+      "model_info": "ZG-BL-UFO",
+      "productId": 182,
+      "productId_hex": "0xb6",
+      "marketing_name": "Surplife Outdoor Permanent Lighting"
+    },
+    "sources": {
+      "js_bundle": "zg_app_builtin_assest/assets/js_bundle/60_surplife.js",
+      "wifi_devices": "magichome2_home_data_provide/assets/wifi_devices.json",
+      "wifi_device_panel": "magichome2_home_data_provide/assets/wifi_device_panel.json",
+      "lmdb": "briturn_core/assets/zg_device_db/data.mdb"
+    },
+    "note": "The shipped DB is keyed by numeric productId only. No artifact contains the string 'AK001-ZJ21413' or 'ZG-BL-UFO'; the mapping to productId 182 (0xB6) comes from the caller's protocol/model number, not from the bundle. See model_string_search."
+  },
+  "js_bundle": {
+    "found": true,
+    "wifiDevices_entry": {
+      "productId": 182,
+      "icon": "enum://dengdai",
+      "category": "zm",
+      "categoryCode": "hc3",
+      "functions": [
+        {
+          "code": "use_ble_music_mode",
+          "deviceMinVer": 20
+        },
+        {
+          "code": "symphony_scene_v2"
+        },
+        {
+          "code": "smart_ai"
+        },
+        {
+          "code": "sbl_dt_symphony"
+        },
+        {
+          "code": "rgb_w_mix"
+        },
+        {
+          "code": "multiple_screen_data",
+          "deviceMinVer": 2
+        },
+        {
+          "code": "firmware_data"
+        },
+        {
+          "code": "timer_data"
+        },
+        {
+          "code": "state_upload"
+        },
+        {
+          "code": "state_upload_v2"
+        },
+        {
+          "code": "function_setting",
+          "deviceMinVer": 9
+        },
+        {
+          "code": "function_inquiry"
+        },
+        {
+          "code": "set_time"
+        },
+        {
+          "code": "control_data"
+        },
+        {
+          "code": "switch_led_v2"
+        },
+        {
+          "code": "switch_led_v3"
+        },
+        {
+          "code": "bright_value_v2"
+        },
+        {
+          "code": "timer_data_v2"
+        },
+        {
+          "code": "colour_data_v2"
+        },
+        {
+          "code": "colour_data_v3"
+        },
+        {
+          "code": "switch_led"
+        },
+        {
+          "code": "get_time"
+        },
+        {
+          "code": "get_timer_list"
+        },
+        {
+          "code": "get_timer_list_v2"
+        },
+        {
+          "code": "wake_up"
+        },
+        {
+          "code": "wake_up_inquire"
+        },
+        {
+          "code": "fall_asleep"
+        },
+        {
+          "code": "fall_asleep_inquire"
+        },
+        {
+          "code": "countdown"
+        },
+        {
+          "code": "music_data_hc3"
+        },
+        {
+          "code": "custom_data_hc3"
+        },
+        {
+          "code": "linkage_hc3"
+        },
+        {
+          "code": "static_colorful_hc3"
+        },
+        {
+          "code": "smear_hc3"
+        },
+        {
+          "code": "set_wiring_preview"
+        },
+        {
+          "code": "smear_hc3_v2",
+          "deviceMinVer": 3
+        },
+        {
+          "code": "microphone_V2"
+        },
+        {
+          "code": "ic_RGBW_TM1814",
+          "deviceMinVer": 9
+        },
+        {
+          "code": "symphony_scene_hc3"
+        },
+        {
+          "code": "symphony_mode_white"
+        },
+        {
+          "code": "symphony_music_mode_v2",
+          "deviceMinVer": 10
+        }
+      ],
+      "protocols": [
+        {
+          "name": "common",
+          "deviceMinVer": 0
+        },
+        {
+          "name": "common1_0",
+          "deviceMinVer": 0
+        },
+        {
+          "name": "common2_0",
+          "deviceMinVer": 0
+        },
+        {
+          "name": "symphonyE1",
+          "deviceMinVer": 0
+        }
+      ],
+      "stateProtocol": [
+        {
+          "name": "wifibleSymphony",
+          "deviceMinVer": 0
+        }
+      ]
+    },
+    "functions_resolved": [
+      {
+        "code": "use_ble_music_mode",
+        "type": "Hex",
+        "deviceMinVer": 20
+      },
+      {
+        "code": "symphony_scene_v2",
+        "type": "Hex"
+      },
+      {
+        "code": "smart_ai",
+        "type": "Hex"
+      },
+      {
+        "code": "sbl_dt_symphony",
+        "type": "Hex"
+      },
+      {
+        "code": "rgb_w_mix",
+        "type": "Hex"
+      },
+      {
+        "code": "multiple_screen_data",
+        "type": "Hex",
+        "deviceMinVer": 2
+      },
+      {
+        "code": "firmware_data",
+        "type": "Hex"
+      },
+      {
+        "code": "timer_data",
+        "type": "Hex"
+      },
+      {
+        "code": "state_upload",
+        "type": "Hex"
+      },
+      {
+        "code": "state_upload_v2",
+        "type": "Hex"
+      },
+      {
+        "code": "function_setting",
+        "type": "Hex",
+        "deviceMinVer": 9
+      },
+      {
+        "code": "function_inquiry",
+        "type": "Hex"
+      },
+      {
+        "code": "set_time",
+        "type": "Json",
+        "value": {
+          "fields": [
+            {
+              "fieldName": "year",
+              "max": 255,
+              "min": 0,
+              "step": 1
+            },
+            {
+              "fieldName": "month",
+              "max": 12,
+              "min": 1,
+              "step": 1
+            },
+            {
+              "fieldName": "day",
+              "max": 31,
+              "min": 1,
+              "step": 1
+            },
+            {
+              "fieldName": "hour",
+              "max": 23,
+              "min": 0,
+              "step": 1
+            },
+            {
+              "fieldName": "sec",
+              "max": 60,
+              "min": 0,
+              "step": 1
+            },
+            {
+              "fieldName": "minute",
+              "max": 60,
+              "min": 0,
+              "step": 1
+            },
+            {
+              "fieldName": "week",
+              "max": 7,
+              "min": 1,
+              "step": 1
+            }
+          ]
+        }
+      },
+      {
+        "code": "control_data",
+        "type": "Hex"
+      },
+      {
+        "code": "switch_led_v2",
+        "type": "Json",
+        "value": {
+          "fields": [
+            {
+              "fieldName": "open",
+              "step": 1
+            },
+            {
+              "fieldName": "delay",
+              "max": 65535,
+              "min": 0,
+              "step": 1
+            },
+            {
+              "fieldName": "gradient",
+              "max": 16777215,
+              "min": 0,
+              "step": 1
+            }
+          ]
+        }
+      },
+      {
+        "code": "switch_led_v3",
+        "type": "Json",
+        "value": {
+          "fields": [
+            {
+              "fieldName": "preview",
+              "max": 255,
+              "min": 0,
+              "step": 1
+            },
+            {
+              "fieldName": "open",
+              "step": 1
+            },
+            {
+              "fieldName": "delay",
+              "max": 65535,
+              "min": 0,
+              "step": 1
+            },
+            {
+              "fieldName": "gradient",
+              "max": 16777215,
+              "min": 0,
+              "step": 1
+            }
+          ]
+        }
+      },
+      {
+        "code": "bright_value_v2",
+        "type": "Json",
+        "value": {
+          "fields": [
+            {
+              "fieldName": "value",
+              "max": 100,
+              "min": 0,
+              "step": 1
+            },
+            {
+              "fieldName": "delay",
+              "max": 65535,
+              "min": 0,
+              "step": 1
+            },
+            {
+              "fieldName": "gradient",
+              "max": 16777215,
+              "min": 0,
+              "step": 1
+            }
+          ]
+        }
+      },
+      {
+        "code": "timer_data_v2",
+        "type": "Hex"
+      },
+      {
+        "code": "colour_data_v2",
+        "type": "Hex"
+      },
+      {
+        "code": "colour_data_v3",
+        "type": "Hex"
+      },
+      {
+        "code": "switch_led",
+        "type": "Json",
+        "value": {
+          "fields": [
+            {
+              "fieldName": "open",
+              "step": 1
+            }
+          ]
+        }
+      },
+      {
+        "code": "get_time",
+        "type": "Hex"
+      },
+      {
+        "code": "get_timer_list",
+        "type": "Hex"
+      },
+      {
+        "code": "get_timer_list_v2",
+        "type": "Hex"
+      },
+      {
+        "code": "wake_up",
+        "type": "Hex"
+      },
+      {
+        "code": "wake_up_inquire",
+        "type": "Hex"
+      },
+      {
+        "code": "fall_asleep",
+        "type": "Hex"
+      },
+      {
+        "code": "fall_asleep_inquire",
+        "type": "Hex"
+      },
+      {
+        "code": "countdown",
+        "type": "Hex"
+      },
+      {
+        "code": "music_data_hc3",
+        "type": "Hex"
+      },
+      {
+        "code": "custom_data_hc3",
+        "type": "Hex"
+      },
+      {
+        "code": "linkage_hc3",
+        "type": "Hex"
+      },
+      {
+        "code": "static_colorful_hc3",
+        "type": "Hex"
+      },
+      {
+        "code": "smear_hc3",
+        "type": "Hex"
+      },
+      {
+        "code": "set_wiring_preview",
+        "type": "Hex"
+      },
+      {
+        "code": "smear_hc3_v2",
+        "type": "Hex",
+        "deviceMinVer": 3
+      },
+      {
+        "code": "microphone_V2",
+        "type": "Hex"
+      },
+      {
+        "code": "ic_RGBW_TM1814",
+        "type": "Hex",
+        "deviceMinVer": 9
+      },
+      {
+        "code": "symphony_scene_hc3",
+        "type": "Hex"
+      },
+      {
+        "code": "symphony_mode_white",
+        "type": "Hex"
+      },
+      {
+        "code": "symphony_music_mode_v2",
+        "type": "Hex",
+        "deviceMinVer": 10
+      }
+    ],
+    "function_count": 41,
+    "has_hexCmdForms": false,
+    "hexCmdForms": null,
+    "protocols": [
+      {
+        "name": "common",
+        "deviceMinVer": 0
+      },
+      {
+        "name": "common1_0",
+        "deviceMinVer": 0
+      },
+      {
+        "name": "common2_0",
+        "deviceMinVer": 0
+      },
+      {
+        "name": "symphonyE1",
+        "deviceMinVer": 0
+      }
+    ],
+    "stateProtocol": [
+      {
+        "name": "wifibleSymphony",
+        "deviceMinVer": 0
+      }
+    ],
+    "panel": {
+      "productId": 182,
+      "type": "symphony_line",
+      "tab_ui": [
+        {
+          "pageProperty": "colorful",
+          "index": 0,
+          "deviceMinVer": 0
+        },
+        {
+          "pageProperty": "scene",
+          "index": 1,
+          "deviceMinVer": 0
+        },
+        {
+          "pageProperty": "carousel",
+          "index": 2,
+          "deviceMinVer": 0
+        },
+        {
+          "pageProperty": "smear",
+          "index": 3,
+          "deviceMinVer": 0
+        },
+        {
+          "pageProperty": "musicMic",
+          "index": 4,
+          "deviceMinVer": 0
+        },
+        {
+          "pageProperty": "power",
+          "index": 5,
+          "deviceMinVer": 0
+        },
+        {
+          "pageProperty": "timing",
+          "index": 6,
+          "deviceMinVer": 0
+        },
+        {
+          "pageProperty": "settings",
+          "index": 7,
+          "deviceMinVer": 0
+        },
+        {
+          "pageProperty": "linkage",
+          "index": 8,
+          "deviceMinVer": 0
+        },
+        {
+          "pageProperty": "white",
+          "index": 9,
+          "deviceMinVer": 0
+        },
+        {
+          "pageProperty": "layout",
+          "index": 10,
+          "deviceMinVer": 0
+        }
+      ]
+    },
+    "also_in_bleDevices": false
+  },
+  "json_assets": {
+    "found": true,
+    "wifi_devices_entry": {
+      "productId": 182,
+      "icon": "enum://dengdai",
+      "category": "zm",
+      "categoryCode": "hc3",
+      "functions": [
+        {
+          "code": "rgb_w_mix",
+          "desc": "rgbw混光",
+          "name": "rgbw混光",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "multiple_screen_data",
+          "desc": "幻彩联屏",
+          "name": "幻彩联屏",
+          "type": "Hex",
+          "deviceMinVer": 2,
+          "value": {}
+        },
+        {
+          "code": "firmware_data",
+          "desc": "固件升级",
+          "name": "固件升级",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "timer_data",
+          "desc": "设置定时",
+          "name": "设置定时",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "state_upload",
+          "desc": "状态上报",
+          "name": "状态上报",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "state_upload_v2",
+          "desc": "状态上报2.0",
+          "name": "状态上报2.0",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "function_setting",
+          "desc": "功能设置",
+          "name": "功能设置",
+          "type": "Hex",
+          "deviceMinVer": 9,
+          "value": {}
+        },
+        {
+          "code": "function_inquiry",
+          "desc": "功能查询",
+          "name": "功能查询",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "set_time",
+          "desc": "校时命令, year从2000年开始",
+          "name": "校时命令",
+          "type": "Json",
+          "deviceMinVer": 0,
+          "value": {
+            "fields": [
+              {
+                "fieldName": "year",
+                "max": 255,
+                "min": 0,
+                "step": 1
+              },
+              {
+                "fieldName": "month",
+                "max": 12,
+                "min": 1,
+                "step": 1
+              },
+              {
+                "fieldName": "day",
+                "max": 31,
+                "min": 1,
+                "step": 1
+              },
+              {
+                "fieldName": "hour",
+                "max": 23,
+                "min": 0,
+                "step": 1
+              },
+              {
+                "fieldName": "sec",
+                "max": 60,
+                "min": 0,
+                "step": 1
+              },
+              {
+                "fieldName": "minute",
+                "max": 60,
+                "min": 0,
+                "step": 1
+              },
+              {
+                "fieldName": "week",
+                "max": 7,
+                "min": 1,
+                "step": 1
+              }
+            ]
+          }
+        },
+        {
+          "code": "control_data",
+          "desc": "透传命令",
+          "name": "透传命令",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "switch_led_v2",
+          "desc": "统一命令的开关",
+          "name": "开关",
+          "type": "Json",
+          "deviceMinVer": 0,
+          "value": {
+            "fields": [
+              {
+                "fieldName": "open",
+                "step": 1
+              },
+              {
+                "fieldName": "delay",
+                "max": 65535,
+                "min": 0,
+                "step": 1
+              },
+              {
+                "fieldName": "gradient",
+                "max": 16777215,
+                "min": 0,
+                "step": 1
+              }
+            ]
+          }
+        },
+        {
+          "code": "switch_led_v3",
+          "desc": "统一命令2.0的开关",
+          "name": "开关",
+          "type": "Json",
+          "deviceMinVer": 0,
+          "value": {
+            "fields": [
+              {
+                "fieldName": "preview",
+                "max": 255,
+                "min": 0,
+                "step": 1
+              },
+              {
+                "fieldName": "open",
+                "step": 1
+              },
+              {
+                "fieldName": "delay",
+                "max": 65535,
+                "min": 0,
+                "step": 1
+              },
+              {
+                "fieldName": "gradient",
+                "max": 16777215,
+                "min": 0,
+                "step": 1
+              }
+            ]
+          }
+        },
+        {
+          "code": "bright_value_v2",
+          "desc": "统一命令调节亮度",
+          "name": "亮度",
+          "type": "Json",
+          "deviceMinVer": 0,
+          "value": {
+            "fields": [
+              {
+                "fieldName": "value",
+                "max": 100,
+                "min": 0,
+                "step": 1
+              },
+              {
+                "fieldName": "delay",
+                "max": 65535,
+                "min": 0,
+                "step": 1
+              },
+              {
+                "fieldName": "gradient",
+                "max": 16777215,
+                "min": 0,
+                "step": 1
+              }
+            ]
+          }
+        },
+        {
+          "code": "timer_data_v2",
+          "desc": "统一命令设置定时2.0",
+          "name": "设置定时2.0",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "colour_data_v2",
+          "desc": "统一命令调rgb",
+          "name": "彩光模式",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "colour_data_v3",
+          "desc": "统一命令2.0调rgb",
+          "name": "彩光模式",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "switch_led",
+          "desc": "开关, 老版本",
+          "name": "开关",
+          "type": "Json",
+          "deviceMinVer": 0,
+          "value": {
+            "fields": [
+              {
+                "fieldName": "open",
+                "step": 1
+              }
+            ]
+          }
+        },
+        {
+          "code": "get_time",
+          "desc": "获取设备时间, 发送时对应的值为null",
+          "name": "获取设备时间",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "get_timer_list",
+          "desc": "获取定时列表, 发送时对应的值为null",
+          "name": "获取定时列表",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "get_timer_list_v2",
+          "desc": "统一命令2.0定时列表, 发送时对应的值为null",
+          "name": "获取定时列表2.0",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "wake_up",
+          "desc": "唤醒",
+          "name": "唤醒",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "wake_up_inquire",
+          "desc": "唤醒查询",
+          "name": "唤醒查询",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "fall_asleep",
+          "desc": "入睡",
+          "name": "入睡",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "fall_asleep_inquire",
+          "desc": "入睡查询",
+          "name": "入睡查询",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "countdown",
+          "desc": "倒计时",
+          "name": "倒计时",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "music_data_hc3",
+          "desc": "新幻彩音乐模式命令",
+          "name": "音乐模式",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "custom_data_hc3",
+          "desc": "幻彩自定义模式",
+          "name": "自定义模式",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "linkage_hc3",
+          "desc": "幻彩联动模式",
+          "name": "联动模式",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "static_colorful_hc3",
+          "desc": "幻彩多彩静态模式",
+          "name": "多彩静态模式",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "smear_hc3",
+          "desc": "幻彩涂抹",
+          "name": "涂抹",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "set_wiring_preview",
+          "desc": "统一命令2.0排序设置-预览",
+          "name": "统一命令2.0排序设置-预览",
+          "type": "Hex",
+          "value": {}
+        },
+        {
+          "code": "smear_hc3_v2",
+          "desc": "幻彩涂抹V2",
+          "name": "预览涂抹",
+          "type": "Hex",
+          "deviceMinVer": 3,
+          "value": {}
+        },
+        {
+          "code": "microphone_V2",
+          "desc": "硬件麦克风",
+          "name": "硬件麦克风",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        }
+      ],
+      "hexCmdForms": {},
+      "runtimeScripts": [],
+      "responseHexDescribes": [],
+      "protocols": [
+        {
+          "name": "common",
+          "desc": "通用命令",
+          "deviceMinVer": 0
+        },
+        {
+          "name": "common1_0",
+          "desc": "通用命令1.0",
+          "deviceMinVer": 0
+        },
+        {
+          "name": "common2_0",
+          "desc": "通用命令2.0",
+          "deviceMinVer": 0
+        },
+        {
+          "name": "symphonyE1",
+          "desc": "幻彩统一命令",
+          "deviceMinVer": 0
+        }
+      ],
+      "stateProtocol": [
+        {
+          "name": "wifibleSymphony",
+          "desc": "统一命令2.0 灯具标准状态",
+          "deviceMinVer": 0
+        }
+      ]
+    },
+    "function_count": 33,
+    "has_hexCmdForms": false,
+    "hexCmdForms": {},
+    "runtimeScripts": [],
+    "responseHexDescribes": [],
+    "protocols": [
+      {
+        "name": "common",
+        "desc": "通用命令",
+        "deviceMinVer": 0
+      },
+      {
+        "name": "common1_0",
+        "desc": "通用命令1.0",
+        "deviceMinVer": 0
+      },
+      {
+        "name": "common2_0",
+        "desc": "通用命令2.0",
+        "deviceMinVer": 0
+      },
+      {
+        "name": "symphonyE1",
+        "desc": "幻彩统一命令",
+        "deviceMinVer": 0
+      }
+    ],
+    "stateProtocol": [
+      {
+        "name": "wifibleSymphony",
+        "desc": "统一命令2.0 灯具标准状态",
+        "deviceMinVer": 0
+      }
+    ],
+    "panel": {
+      "productId": 182,
+      "type": "symphony_line",
+      "tab_ui": [
+        {
+          "pageProperty": "colorful",
+          "index": 0,
+          "deviceMinVer": 0
+        },
+        {
+          "pageProperty": "scene",
+          "index": 1,
+          "deviceMinVer": 0
+        },
+        {
+          "pageProperty": "carousel",
+          "index": 2,
+          "deviceMinVer": 0
+        },
+        {
+          "pageProperty": "smear",
+          "index": 3,
+          "deviceMinVer": 0
+        },
+        {
+          "pageProperty": "musicMic",
+          "index": 4,
+          "deviceMinVer": 0
+        },
+        {
+          "pageProperty": "power",
+          "index": 5,
+          "deviceMinVer": 0
+        },
+        {
+          "pageProperty": "timing",
+          "index": 6,
+          "deviceMinVer": 0
+        },
+        {
+          "pageProperty": "settings",
+          "index": 7,
+          "deviceMinVer": 0
+        },
+        {
+          "pageProperty": "linkage",
+          "index": 8,
+          "deviceMinVer": 0
+        },
+        {
+          "pageProperty": "white",
+          "index": 9,
+          "deviceMinVer": 0
+        },
+        {
+          "pageProperty": "layout",
+          "index": 10,
+          "deviceMinVer": 0
+        }
+      ]
+    },
+    "ble_devices_entry": {
+      "productId": 182,
+      "icon": "enum://dengdai",
+      "category": "zm",
+      "categoryCode": "hc3",
+      "functions": [
+        {
+          "code": "rgb_w_mix",
+          "desc": "rgbw混光",
+          "name": "rgbw混光",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "multiple_screen_data",
+          "desc": "幻彩联屏",
+          "name": "幻彩联屏",
+          "type": "Hex",
+          "deviceMinVer": 2,
+          "value": {}
+        },
+        {
+          "code": "firmware_data",
+          "desc": "固件升级",
+          "name": "固件升级",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "timer_data",
+          "desc": "设置定时",
+          "name": "设置定时",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "state_upload",
+          "desc": "状态上报",
+          "name": "状态上报",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "state_upload_v2",
+          "desc": "状态上报2.0",
+          "name": "状态上报2.0",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "function_setting",
+          "desc": "功能设置",
+          "name": "功能设置",
+          "type": "Hex",
+          "deviceMinVer": 9,
+          "value": {}
+        },
+        {
+          "code": "function_inquiry",
+          "desc": "功能查询",
+          "name": "功能查询",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "set_time",
+          "desc": "校时命令, year从2000年开始",
+          "name": "校时命令",
+          "type": "Json",
+          "deviceMinVer": 0,
+          "value": {
+            "fields": [
+              {
+                "fieldName": "year",
+                "max": 255,
+                "min": 0,
+                "step": 1
+              },
+              {
+                "fieldName": "month",
+                "max": 12,
+                "min": 1,
+                "step": 1
+              },
+              {
+                "fieldName": "day",
+                "max": 31,
+                "min": 1,
+                "step": 1
+              },
+              {
+                "fieldName": "hour",
+                "max": 23,
+                "min": 0,
+                "step": 1
+              },
+              {
+                "fieldName": "sec",
+                "max": 60,
+                "min": 0,
+                "step": 1
+              },
+              {
+                "fieldName": "minute",
+                "max": 60,
+                "min": 0,
+                "step": 1
+              },
+              {
+                "fieldName": "week",
+                "max": 7,
+                "min": 1,
+                "step": 1
+              }
+            ]
+          }
+        },
+        {
+          "code": "control_data",
+          "desc": "透传命令",
+          "name": "透传命令",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "switch_led_v2",
+          "desc": "统一命令的开关",
+          "name": "开关",
+          "type": "Json",
+          "deviceMinVer": 0,
+          "value": {
+            "fields": [
+              {
+                "fieldName": "open",
+                "step": 1
+              },
+              {
+                "fieldName": "delay",
+                "max": 65535,
+                "min": 0,
+                "step": 1
+              },
+              {
+                "fieldName": "gradient",
+                "max": 16777215,
+                "min": 0,
+                "step": 1
+              }
+            ]
+          }
+        },
+        {
+          "code": "switch_led_v3",
+          "desc": "统一命令2.0的开关",
+          "name": "开关",
+          "type": "Json",
+          "deviceMinVer": 0,
+          "value": {
+            "fields": [
+              {
+                "fieldName": "preview",
+                "max": 255,
+                "min": 0,
+                "step": 1
+              },
+              {
+                "fieldName": "open",
+                "step": 1
+              },
+              {
+                "fieldName": "delay",
+                "max": 65535,
+                "min": 0,
+                "step": 1
+              },
+              {
+                "fieldName": "gradient",
+                "max": 16777215,
+                "min": 0,
+                "step": 1
+              }
+            ]
+          }
+        },
+        {
+          "code": "bright_value_v2",
+          "desc": "统一命令调节亮度",
+          "name": "亮度",
+          "type": "Json",
+          "deviceMinVer": 0,
+          "value": {
+            "fields": [
+              {
+                "fieldName": "value",
+                "max": 100,
+                "min": 0,
+                "step": 1
+              },
+              {
+                "fieldName": "delay",
+                "max": 65535,
+                "min": 0,
+                "step": 1
+              },
+              {
+                "fieldName": "gradient",
+                "max": 16777215,
+                "min": 0,
+                "step": 1
+              }
+            ]
+          }
+        },
+        {
+          "code": "timer_data_v2",
+          "desc": "统一命令设置定时2.0",
+          "name": "设置定时2.0",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "colour_data_v2",
+          "desc": "统一命令调rgb",
+          "name": "彩光模式",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "colour_data_v3",
+          "desc": "统一命令2.0调rgb",
+          "name": "彩光模式",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "switch_led",
+          "desc": "开关, 老版本",
+          "name": "开关",
+          "type": "Json",
+          "deviceMinVer": 0,
+          "value": {
+            "fields": [
+              {
+                "fieldName": "open",
+                "step": 1
+              }
+            ]
+          }
+        },
+        {
+          "code": "get_time",
+          "desc": "获取设备时间, 发送时对应的值为null",
+          "name": "获取设备时间",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "get_timer_list",
+          "desc": "获取定时列表, 发送时对应的值为null",
+          "name": "获取定时列表",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "get_timer_list_v2",
+          "desc": "统一命令2.0定时列表, 发送时对应的值为null",
+          "name": "获取定时列表2.0",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "wake_up",
+          "desc": "唤醒",
+          "name": "唤醒",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "wake_up_inquire",
+          "desc": "唤醒查询",
+          "name": "唤醒查询",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "fall_asleep",
+          "desc": "入睡",
+          "name": "入睡",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "fall_asleep_inquire",
+          "desc": "入睡查询",
+          "name": "入睡查询",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "countdown",
+          "desc": "倒计时",
+          "name": "倒计时",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "music_data_hc3",
+          "desc": "新幻彩音乐模式命令",
+          "name": "音乐模式",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "custom_data_hc3",
+          "desc": "幻彩自定义模式",
+          "name": "自定义模式",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "linkage_hc3",
+          "desc": "幻彩联动模式",
+          "name": "联动模式",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "static_colorful_hc3",
+          "desc": "幻彩多彩静态模式",
+          "name": "多彩静态模式",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "smear_hc3",
+          "desc": "幻彩涂抹",
+          "name": "涂抹",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        },
+        {
+          "code": "set_wiring_preview",
+          "desc": "统一命令2.0排序设置-预览",
+          "name": "统一命令2.0排序设置-预览",
+          "type": "Hex",
+          "value": {}
+        },
+        {
+          "code": "smear_hc3_v2",
+          "desc": "幻彩涂抹V2",
+          "name": "预览涂抹",
+          "type": "Hex",
+          "deviceMinVer": 3,
+          "value": {}
+        },
+        {
+          "code": "microphone_V2",
+          "desc": "硬件麦克风",
+          "name": "硬件麦克风",
+          "type": "Hex",
+          "deviceMinVer": 0,
+          "value": {}
+        }
+      ],
+      "hexCmdForms": {},
+      "runtimeScripts": [],
+      "responseHexDescribes": [],
+      "protocols": [
+        {
+          "name": "common",
+          "desc": "通用命令",
+          "deviceMinVer": 0
+        },
+        {
+          "name": "common1_0",
+          "desc": "通用命令1.0",
+          "deviceMinVer": 0
+        },
+        {
+          "name": "common2_0",
+          "desc": "通用命令2.0",
+          "deviceMinVer": 0
+        },
+        {
+          "name": "symphonyE1",
+          "desc": "幻彩统一命令",
+          "deviceMinVer": 0
+        }
+      ],
+      "stateProtocol": [
+        {
+          "name": "wifibleSymphony",
+          "desc": "统一命令2.0 灯具标准状态",
+          "deviceMinVer": 0
+        }
+      ]
+    }
+  },
+  "lmdb": {
+    "found": false,
+    "device": [],
+    "protocols": [],
+    "state_protocols": [],
+    "functions": [],
+    "function_count": 0,
+    "panel": [],
+    "panel_tabs": []
+  },
+  "command_family_coverage": {
+    "js_bundle": {
+      "E1 21": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 22": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 23": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 26": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 05": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 06": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      }
+    },
+    "wifi_devices.json": {
+      "E1 21": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 22": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 23": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 26": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 05": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 06": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      }
+    },
+    "wifi_dp_cmd.json": {
+      "E1 21": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 22": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 23": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 26": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 05": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 06": {
+        "status": "present",
+        "offsets": [
+          2546
+        ],
+        "hit_count": 1
+      },
+      "_all_cmdForms": {
+        "state_upload": "818A8B96",
+        "bright_value_v2": "3b010000{value}00{value}{delay}{delay}{delay}{gradient}{gradient}",
+        "switch_led": "71{open}0f",
+        "switch_led_v2": "3b{open}0000000000{gradient}{gradient}{gradient}{delay}{delay}",
+        "symp_app_volume": "74{volume}",
+        "symp_get_mic_info": "720072",
+        "symp_scene_v2": "42{model}{speed}{bright}",
+        "twinkle_data": "3A{exeType}{exeValue}{exeValue}{exeValue}{lightTime}{slakeTime}{count}{finishState}{transitionTime}",
+        "music_data_v2": "36{exeType}{exeValue}{exeValue}{exeValue}{volume}{transitionTime}{transitionTime}",
+        "get_timer_list": "222a2b",
+        "get_custom": "525a5b",
+        "get_time": "111a1b",
+        "get_mic_info": "7200",
+        "get_mic_info_v2": "7500",
+        "get_symp_fixed_data": "444a4b",
+        "get_symp_config_v2": "631221f0",
+        "sdd_get_colour_data": "b0babb",
+        "set_time": "1014{year}{month}{day}{hour}{minute}{sec}{week}00",
+        "get_lver": "41542b4c5645520d",
+        "reset": "41542b52454c440d",
+        "candle_data": "39{exeType}{exeValue}{exeValue}{exeValue}{speed}{bright}{extent}",
+        "scene_data_v2": "38{model}{speed}{bright}",
+        "temp_value_v2": "3bb1000000{cct}{bright}00001e0000",
+        "function_inquiry": "2b2c2d",
+        "switch_led_v3": "e001{preview}3b{open}0000000000{gradient}{gradient}{gradient}{delay}{delay}",
+        "scene_data_v3": "e002{preview}{model}{speed}{bright}",
+        "fall_asleep_inquire": "e00a",
+        "wake_up_inquire": "e008",
+        "get_timer_list_v2": "e006",
+        "state_upload_v2": "ea818a8b",
+        "countdown": "e00d"
+      }
+    },
+    "wifi_dp_response.json": {
+      "E1 21": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 22": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 23": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 26": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 05": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 06": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      }
+    },
+    "wifi_device_panel.json": {
+      "E1 21": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 22": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 23": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 26": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 05": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 06": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      }
+    },
+    "HIKARIYA/wifi_dp_cmd.json": {
+      "E1 21": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 22": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 23": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 26": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 05": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 06": {
+        "status": "present",
+        "offsets": [
+          2546
+        ],
+        "hit_count": 1
+      },
+      "_all_cmdForms": {
+        "state_upload": "818A8B96",
+        "bright_value_v2": "3b010000{value}00{value}{delay}{delay}{delay}{gradient}{gradient}",
+        "switch_led": "71{open}0f",
+        "switch_led_v2": "3b{open}0000000000{gradient}{gradient}{gradient}{delay}{delay}",
+        "symp_app_volume": "74{volume}",
+        "symp_get_mic_info": "720072",
+        "symp_scene_v2": "42{model}{speed}{bright}",
+        "twinkle_data": "3A{exeType}{exeValue}{exeValue}{exeValue}{lightTime}{slakeTime}{count}{finishState}{transitionTime}",
+        "music_data_v2": "36{exeType}{exeValue}{exeValue}{exeValue}{volume}{transitionTime}{transitionTime}",
+        "get_timer_list": "222a2b",
+        "get_custom": "525a5b",
+        "get_time": "111a1b",
+        "get_mic_info": "7200",
+        "get_mic_info_v2": "7500",
+        "get_symp_fixed_data": "444a4b",
+        "get_symp_config_v2": "631221f0",
+        "sdd_get_colour_data": "b0babb",
+        "set_time": "1014{year}{month}{day}{hour}{minute}{sec}{week}00",
+        "get_lver": "41542b4c5645520d",
+        "reset": "41542b52454c440d",
+        "candle_data": "39{exeType}{exeValue}{exeValue}{exeValue}{speed}{bright}{extent}",
+        "scene_data_v2": "38{model}{speed}{bright}",
+        "temp_value_v2": "3bb1000000{cct}{bright}00001e0000",
+        "function_inquiry": "2b2c2d",
+        "switch_led_v3": "e001{preview}3b{open}0000000000{gradient}{gradient}{gradient}{delay}{delay}",
+        "scene_data_v3": "e002{preview}{model}{speed}{bright}",
+        "fall_asleep_inquire": "e00a",
+        "wake_up_inquire": "e008",
+        "get_timer_list_v2": "e006",
+        "state_upload_v2": "ea818a8b",
+        "countdown": "e00d"
+      }
+    },
+    "data.mdb": {
+      "E1 21": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 22": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 23": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 26": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 05": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 06": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      }
+    },
+    "Dart App binary": {
+      "E1 21": {
+        "status": "present",
+        "offsets": [
+          76466698
+        ],
+        "hit_count": 1
+      },
+      "E1 22": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 23": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E1 26": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 05": {
+        "status": "absent",
+        "offsets": [],
+        "hit_count": 0
+      },
+      "E0 06": {
+        "status": "present",
+        "offsets": [
+          84415031
+        ],
+        "hit_count": 1
+      }
+    }
+  },
+  "model_string_search": {
+    "js_bundle": {
+      "model": {
+        "hit_count": 0,
+        "offsets": []
+      },
+      "model_info": {
+        "hit_count": 0,
+        "offsets": []
+      },
+      "model_prefix": {
+        "hit_count": 0,
+        "offsets": [],
+        "distinct_strings": []
+      },
+      "protocol_hex": {
+        "hit_count": 0,
+        "offsets": []
+      }
+    },
+    "wifi_devices.json": {
+      "model": {
+        "hit_count": 0,
+        "offsets": []
+      },
+      "model_info": {
+        "hit_count": 0,
+        "offsets": []
+      },
+      "model_prefix": {
+        "hit_count": 0,
+        "offsets": [],
+        "distinct_strings": []
+      },
+      "protocol_hex": {
+        "hit_count": 0,
+        "offsets": []
+      }
+    },
+    "data.mdb": {
+      "model": {
+        "hit_count": 0,
+        "offsets": []
+      },
+      "model_info": {
+        "hit_count": 0,
+        "offsets": []
+      },
+      "model_prefix": {
+        "hit_count": 0,
+        "offsets": [],
+        "distinct_strings": []
+      },
+      "protocol_hex": {
+        "hit_count": 0,
+        "offsets": []
+      }
+    },
+    "Dart App binary": {
+      "model": {
+        "hit_count": 0,
+        "offsets": []
+      },
+      "model_info": {
+        "hit_count": 0,
+        "offsets": []
+      },
+      "model_prefix": {
+        "hit_count": 3,
+        "offsets": [
+          75562672,
+          77854848,
+          79570000
+        ],
+        "distinct_strings": [
+          "AK001-ZJ2",
+          "AK001-ZJ21",
+          "AK001-ZJ215"
+        ]
+      },
+      "protocol_hex": {
+        "hit_count": 0,
+        "offsets": []
+      }
+    }
+  },
+  "provenance_offsets": {
+    "60_surplife.js": {
+      "file": "/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/zg_app_builtin_assest/assets/js_bundle/60_surplife.js",
+      "size": 426410,
+      "offsets": {
+        "bleDevices=[": [
+          223
+        ],
+        "wifiDevices=[": [
+          129954
+        ],
+        "panel=[": [
+          56937
+        ],
+        "functions=[": [
+          44584
+        ],
+        "productId:182,": [
+          66387,
+          194495
+        ],
+        "symphonyE1": [
+          2949,
+          3847,
+          4624,
+          4940,
+          5669,
+          5980,
+          8347,
+          10344,
+          10661,
+          10977,
+          12090,
+          13204,
+          14318,
+          15432,
+          15744,
+          16925,
+          18107,
+          18424,
+          19492,
+          20561,
+          20878,
+          22426,
+          24677,
+          24993,
+          28515,
+          29654,
+          30793,
+          31110,
+          31426,
+          31742,
+          32053,
+          32369,
+          32685,
+          169759,
+          174032,
+          179836,
+          183013,
+          184104,
+          186975,
+          195760,
+          197001,
+          198249,
+          199383,
+          203272,
+          204539,
+          207610,
+          208827,
+          212522,
+          213865,
+          215939,
+          217205,
+          229462,
+          230764,
+          233735,
+          235006,
+          236231,
+          237456,
+          238681,
+          239906,
+          241146,
+          242336,
+          247914,
+          249131,
+          251787,
+          253156,
+          254368,
+          257055,
+          258286,
+          259399,
+          263095,
+          264045,
+          265151,
+          281811,
+          282932,
+          285401,
+          286473,
+          287528,
+          292734,
+          299302,
+          302797,
+          307151,
+          308143,
+          309424,
+          310395,
+          315823,
+          316850,
+          317941,
+          319268,
+          320511,
+          321553,
+          324018,
+          326005,
+          327219,
+          328433,
+          331280,
+          332386,
+          333532,
+          334980,
+          337650,
+          338676,
+          340075,
+          342704,
+          345270,
+          346342,
+          347627,
+          350627,
+          354158,
+          355423,
+          357964,
+          360230,
+          361541,
+          364964,
+          365990,
+          367096,
+          368367,
+          371102,
+          372171,
+          373615,
+          375013,
+          376321,
+          377718,
+          378961,
+          380429,
+          381541,
+          386365,
+          389719,
+          391008,
+          396480,
+          397552,
+          399040,
+          400083,
+          401155,
+          402261
+        ],
+        "wifibleSymphony": [
+          3000,
+          3898,
+          4675,
+          4991,
+          5720,
+          6031,
+          7196,
+          8398,
+          10712,
+          11028,
+          15795,
+          18475,
+          20929,
+          22119,
+          22477,
+          24728,
+          25044,
+          26179,
+          27356,
+          31161,
+          31477,
+          31793,
+          32104,
+          32420,
+          32736,
+          169810,
+          172932,
+          174083,
+          177137,
+          178642,
+          179887,
+          181275,
+          183064,
+          184155,
+          187026,
+          195811,
+          197052,
+          198300,
+          199434,
+          202132,
+          203323,
+          204590,
+          207661,
+          208878,
+          212573,
+          213916,
+          225646,
+          229513,
+          230815,
+          235057,
+          236282,
+          237507,
+          238732,
+          239957,
+          241197,
+          242387,
+          243837,
+          245299,
+          246722,
+          247965,
+          249182,
+          250614,
+          251838,
+          253207,
+          254419,
+          255771,
+          257106,
+          258337,
+          263146,
+          266659,
+          268082,
+          269505,
+          281862,
+          282983,
+          284382,
+          289075,
+          290537,
+          291710,
+          299353,
+          307202,
+          309475,
+          311903,
+          313326,
+          314749,
+          319319,
+          320562,
+          323049,
+          335031,
+          336499,
+          337701,
+          340126,
+          341316,
+          342755,
+          344249,
+          350678,
+          354209,
+          356617,
+          358015,
+          359176,
+          365015,
+          368418,
+          369851,
+          373666,
+          375064,
+          376372,
+          377769,
+          379012,
+          380480,
+          385262,
+          386416,
+          388488,
+          389770,
+          391059,
+          399091
+        ],
+        "symphony_line": [
+          59860,
+          60522,
+          62511,
+          63080,
+          63649,
+          64351,
+          65269,
+          65838,
+          66407,
+          67333,
+          67902,
+          68649,
+          69217,
+          72785,
+          73354,
+          73874,
+          74394,
+          74914,
+          75434,
+          77562,
+          78895,
+          79465,
+          80616,
+          81231,
+          82421,
+          86485,
+          88650,
+          88935,
+          89504,
+          91956,
+          92525,
+          93812,
+          94912,
+          95481,
+          96143,
+          97243,
+          97946,
+          98703,
+          99365,
+          100165,
+          100877,
+          101671,
+          102240,
+          103204,
+          103773,
+          104435,
+          105097,
+          105666,
+          106279,
+          106848,
+          108820,
+          109749
+        ]
+      }
+    },
+    "wifi_devices.json": {
+      "file": "/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/magichome2_home_data_provide/assets/wifi_devices.json",
+      "offsets": {
+        "{\"productId\":182": [
+          265167
+        ],
+        "\"symphonyE1\"": [
+          161526,
+          179380,
+          203037,
+          217025,
+          222237,
+          235090,
+          270319,
+          275641,
+          281336,
+          286659,
+          304588,
+          310156,
+          323197,
+          328509,
+          345025,
+          350436
+        ],
+        "\"wifibleSymphony\"": [
+          161611,
+          179465,
+          203122,
+          217110,
+          235175,
+          270404,
+          275726,
+          281421,
+          286744,
+          299455,
+          304673,
+          310241,
+          323282,
+          328594,
+          345110,
+          350521
+        ]
+      }
+    },
+    "ble_devices.json": {
+      "file": "/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/magichome2_home_data_provide/assets/ble_devices.json",
+      "offsets": {
+        "{\"productId\":182": [
+          266405
+        ]
+      }
+    },
+    "wifi_device_panel.json": {
+      "file": "/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/magichome2_home_data_provide/assets/wifi_device_panel.json",
+      "offsets": {
+        "{\"productId\":182": [
+          10568
+        ]
+      }
+    },
+    "wifi_dp_cmd.json": {
+      "file": "/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/magichome2_home_data_provide/assets/wifi_dp_cmd.json",
+      "offsets": {
+        "\"switch_led_v3\"": [
+          2144
+        ],
+        "\"scene_data_v3\"": [
+          2271
+        ],
+        "\"get_timer_list_v2\"": [
+          2514
+        ],
+        "\"countdown\"": [
+          2672
+        ],
+        "\"e006\"": [
+          2545
+        ],
+        "e001{preview}": [
+          2172
+        ],
+        "e002{preview}": [
+          2299
+        ]
+      }
+    },
+    "wifi_dp_response.json": {
+      "file": "/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/magichome2_home_data_provide/assets/wifi_dp_response.json",
+      "offsets": {
+        "\"state_upload\"": [
+          11
+        ],
+        "\"get_time\"": [
+          191
+        ],
+        "\"get_symp_config_v2\"": [
+          864
+        ]
+      }
+    },
+    "data.mdb": {
+      "file": "/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/flutter_assets/packages/briturn_core/assets/zg_device_db/data.mdb",
+      "offsets": {
+        "CommandProtocol": [
+          474572
+        ],
+        "ZGDeviceEntity": [
+          472676
+        ],
+        "DeviceFunctionEntity": [
+          473764
+        ],
+        "symphonyE1": [
+          344756,
+          345140,
+          345524,
+          346300,
+          346684,
+          348244,
+          348628,
+          349012,
+          349396,
+          349780,
+          350164,
+          350548,
+          351028,
+          351700,
+          352084,
+          352364,
+          353036,
+          353420,
+          356020,
+          356500,
+          357172,
+          357556,
+          358324,
+          358708,
+          359380,
+          359764,
+          361228,
+          361612,
+          362092,
+          362476,
+          363628,
+          364780,
+          366220,
+          367772,
+          368252,
+          369108,
+          369588,
+          370068,
+          370844,
+          371228,
+          374900,
+          375380,
+          375764,
+          399956,
+          400436,
+          400820,
+          403812,
+          404196,
+          404676,
+          405060,
+          406212,
+          407076,
+          459732,
+          460116,
+          461084,
+          462444,
+          463412,
+          547412,
+          547892,
+          548276,
+          688988,
+          689372,
+          693044,
+          693524,
+          693908,
+          695444,
+          695828,
+          696212,
+          696780,
+          697164,
+          697548,
+          698324,
+          698708,
+          699092,
+          699868,
+          700252,
+          701812,
+          702196,
+          702580,
+          702964,
+          703348,
+          703732,
+          704116,
+          1612372,
+          1612852,
+          1631340,
+          1631724,
+          1633260,
+          1633932,
+          1634316,
+          1635284,
+          1636644,
+          1637612,
+          1645140,
+          1645620,
+          1646004,
+          1648996,
+          1649380,
+          1649860,
+          1650244,
+          1651396,
+          1652260,
+          1653700,
+          1661524,
+          1662004,
+          1694292,
+          1694772
+        ],
+        "wifibleSymphony": [
+          543260,
+          543372,
+          543484,
+          543712,
+          543928,
+          545016,
+          545992,
+          546092,
+          546204,
+          838172,
+          838284,
+          838396,
+          838624,
+          838840,
+          839928,
+          840904,
+          841004,
+          841116,
+          841564,
+          841680,
+          841784,
+          842548,
+          842660,
+          842772,
+          843112,
+          848096,
+          848200,
+          848300,
+          848416,
+          848520,
+          848624,
+          848724,
+          848840,
+          848944,
+          849044,
+          849156,
+          849268,
+          849384,
+          849488,
+          849592,
+          849696,
+          849800,
+          849904,
+          850008,
+          850440,
+          850544,
+          1477148,
+          1477260,
+          1477372,
+          1477600,
+          1477816,
+          1478904,
+          1479880,
+          1479980,
+          1480092,
+          1480540,
+          1480656,
+          1480760,
+          1481524,
+          1481636,
+          1481748,
+          1482088,
+          1487072,
+          1487176,
+          1487276,
+          1487392,
+          1487496,
+          1487600,
+          1487700,
+          1487816,
+          1487920,
+          1488020,
+          1488132,
+          1488244,
+          1488360,
+          1488464,
+          1488568,
+          1488672,
+          1488776,
+          1488880,
+          1488984,
+          1489416,
+          1489520,
+          1489828,
+          1490824,
+          1490928,
+          1549544,
+          1549648,
+          1549976,
+          1550080,
+          1550288,
+          1550616,
+          1550720,
+          1551352,
+          1551676,
+          1551792,
+          1552100,
+          1552216,
+          1552316,
+          1552428,
+          1552640,
+          1552740,
+          1552952
+        ],
+        "symphony_line": [
+          1030352,
+          1030440,
+          1031016,
+          1031920,
+          1032088,
+          1032176,
+          1403400,
+          1403488,
+          1403664,
+          1404016,
+          1404104,
+          1404192,
+          1404280,
+          1404368,
+          1404456,
+          1405464,
+          1405552,
+          1405720,
+          1405808,
+          1406056,
+          1406296,
+          1406464,
+          1406552,
+          1406640,
+          1407048,
+          1407136,
+          1521872,
+          1521960,
+          1522536,
+          1523440,
+          1523608,
+          1523696
+        ]
+      }
+    },
+    "Dart App binary": {
+      "file": "/Applications/Surplife.app/Wrapper/Surplife.app/Frameworks/App.framework/App",
+      "offsets": {
+        "AK001-ZJ2": [
+          75562672,
+          77854848,
+          79570000
+        ],
+        "AK001-ZJ21": [
+          77854848,
+          79570000
+        ],
+        "AK001-ZJ215": [
+          79570000
+        ],
+        "AK001-ZJ21413": [],
+        "ZG-BL-UFO": [],
+        "symphonyE1": [
+          84879280
+        ]
+      }
+    }
+  }
+}
