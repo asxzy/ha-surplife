@@ -118,6 +118,10 @@ def asset_paths(app: str) -> Dict[str, str]:
         "dart_app": os.path.join(
             app, "Wrapper", "Surplife.app", "Frameworks", "App.framework", "App",
         ),
+        # The Swift/ObjC runner Mach-O that sits beside App.framework.
+        "runner_binary": os.path.join(
+            app, "Wrapper", "Surplife.app", "Surplife",
+        ),
     }
 
 
@@ -471,15 +475,23 @@ def locate_offsets(paths: Dict[str, str]) -> Dict[str, Any]:
     }
     out["wifi_dp_cmd.json"] = {
         "file": paths["wifi_dp_cmd"],
+        # NOTE: two families of needle here. Quoted needles ('"e006"') point at the
+        # opening quote of the JSON key/value token; unquoted needles (b"e006") point
+        # at the first byte of the cmdForm *value*, which is what the report cites.
         "offsets": offsets_of(paths["wifi_dp_cmd"], [
             b'"switch_led_v3"', b'"scene_data_v3"', b'"get_timer_list_v2"',
             b'"countdown"', b'"e006"', b"e001{preview}", b"e002{preview}",
+            b"e006", b"e00a", b"e008", b"e00d", b"ea818a8b",
         ]),
     }
     out["wifi_dp_response.json"] = {
         "file": paths["wifi_dp_response"],
+        # Quoted key form ('"state_upload"') = opening quote of the key;
+        # the '"dpCode":"..."' form = first byte of the whole dpCode token.
         "offsets": offsets_of(paths["wifi_dp_response"], [
             b'"state_upload"', b'"get_time"', b'"get_symp_config_v2"',
+            b'"dpCode":"state_upload"', b'"dpCode":"get_time"',
+            b'"dpCode":"get_symp_config_v2"',
         ]),
     }
     out["data.mdb"] = {
@@ -494,6 +506,16 @@ def locate_offsets(paths: Dict[str, str]) -> Dict[str, Any]:
         "offsets": offsets_of(paths["dart_app"], [
             b"AK001-ZJ2", b"AK001-ZJ21", b"AK001-ZJ215", b"AK001-ZJ21413",
             b"ZG-BL-UFO", b"symphonyE1",
+        ]),
+    }
+    # The Swift/ObjC runner binary next to App.framework. It carries a *different*
+    # subset of the AK001-* literals (no AK001-ZJ215), which is why the report cites
+    # it separately rather than treating "the app" as one binary.
+    out["Swift runner binary"] = {
+        "file": paths["runner_binary"],
+        "offsets": offsets_of(paths["runner_binary"], [
+            b"AK001-ZJ2", b"AK001-ZJ21", b"AK001-ZJ215", b"AK001-ZJ21413",
+            b"ZG-BL-UFO",
         ]),
     }
     return out
@@ -810,8 +832,8 @@ def main() -> int:
             "Raw byte scan, case-insensitive. `offsets` are byte offsets into "
             "the named artifact. False positives are NOT filtered here. Known "
             "false positives, all verified by reading the surrounding bytes: "
-            "(1) 'e121' in the Dart App binary at 76466698 is the symbol "
-            "'#ffiClosure121'; (2) 'e006' in the Dart App binary at 84415031 "
+            "(1) 'e121' in the Dart App binary at 76466688 is the symbol "
+            "'#ffiClosure121'; (2) 'e006' in the Dart App binary at 84415024 "
             "is the localisation key 'common_e006'; (3) 'e122'/'e123' hits in "
             "PNG/TTF files are image/font pixel or glyph data. Only "
             "wifi_dp_cmd.json (and its HIKARIYA twin) contain real command "

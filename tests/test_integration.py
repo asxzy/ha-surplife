@@ -321,3 +321,60 @@ async def test_unload(hass: HomeAssistant, entry) -> None:
     # it is no longer live.
     state = hass.states.get(LIGHT)
     assert state is None or state.state == STATE_UNAVAILABLE
+
+
+# -- poll failure tolerance ------------------------------------------------
+
+
+async def test_single_poll_failure_keeps_entities_available(
+    hass: HomeAssistant, entry, fake_client
+) -> None:
+    """One missed poll must not mark the strip unavailable.
+
+    The controllers stop answering for a couple of seconds after a multi-paint
+    scribble render, which can span a whole poll at the default interval.
+    """
+    from custom_components.surplife.protocol import SurplifeConnectionError
+
+    fake_client.get_state.side_effect = SurplifeConnectionError("no reply")
+    await hass.data[DOMAIN][entry.entry_id].async_refresh()
+    await hass.async_block_till_done()
+
+    state = hass.states.get(LIGHT)
+    assert state is not None
+    assert state.state == STATE_ON
+
+
+async def test_repeated_poll_failures_mark_unavailable(
+    hass: HomeAssistant, entry, fake_client
+) -> None:
+    """A run of failures is a real outage and must be reported."""
+    from custom_components.surplife.protocol import SurplifeConnectionError
+
+    fake_client.get_state.side_effect = SurplifeConnectionError("no reply")
+    for _ in range(3):
+        await hass.data[DOMAIN][entry.entry_id].async_refresh()
+        await hass.async_block_till_done()
+
+    state = hass.states.get(LIGHT)
+    assert state is not None
+    assert state.state == STATE_UNAVAILABLE
+
+
+async def test_poll_recovers_after_transient_failure(
+    hass: HomeAssistant, entry, fake_client
+) -> None:
+    """A good poll clears the failure count."""
+    from custom_components.surplife.protocol import SurplifeConnectionError
+
+    fake_client.get_state.side_effect = SurplifeConnectionError("no reply")
+    await hass.data[DOMAIN][entry.entry_id].async_refresh()
+    await hass.async_block_till_done()
+
+    fake_client.get_state.side_effect = None
+    fake_client.get_state.return_value = _state()
+    await hass.data[DOMAIN][entry.entry_id].async_refresh()
+    await hass.async_block_till_done()
+
+    assert hass.states.get(LIGHT).state == STATE_ON
+    assert hass.data[DOMAIN][entry.entry_id]._failures == 0

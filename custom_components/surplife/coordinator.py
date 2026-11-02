@@ -19,7 +19,7 @@ import asyncio
 import datetime as dt
 import logging
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Final
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_NAME
@@ -51,6 +51,11 @@ from .protocol import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+#: Consecutive failed polls tolerated before entities go unavailable. The
+#: controllers pause for ~2.6s after a multi-paint render, which can span a
+#: whole poll at the default interval.
+_MAX_POLL_FAILURES: Final = 3
 
 
 @dataclass
@@ -100,6 +105,7 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         self.host: str = entry.data[CONF_HOST]
         self._client = SurplifeClient(self.host, DEFAULT_PORT, timeout=DEFAULT_TIMEOUT)
         self._write_lock = asyncio.Lock()
+        self._failures = 0
         self.runtime = SurplifeRuntime()
 
         super().__init__(
@@ -134,14 +140,30 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
     # -- polling -----------------------------------------------------------
 
     async def _async_update_data(self) -> SurplifeRuntime:
-        """Read the state frame and merge it into the runtime state."""
+        """Read the state frame and merge it into the runtime state.
+
+        A single missed poll is tolerated: the controllers stop answering for
+        a couple of seconds after a multi-paint scribble render, and dropping
+        every entity to ``unavailable`` for that would be wrong. Only a run of
+        consecutive failures is reported as an update failure.
+        """
         try:
             state = await asyncio.to_thread(self._client.get_state)
-        except SurplifeConnectionError as err:
+        except (SurplifeConnectionError, SurplifeError) as err:
+            self._failures += 1
+            if self._failures < _MAX_POLL_FAILURES:
+                _LOGGER.debug(
+                    "Transient poll failure %d/%d for %s: %s",
+                    self._failures,
+                    _MAX_POLL_FAILURES,
+                    self.host,
+                    err,
+                )
+                # Keep the last known runtime; the entity stays available.
+                return self.runtime
             raise UpdateFailed(f"cannot reach {self.host}: {err}") from err
-        except SurplifeError as err:
-            raise UpdateFailed(f"bad reply from {self.host}: {err}") from err
 
+        self._failures = 0
         self.runtime.state = state
         # The device always populates the pattern byte, and reuses it for
         # non-effect modes, so only trust it when it is a known effect.

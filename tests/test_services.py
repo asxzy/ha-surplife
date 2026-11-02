@@ -130,7 +130,7 @@ async def test_apply_preset_to_multiple_lights(hass: HomeAssistant, entry, clien
         data={
             CONF_HOST: "192.168.1.51",
             CONF_NAME: "Soffit East",
-            "mac": "AABBCCDDEE22",
+            "mac": "AABBCCDDEE11",
             "hw_version": "AK001-ZJ21413",
             "firmware_info": "+ok=B6_26_20240514_ZG-BL-UFO",
             "led_count": 35,

@@ -7,7 +7,7 @@
     "E0 05",
     "E0 06"
   ],
-  "note": "Raw byte scan, case-insensitive. `offsets` are byte offsets into the named artifact. False positives are NOT filtered here. Known false positives, all verified by reading the surrounding bytes: (1) 'e121' in the Dart App binary at 76466698 is the symbol '#ffiClosure121'; (2) 'e006' in the Dart App binary at 84415031 is the localisation key 'common_e006'; (3) 'e122'/'e123' hits in PNG/TTF files are image/font pixel or glyph data. Only wifi_dp_cmd.json (and its HIKARIYA twin) contain real command opcodes; the genuine ones are e001, e002, e006, e008, e00a, e00d.",
+  "note": "Raw byte scan, case-insensitive. `offsets` are byte offsets into the named artifact. False positives are NOT filtered here. Known false positives, all verified by reading the surrounding bytes: (1) 'e121' in the Dart App binary at 76466688 is the symbol '#ffiClosure121'; (2) 'e006' in the Dart App binary at 84415024 is the localisation key 'common_e006'; (3) 'e122'/'e123' hits in PNG/TTF files are image/font pixel or glyph data. Only wifi_dp_cmd.json (and its HIKARIYA twin) contain real command opcodes; the genuine ones are e001, e002, e006, e008, e00a, e00d.",
   "coverage": {
     "js_bundle": {
       "E1 21": {

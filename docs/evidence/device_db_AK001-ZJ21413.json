@@ -2339,6 +2339,21 @@
         ],
         "e002{preview}": [
           2299
+        ],
+        "e006": [
+          2546
+        ],
+        "e00a": [
+          2392
+        ],
+        "e008": [
+          2468
+        ],
+        "e00d": [
+          2696
+        ],
+        "ea818a8b": [
+          2622
         ]
       }
     },
@@ -2353,6 +2368,15 @@
         ],
         "\"get_symp_config_v2\"": [
           864
+        ],
+        "\"dpCode\":\"state_upload\"": [
+          2
+        ],
+        "\"dpCode\":\"get_time\"": [
+          182
+        ],
+        "\"dpCode\":\"get_symp_config_v2\"": [
+          855
         ]
       }
     },
@@ -2638,6 +2662,21 @@
         "symphonyE1": [
           84879280
         ]
+      }
+    },
+    "Swift runner binary": {
+      "file": "/Applications/Surplife.app/Wrapper/Surplife.app/Surplife",
+      "offsets": {
+        "AK001-ZJ2": [
+          29780083,
+          29798796
+        ],
+        "AK001-ZJ21": [
+          29780083
+        ],
+        "AK001-ZJ215": [],
+        "AK001-ZJ21413": [],
+        "ZG-BL-UFO": []
       }
     }
   }

@@ -43,8 +43,12 @@ _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_TIMEOUT: Final = 6.0
 DEFAULT_READ_TIMEOUT: Final = 2.0
-RECONNECT_DELAY: Final = 0.25
-MAX_ATTEMPTS: Final = 2
+#: Delay before retrying a failed exchange, multiplied by the attempt number.
+#: The backoff matters: after a multi-paint scribble render the controller stops
+#: answering for up to ~2.6s (measured), so a fixed short retry fires while it is
+#: still busy and burns the whole attempt budget.
+RECONNECT_DELAY: Final = 0.5
+MAX_ATTEMPTS: Final = 3
 #: Minimum spacing between writes. The controllers dislike bursts.
 MIN_WRITE_INTERVAL: Final = 0.05
 
@@ -183,11 +187,18 @@ class SurplifeClient:
         expect_reply: bool = False,
         read_timeout: float | None = None,
     ) -> Frame | None:
-        """Send a command and optionally read one reply, with one retry.
+        """Send a command and optionally read one reply, retrying with backoff.
 
         A failed attempt closes the socket so the retry starts clean. This is
-        what makes the client survive the devices' occasional dropped first
-        command.
+        what makes the client survive two distinct device behaviours:
+
+        * a freshly opened socket silently drops its first command, and
+        * after a multi-paint scribble render the controller stops answering
+          for up to ~2.6s (measured on hardware).
+
+        Both are transient, so the retry delay grows with each attempt rather
+        than staying fixed — a fixed short delay lands while the device is
+        still busy and exhausts the budget.
         """
         last_error: Exception | None = None
         for attempt in range(MAX_ATTEMPTS):
@@ -206,12 +217,12 @@ class SurplifeClient:
                 last_error = err
                 self._disconnect()
                 if attempt + 1 < MAX_ATTEMPTS:
-                    time.sleep(RECONNECT_DELAY)
+                    time.sleep(RECONNECT_DELAY * (attempt + 1))
             except OSError as err:
                 last_error = SurplifeConnectionError(f"send failed: {err}")
                 self._disconnect()
                 if attempt + 1 < MAX_ATTEMPTS:
-                    time.sleep(RECONNECT_DELAY)
+                    time.sleep(RECONNECT_DELAY * (attempt + 1))
         raise last_error or SurplifeConnectionError("command failed")
 
     # -- state -------------------------------------------------------------
