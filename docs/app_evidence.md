@@ -365,6 +365,24 @@ So the scribble template vocabulary is: **`blink`, `asyncBlink`, `breath`,
 `asyncBreath`, `gradient`, `asyncGradient`, `jump`, `asyncJump`, `flash`,
 `stream`, `fireflyA`** — 11 templates. **verified** — `strings_doodle_templates.txt`
 
+**What the templates actually contain is now settled: they are Lottie preview
+animations, not wire data.** All eleven were fetched and parsed. Every one is a
+Bodymovin v5.7.7 document describing a `100 x 40` canvas at `20` fps, with
+shape layers and keyframes, e.g. `blink.json` has `"v":"5.7.7","fr":20,
+"w":100,"h":40` and a `形状图层 3` shape layer. **verified** (fetched 2026-11-03,
+HTTP 200, 3.9–99 KB each)
+
+That matters: the templates cannot be decoded into per-LED frames, because they
+are the *preview art* the app shows in its doodle picker. There is no
+index/manifest at the directory root (`/` is 403, `index.json`, `list.json` and
+`doodle.json` are all 404), so the eleven names above are the complete set.
+**verified**
+
+The consequence for this project is that the app's doodle "effects 1-8" are
+firmware-side, and only their *ids* are usable locally (see
+`docs/protocol_0xB6.md` §8.4). The named patterns this integration ships are
+therefore our own constructions, not ports of the app's templates.
+
 Note `stream` (not "flowing") is the app's word for flowing paint. **verified**
 
 Our expected scribble names map as follows:

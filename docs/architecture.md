@@ -27,13 +27,19 @@ custom_components/surplife/
 │   └── client.py      persistent socket, serialised writes, backoff retry
 ├── coordinator.py     async wrapper + optimistic state
 ├── light.py           the main control surface
-├── select.py          effect, direction
+├── select.py          effect, direction, per-LED look, scene
 ├── number.py          speed, density
+├── text.py            per-LED pattern editor
 ├── sensor.py          LED count, mode, timers
 ├── button.py          sync clock, refresh
 ├── switch.py          deliberately empty
 ├── services.py        scribble, segments, timers, presets
+├── scene_services.py  scene CRUD, looks, date-driven apply
 ├── presets/           seven holiday recipes
+├── scribble_looks.py  nine named per-LED pattern generators
+├── scenes/
+│   ├── model.py       Scene dataclass, validation, date selection
+│   └── store.py       HA Store-backed persistence
 ├── config_flow.py     discovery + manual entry
 └── manifest.json
 ```
@@ -154,6 +160,9 @@ Verified to find all three controllers reliably across repeated runs. **Verified
 | `light.<name>` | on/off, RGB, warm white, 24 effects |
 | `select.<name>_effect` | effect picker (also on the light) |
 | `select.<name>_direction` | animation direction |
+| `text.<name>_per_led_pattern` | per-LED pattern editor |
+| `select.<name>_per_led_look` | nine curated per-LED patterns |
+| `select.<name>_scene` | stored scenes, or today's scene |
 | `number.<name>_effect_speed` | 0-100, read from the device |
 | `number.<name>_effect_density` | 0-100, local only |
 | `sensor.<name>_led_count` | sizes every bitmap |
@@ -169,6 +178,38 @@ support so effects can be driven from automations without constructing a full
 `switch.py` registers nothing. The stock integration's switches are "remote
 access" (a cloud feature) and "music mode" (no local protocol on 0xB6);
 creating entities that do nothing would be worse than not creating them.
+
+## Why scenes live outside the config entry
+
+Scenes are stored once for the whole integration at
+`.storage/surplife.scenes`, not per config entry. The same "Christmas" scene is
+meant to drive all three strips at once, so one copy is the correct model;
+per-entry copies could drift, and applying "the same scene everywhere" would
+become ambiguous.
+
+The store is created by the first entry and kept under a dedicated
+`hass.data[DOMAIN]["__scenes__"]` key, so reloading any single entry does not
+lose or duplicate it. It is dropped only when the last entry unloads, along with
+the services.
+
+Two robustness rules in the loader:
+
+1. **A bad record is skipped, not fatal.** One hand-edited scene with an
+   unknown effect must not take the whole collection down.
+2. **Unknown keys are ignored on read.** A renamed field stays readable rather
+   than bricking the store on upgrade.
+
+## Why the daily pick is seeded
+
+`select_for_date` chooses pseudo-randomly by default, but the RNG is seeded from
+`date | topic | candidate names`. Two consequences, both required:
+
+* the same day always resolves to the same scene, so an automation that runs at
+  sunset and again after a restart does not flip the lights;
+* the result does not depend on the order scenes happen to be stored in, so it
+  is stable across a restore.
+
+A plain `random.choice` would violate both.
 
 ## Why services carry `surplife_entry_id`
 

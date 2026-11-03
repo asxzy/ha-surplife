@@ -58,6 +58,9 @@ Each controller becomes one device with:
 - `select.<name>_effect` — effect picker
 - `number.<name>_effect_speed` / `_effect_density` — animation tuning
 - `select.<name>_direction` — left→right / right→left
+- `text.<name>_per_led_pattern` — type a per-LED pattern ("scribble")
+- `select.<name>_per_led_look` — nine one-tap per-LED patterns
+- `select.<name>_scene` — apply a stored scene, or today's scene
 - `sensor.<name>_led_count` / `_firmware` — device facts
 - `button.<name>_sync_clock` — push HA's clock to the controller
 
@@ -92,6 +95,60 @@ data:
   repeat: everyday
 ```
 
+## Per-LED ("scribble") painting
+
+The wire protocol takes a full per-LED pattern; the app calls this
+**doodle/Graffiti**. It is exposed three ways, from casual to exact:
+
+```yaml
+# One tap: a built-in look
+service: surplife.apply_look
+target:
+  entity_id: light.soffit_east
+data:
+  look: candy_cane          # solid, stripes, candy_cane, gradient, rainbow,
+  palette: ["#ff0000", "#ffffff"]   # firefly, twinkle, chase, wreath
+
+# Type it: the text entity
+#   text.soffit_east_per_led_pattern  <-  "12xred 23xblue/fast"
+
+# Script it: the raw grammar
+service: surplife.set_scribble
+target:
+  entity_id: light.soffit_east
+data:
+  pattern: "12xred/fast 23x0,0,255"
+```
+
+## Scenes that follow the calendar
+
+A *scene* is a named recipe — colour, warm white, effect, segments, a per-LED
+look or pattern — stored in Home Assistant and applicable to any controller.
+Give it a season and an automation can apply "whatever belongs to today":
+
+```yaml
+service: surplife.save_scene
+data:
+  name: christmas
+  mode: effect
+  effect: Flowing Water
+  colors: ["#ff0000", "#00c83c"]
+  start: "11-15"     # inclusive, and windows wrap the year end
+  end: "12-31"
+  tags: holidays
+
+service: surplife.apply_scene_for_date
+target:
+  entity_id:
+    - light.soffit_east
+    - light.soffit_west
+    - light.soffit_south
+data:
+  randomize: true    # stable per day: seeded from the date, not an RNG
+```
+
+Full details in [`docs/scenes_and_looks.md`](docs/scenes_and_looks.md).
+
 ## Grouping
 
 The Surplife app's device grouping is **cloud-side only** — it is a
@@ -106,6 +163,7 @@ three controllers, or use the `surplife.apply_preset` service with
 - [`docs/protocol_0xB6.md`](docs/protocol_0xB6.md) — verified wire protocol
 - [`docs/device_db.md`](docs/device_db.md) — shipped device-database evidence
 - [`docs/app_evidence.md`](docs/app_evidence.md) — app UI labels and limits
+- [`docs/scenes_and_looks.md`](docs/scenes_and_looks.md) — scenes, looks, calendar
 - [`docs/architecture.md`](docs/architecture.md) — component design
 
 Every wire-level claim in this repository is marked **verified** (probed against
