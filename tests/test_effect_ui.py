@@ -302,6 +302,47 @@ async def test_light_describes_the_active_palette(
     assert attributes["palette_mode"] == "colours"
 
 
+async def test_palette_survives_a_restart(
+    hass: HomeAssistant, loaded_entry, patched_client
+) -> None:
+    """The strip's colours must not be advertised as white after a restart.
+
+    The firmware reports *which* effect is playing but never which colours it
+    was given, so on a fresh start the runtime palette is still its default
+    white while the strip is actually showing red and blue. The Configure
+    panel's saved palette is the only record of the truth, so the poll adopts
+    it rather than letting the entity claim the strip is white.
+    """
+    from dataclasses import replace
+    from unittest.mock import Mock
+
+    coordinator = hass.data[DOMAIN][loaded_entry.entry_id]
+    hass.config_entries.async_update_entry(
+        loaded_entry,
+        options={
+            EFFECTS_KEY: {
+                "Chase": {
+                    "colors": [[255, 0, 0, 0], [0, 0, 255, 0]],
+                    "speed": 30,
+                    "density": 70,
+                    "direction": 2,
+                }
+            }
+        },
+    )
+    coordinator.runtime.effect_name = None
+    patched_client.get_state = Mock(
+        return_value=replace(coordinator.runtime.state, pattern=6)
+    )
+
+    await coordinator.async_refresh()
+    await hass.async_block_till_done()
+
+    assert coordinator.runtime.effect_name == "Chase"
+    assert coordinator.runtime.palette == [(255, 0, 0, 0), (0, 0, 255, 0)]
+    assert hass.states.get(LIGHT).attributes["palette"] == ["#ff0000", "#0000ff"]
+
+
 async def test_light_says_which_controls_an_effect_uses(
     hass: HomeAssistant, loaded_entry
 ) -> None:

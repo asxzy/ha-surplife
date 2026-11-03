@@ -241,8 +241,32 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         self.runtime.state = state
         # The device always populates the pattern byte, and reuses it for
         # non-effect modes, so only trust it when it is a known effect.
+        previous = self.runtime.effect_name
         self.runtime.effect_name = state.effect_name
+        if state.effect_name is not None and state.effect_name != previous:
+            self._restore_saved_palette(state.effect_name)
         return self.runtime
+
+    def _restore_saved_palette(self, name: str) -> None:
+        """Adopt the saved colours of an effect the device says is running.
+
+        The firmware reports *which* effect is playing but never which colours
+        it was given, so after a restart the runtime's palette is still its
+        default white while the strip is actually showing red and blue. The
+        Configure panel's saved palette is the only record of the truth, so the
+        ``palette`` attribute is hydrated from it rather than advertising white
+        for a strip that is not white.
+        """
+        saved = effect_settings(self.entry.options, name)
+        if saved is None or not saved.colors:
+            return
+        self.runtime.palette = list(saved.colors)
+        if saved.speed is not None:
+            self.runtime.effect_speed = saved.speed
+        if saved.density is not None:
+            self.runtime.effect_density = saved.density
+        if saved.direction is not None:
+            self.runtime.effect_direction = saved.direction
 
     async def async_shutdown(self) -> None:
         """Close the socket."""
