@@ -12,6 +12,7 @@ Everything here is evidence-backed. Each factual claim is tagged:
 | [device_db.md](device_db.md) | The shipped device database entry for `AK001-ZJ21413` |
 | [app_evidence.md](app_evidence.md) | What is and is not recoverable from the shipped Flutter app |
 | [architecture.md](architecture.md) | Component structure and design decisions |
+| [effect_controls.md](effect_controls.md) | Configuring effects and per-LED patterns without raw commands |
 | [deployment.md](deployment.md) | How to deploy and verify on a live Home Assistant |
 
 ## Evidence index

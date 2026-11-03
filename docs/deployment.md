@@ -31,6 +31,22 @@ rsync -a custom_components/surplife/ \
 
 Restart Home Assistant.
 
+**Keep backups and old copies outside `custom_components/`.** Home Assistant
+scans every subdirectory there as a potential integration, so a copy left at
+`custom_components/surplife.old` is loaded alongside the real one. It carries
+the same `domain` in its `manifest.json`, and the import then fails with:
+
+```
+Setup failed for custom integration 'surplife':
+Unable to import component: No module named 'custom_components.surplife.old'
+```
+
+The visible symptom is worse than that message: every `surplife` entity comes
+back `unavailable` with `restored: true`, and the integration's services
+disappear from the service list entirely, because nothing loaded. Stage
+replacements outside the tree (`/config/.surplife_backups/`, `/tmp`) and delete
+the staging directory when done.
+
 ## Add a controller
 
 Settings → Devices & Services → **Add Integration** → *Surplife Permanent

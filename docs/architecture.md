@@ -33,6 +33,8 @@ custom_components/surplife/
 ├── sensor.py          LED count, mode, timers
 ├── button.py          sync clock, refresh
 ├── switch.py          deliberately empty
+├── effect_profile.py  what each effect actually uses (colours, speed, density)
+├── settings.py        per-effect and per-look settings in the entry options
 ├── services.py        scribble, segments, timers, presets
 ├── scene_services.py  scene CRUD, looks, date-driven apply
 ├── presets/           seven holiday recipes
@@ -40,7 +42,7 @@ custom_components/surplife/
 ├── scenes/
 │   ├── model.py       Scene dataclass, validation, date selection
 │   └── store.py       HA Store-backed persistence
-├── config_flow.py     discovery + manual entry
+├── config_flow.py     discovery, manual entry, and the per-effect control panel
 └── manifest.json
 ```
 
