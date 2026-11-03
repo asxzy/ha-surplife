@@ -239,6 +239,32 @@ async def test_direction_selector_reapplies_and_saves(
     assert effect_settings(loaded_entry.options, "Chase").direction == 2
 
 
+async def test_speed_slider_holds_the_value_it_was_given(
+    hass: HomeAssistant, loaded_entry, patched_client
+) -> None:
+    """The slider must not snap back to the pre-command speed.
+
+    Speed is genuinely reported by the device, so the entity prefers the state
+    frame's byte. That frame is a snapshot from the last poll, so right after
+    commanding an effect it still reports the *old* speed — the slider jumped
+    back and looked like the move had been ignored, even though the strip had
+    been told correctly.
+    """
+    coordinator = hass.data[DOMAIN][loaded_entry.entry_id]
+    await coordinator.async_set_effect("Chase")
+
+    await hass.services.async_call(
+        "number",
+        "set_value",
+        {ATTR_ENTITY_ID: SPEED, "value": 17},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    assert hass.states.get(SPEED).state == "17.0"
+    assert coordinator.runtime.effect_speed == 17
+
+
 async def test_direction_selector_reports_the_stored_direction(
     hass: HomeAssistant, loaded_entry
 ) -> None:

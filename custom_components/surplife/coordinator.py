@@ -407,13 +407,14 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         resolved_direction = (
             direction if direction is not None else (saved.direction if saved else None)
         )
+        effective_speed = (
+            self.runtime.effect_speed if resolved_speed is None else resolved_speed
+        )
         await self._run(
             self._client.set_effect,
             effect_id,
             palette,
-            speed=self.runtime.effect_speed
-            if resolved_speed is None
-            else resolved_speed,
+            speed=effective_speed,
             density=(
                 self.runtime.effect_density
                 if resolved_density is None
@@ -429,9 +430,7 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         )
         self.runtime.effect_name = name
         self.runtime.palette = palette
-        self.runtime.effect_speed = (
-            self.runtime.effect_speed if resolved_speed is None else resolved_speed
-        )
+        self.runtime.effect_speed = effective_speed
         self.runtime.effect_density = (
             self.runtime.effect_density
             if resolved_density is None
@@ -444,7 +443,9 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         )
         self.runtime.look = None
         if self.runtime.state is not None:
-            self.runtime.state = _replace_pattern(self.runtime.state, effect_id)
+            self.runtime.state = _replace_effect_state(
+                self.runtime.state, effect_id, speed=effective_speed
+            )
         self.async_update_listeners()
 
     # -- segments ----------------------------------------------------------
@@ -593,8 +594,19 @@ def _replace_power(state: SurplifeState, power: bool) -> SurplifeState:
     return replace(state, power=power)
 
 
-def _replace_pattern(state: SurplifeState, pattern: int) -> SurplifeState:
-    """Return a copy of a state frame with the pattern byte changed."""
+def _replace_effect_state(
+    state: SurplifeState, pattern: int, *, speed: int | None = None
+) -> SurplifeState:
+    """Return a copy of a state frame with the effect bytes we just wrote.
+
+    The frame is a snapshot from the last poll, so after commanding an effect it
+    still reports the *previous* effect and speed. Patching the fields we know we
+    just set keeps the entities honest until the next poll confirms them — most
+    visibly, the speed slider would otherwise snap back to the old value the
+    moment it was moved.
+    """
     from dataclasses import replace
 
-    return replace(state, pattern=pattern)
+    if speed is None:
+        return replace(state, pattern=pattern)
+    return replace(state, pattern=pattern, speed=speed)
