@@ -111,9 +111,7 @@ async def run() -> int:
             await hass.async_block_till_done()
             ok = entry.state.name == "LOADED"
             registered = {
-                name
-                for name in declared
-                if hass.services.has_service("surplife", name)
+                name for name in declared if hass.services.has_service("surplife", name)
             }
             results.append(
                 (
@@ -122,8 +120,71 @@ async def run() -> int:
                     f"{len(registered)}/{len(declared)} handlers",
                 )
             )
-        except Exception as err:  # noqa: BLE001 - report as a failed check
+        except Exception as err:
             results.append(("services register", False, f"{type(err).__name__}: {err}"))
+
+        # 4. The per-effect control panel must actually render. A schema that
+        #    builds but does not serialize is the silent failure this exists to
+        #    catch: the form opens and every field is missing, which looks like
+        #    "the integration has no options" rather than an error.
+        try:
+
+            flow = await hass.config_entries.options.async_init("smoke")
+            steps_seen = [flow.get("step_id")]
+            # Walk into the effect panel for a multi-colour effect.
+            flow = await hass.config_entries.options.async_configure(
+                flow["flow_id"], {"next_step_id": "effect"}
+            )
+            steps_seen.append(flow.get("step_id"))
+            flow = await hass.config_entries.options.async_configure(
+                flow["flow_id"], {"effect": "Static Gradient"}
+            )
+            steps_seen.append(flow.get("step_id"))
+            schema = flow["data_schema"]
+            fields = {str(key) for key in schema.schema}
+            serialized = schema.schema and all(key.schema for key in schema.schema)
+            ok = (
+                flow.get("type") == "form"
+                and "color_1" in fields
+                and "color_4" in fields
+                and "direction" not in fields
+                and bool(serialized)
+            )
+            results.append(
+                (
+                    "effect panel renders",
+                    ok,
+                    f"steps={'/'.join(str(s) for s in steps_seen)} "
+                    f"fields={len(fields)}",
+                )
+            )
+            hass.config_entries.options.async_abort(flow["flow_id"])
+        except Exception as err:
+            results.append(
+                ("effect panel renders", False, f"{type(err).__name__}: {err}")
+            )
+
+        # 5. The per-LED look panel, which has a different generated shape.
+        try:
+            flow = await hass.config_entries.options.async_init("smoke")
+            flow = await hass.config_entries.options.async_configure(
+                flow["flow_id"], {"next_step_id": "look"}
+            )
+            flow = await hass.config_entries.options.async_configure(
+                flow["flow_id"], {"look": "stripes"}
+            )
+            fields = {str(key) for key in flow["data_schema"].schema}
+            ok = (
+                flow.get("type") == "form"
+                and {"color_1", "color_2", "scribble_effect"} <= fields
+                and "color_3" not in fields
+            )
+            results.append(("look panel renders", ok, f"fields={len(fields)}"))
+            hass.config_entries.options.async_abort(flow["flow_id"])
+        except Exception as err:
+            results.append(
+                ("look panel renders", False, f"{type(err).__name__}: {err}")
+            )
 
         await hass.async_stop()
 
@@ -143,7 +204,7 @@ def main() -> int:
     logging.basicConfig(level=logging.WARNING)
     try:
         return asyncio.run(run())
-    except Exception as err:  # noqa: BLE001 - report, do not traceback-dump
+    except Exception as err:
         print(f"  [FAIL] home assistant boot: {type(err).__name__}: {err}")
         return 1
 
