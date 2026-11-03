@@ -156,23 +156,36 @@ Version 2. **verified** — the state frame's power byte flips immediately.
 
 ---
 
-## 5. Colour and warm white — `E0 01`
+## 5. Colour, white and RGBW — `E0 01`
 
 ```
-e0 01 00 A1 H/2 S V 00 00 00 00 14 00 00     colour
-e0 01 00 B1 00 00 00 00 LVL 00 00 14 00 00   warm white
+e0 01 00 A1 H/2 S V 00 00 00 00 14 00 00     colour only
+e0 01 00 B1 00 00 00 00 LVL 00 00 14 00 00   white only
+e0 01 00 00 H/2 S V 00 LVL 00 00 14 00 00    colour + white (RGBW)
 ```
 
 | Byte | Meaning |
 |---|---|
-| 3 | write mode: `0xa1` colour, `0xb1` white |
+| 3 | write mode: `0xa1` colour, `0xb1` white, `0x00` both |
 | 4-6 | hue (halved), saturation, value |
 | 7 | white temperature — always 0, the strip has no cold-white LED |
 | 8 | white level 0-100 |
 | 11 | constant `0x14` |
 
-Version 2. Both **verified** on hardware. Byte 7 staying at zero is **verified**
-by the absence of any cool-white behaviour on the strip.
+Version 2. Both single-channel forms are **verified** on hardware. Byte 7
+staying at zero is **verified** by the absence of any cool-white behaviour on
+the strip.
+
+**Write mode `0x00` is how white is selected without an RGB imitation.** The
+strip has one white LED and three colour LEDs. Writing the colour channels to
+zero and byte 8 to a level lights only the white LED; writing three equal bright
+RGB values instead lights three colour LEDs and is dimmer and a different white.
+The `0x00` frame is accepted by the firmware (it does not error or drop the
+connection), and the field layout is the same one that the **verified** `E1 26`
+paint below uses for its per-LED colour record.
+
+Like `0xa1` and `0xb1`, the combined frame is **not echoed** in the state frame,
+so the integration tracks colour and white optimistically.
 
 ---
 
@@ -277,6 +290,11 @@ e1 26 EFFECT DIR DENSITY SPEED BLINK H/2 S V 00 WLVL BLINKSPD <bitmap>
 **verified**: `E1 26` both sets *and* renders. The device keeps a stateful
 per-LED framebuffer, so each paint affects only its bitmap-selected LEDs and
 leaves the rest untouched.
+
+The 5-byte colour record `H/2 S V 00 WLVL` is the same one used by `E1 21`
+effects and `E1 22` segments, so a per-LED LED can be colour, white, or both.
+This is the field layout that establishes byte 8 of `E0 01` as the W level:
+the paint is verified, and it puts white in the same position.
 
 That last property is the reason the implementation **covers every LED in every
 render**, padding short patterns with dark LEDs. Relying on the framebuffer to

@@ -49,7 +49,7 @@
       "fields": {
         "pattern": {
           "name": "Pattern",
-          "description": "Per-LED spec, e.g. \"20xred 15x0,0,255\" or \"10xw80\"."
+          "description": "Per-LED spec, e.g. \"20xred 15x0,0,255\" or \"10xw80\". A four-part token such as \"5x0,0,0,100\" lights the white LED for those LEDs."
         },
         "effect": {
           "name": "Effect",
@@ -76,7 +76,7 @@
       "fields": {
         "colors": {
           "name": "Colours",
-          "description": "Up to 20 colours. Missing trailing segments are turned off."
+          "description": "Up to 20 colours. Missing trailing segments are turned off. Give an entry a white level to drive the W channel instead of simulating white from RGB."
         }
       }
     },
@@ -137,7 +137,7 @@
         },
         "palette": {
           "name": "Palette",
-          "description": "Optional colours; the rainbow look ignores this."
+          "description": "Optional colours; the rainbow look ignores them. A white level on an entry is accepted and treated as that colour."
         },
         "direction": {
           "name": "Direction"
@@ -171,7 +171,7 @@
         },
         "colors": {
           "name": "Colours",
-          "description": "Solid-colour scenes use the first colour; effect scenes cycle through all."
+          "description": "Solid-colour scenes use the first colour; effect scenes cycle through all. A white level on an entry drives the W channel, so (white, no colour) is a real white and not an RGB imitation."
         },
         "brightness": {
           "name": "Brightness",
@@ -179,7 +179,7 @@
         },
         "white": {
           "name": "Warm white level",
-          "description": "0-255, used by warm-white scenes."
+          "description": "0-255 W-channel level for warm-white scenes. This is the white LED, not simulated RGB white."
         },
         "effect": {
           "name": "Effect",
@@ -196,7 +196,7 @@
         },
         "segments": {
           "name": "Segments",
-          "description": "Up to 20 colours, used by segment scenes."
+          "description": "Up to 20 colours, used by segment scenes. A white level on an entry drives the W channel for that segment."
         },
         "pattern": {
           "name": "Per-LED pattern",

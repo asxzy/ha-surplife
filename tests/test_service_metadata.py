@@ -185,6 +185,19 @@ def test_service_strings_are_text_only() -> None:
                 )
 
 
+def test_strings_cover_every_documented_field() -> None:
+    """Every field in ``services.yaml`` needs a label in ``strings.json``.
+
+    Home Assistant falls back to the raw field name when a label is missing, so
+    a user sees ``scribble_effect`` instead of "Per-LED effect". That is a
+    usability bug, not a crash, which is exactly the kind that goes unnoticed.
+    """
+    for service, spec in _documented().items():
+        described = _strings()["services"][service].get("fields", {})
+        for field in spec.get("fields", {}):
+            assert field in described, f"{service}.{field} has no strings.json entry"
+
+
 def test_translations_match_strings() -> None:
     """The compiled translation must not drift from the source strings."""
     with (COMPONENT / "translations" / "en.json").open() as handle:

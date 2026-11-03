@@ -96,12 +96,17 @@ space-separated tokens
   <n>x<colour>             a run of n LEDs
   <colour>/slow|fast       with a blink mode
   <colour>/<blink>/<speed> with an explicit blink speed
-  w<n>                     warm white at level n (0-100)
+  w<n>                     white LED at level n (0-100), colour channels dark
+  r,g,b,w                  white LED at level w added to the colour
 ```
 
-Colours are a name, `#rrggbb`, or `r,g,b`. Short patterns are padded with dark
-LEDs — deliberately, because the device keeps a stateful per-LED framebuffer and
-an unmentioned LED would otherwise keep its previous value.
+Colours are a name, `#rrggbb`, or `r,g,b`. A fourth value is the W channel, so
+`0,0,0,100` is the white LED alone while `255,0,0,60` mixes red with white.
+Prefer `w<n>` or a fourth value over `255,255,255` when you want white: the
+strip's white LED is brighter and a cleaner white than three colour LEDs
+simulating one. Short patterns are padded with dark LEDs — deliberately,
+because the device keeps a stateful per-LED framebuffer and an unmentioned LED
+would otherwise keep its previous value.
 
 ## 3. Scenes
 
@@ -128,12 +133,28 @@ data:
 
 | Mode | Payload | Maps onto |
 |---|---|---|
-| `rgb` | `colors[0]`, `brightness` | `E0 01` colour |
-| `white` | `white` | `E0 01` warm white |
+| `rgb` | `colors[0]`, `brightness` | `E0 01` colour, or RGBW if `colors[0]` has a fourth value |
+| `white` | `white` | `E0 01` white channel |
 | `effect` | `effect`, `colors`, `speed`, `density`, `direction` | `E1 21` |
 | `segments` | `segments` (up to 20) | `E1 22` |
 | `scribble` | `pattern` | `E1 23` + `E1 26` |
 | `look` | `look` | `E1 23` + `E1 26` |
+
+### 3.1.1 Colour is RGBW
+
+The strip has one white LED. A colour entry may therefore be a triple
+(`#ff0000`) or a quadruple whose fourth value is a W level 0-100:
+
+```yaml
+colors: ["0,0,0,100"]     # the white LED, no colour — a real white
+colors: ["255,0,0,60"]    # red mixed with white
+colors: ["#ff0000"]       # colour only
+```
+
+`0,0,0,100` is the recommended way to ask for white. `255,255,255` also looks
+white, but it lights three colour LEDs to imitate the white LED, which is dimmer
+and a different shade. The same applies to `segments` entries and to the
+per-LED pattern's fourth value.
 
 Applying a scene also turns the strip on if it is off, so "apply the scene" is
 one operation rather than two.
