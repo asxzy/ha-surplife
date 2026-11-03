@@ -124,6 +124,15 @@ This is a deliberate, documented compromise rather than a bug. The alternative �
 reporting the stale bytes the device does return — would show users a colour
 they did not pick.
 
+Because colour is never read back, a restart has nothing to report. The entity
+still owes Home Assistant a concrete value, because the frontend takes the
+colour wheel's position and the white slider's value from `rgbw_color` and the
+Lovelace card tints its icon from `rgb_color`. Reporting `None` while claiming
+`color_mode: rgbw` makes the colour controls vanish from the card — no picker,
+no white slider — so a cold start reports neutral white and the first command
+replaces it. White-only mode is the one case that legitimately reports no
+colour, because the W channel is then the light source.
+
 ## Grouping
 
 The app's device grouping is **cloud-side only**: a `GroupControl` record pushed

@@ -16,6 +16,7 @@ from homeassistant.components.light import (
     ATTR_EFFECT,
     ATTR_RGB_COLOR,
     ATTR_RGBW_COLOR,
+    ATTR_WHITE,
     ColorMode,
 )
 from homeassistant.const import (
@@ -183,6 +184,75 @@ async def test_rgb_state_is_optimistic(hass: HomeAssistant, entry) -> None:
     state = hass.states.get(LIGHT)
     assert state.attributes["rgb_color"] == (0, 0, 255)
     assert state.attributes["color_mode"] == ColorMode.RGBW
+
+
+async def test_colour_is_reported_before_anything_is_commanded(
+    hass: HomeAssistant, entry
+) -> None:
+    """A freshly loaded light must still expose a colour to the frontend.
+
+    The firmware never echoes colour, so on a cold start there is nothing to
+    read back. Home Assistant takes both the colour wheel's position and the
+    white slider's value from ``rgbw_color``, and the Lovelace card tints its
+    icon from ``rgb_color``. Reporting ``None`` for either while claiming
+    ``color_mode: rgbw`` makes the frontend drop the colour controls
+    completely: the card shows a switch and a brightness slider and no way to
+    pick a colour.
+
+    This is a regression test for exactly that. It must hold with no command
+    issued at all, which is what a restart looks like.
+    """
+    state = hass.states.get(LIGHT)
+    assert state.attributes["color_mode"] == ColorMode.RGBW
+    assert state.attributes["rgbw_color"] is not None
+    assert state.attributes["rgb_color"] is not None
+
+
+async def test_bare_turn_on_keeps_the_colour_controls(
+    hass: HomeAssistant, entry
+) -> None:
+    """``turn_on`` with no arguments must not wipe the colour attributes.
+
+    This is the path a user hits by tapping the entity in the UI: no colour is
+    passed, so nothing is converted, and the reported mix has to survive.
+    """
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: LIGHT, ATTR_RGB_COLOR: (255, 0, 0)},
+        blocking=True,
+    )
+    await hass.services.async_call(
+        "light", "turn_off", {ATTR_ENTITY_ID: LIGHT}, blocking=True
+    )
+    await hass.services.async_call(
+        "light", "turn_on", {ATTR_ENTITY_ID: LIGHT}, blocking=True
+    )
+
+    state = hass.states.get(LIGHT)
+    assert state.state == STATE_ON
+    assert state.attributes["color_mode"] == ColorMode.RGBW
+    assert state.attributes["rgbw_color"] is not None
+    assert state.attributes["rgb_color"] == (255, 0, 0)
+
+
+async def test_white_mode_clears_the_colour(
+    hass: HomeAssistant, entry
+) -> None:
+    """White-only mode reports no colour, and the frontend must agree.
+
+    ``rgbw_color`` is ``None`` here on purpose: the W channel is the light
+    source, so there is no colour to show. Home Assistant requires this to be
+    consistent with ``color_mode``, and it offers the white slider instead.
+    """
+    await hass.services.async_call(
+        "light", "turn_on", {ATTR_ENTITY_ID: LIGHT, ATTR_WHITE: 200}, blocking=True
+    )
+
+    state = hass.states.get(LIGHT)
+    assert state.attributes["color_mode"] == ColorMode.WHITE
+    assert state.attributes["rgbw_color"] is None
+    assert state.attributes["rgb_color"] is None
 
 
 async def test_white_is_the_w_channel_not_an_rgb_mix(

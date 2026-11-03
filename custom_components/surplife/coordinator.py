@@ -59,6 +59,22 @@ _LOGGER = logging.getLogger(__name__)
 #: whole poll at the default interval.
 _MAX_POLL_FAILURES: Final = 3
 
+#: The mix reported before any colour has ever been commanded.
+#:
+#: The firmware never echoes colour, so on a cold start there is nothing to
+#: report. Home Assistant still requires a concrete ``rgbw_color`` whenever the
+#: light says its mode is RGBW: the frontend takes both the colour wheel's
+#: position and the white slider's value from that attribute, so ``None`` means
+#: the colour controls silently disappear. A neutral white is the least
+#: misleading value to start from — it is what the picker shows, and the first
+#: command replaces it.
+#:
+#: It is deliberately *not* restored from the previous Home Assistant run:
+#: colour is not echoed by the device, so a restart has no way to know whether
+#: the strip still shows what this integration last sent. Guessing wrong and
+#: drawing a confident wheel is worse than starting neutral.
+_DEFAULT_RGBW: Final = (255, 255, 255, 0)
+
 
 @dataclass
 class SurplifeRuntime:
@@ -108,10 +124,51 @@ class SurplifeRuntime:
 
     @property
     def color_mode(self) -> str:
-        """``rgbw`` for a mix, ``white`` for the white channel alone, else ``rgb``."""
+        """``white`` when only the white channel is lit, otherwise ``rgbw``.
+
+        There is deliberately no third ``rgb`` value: the controller always has
+        a W channel, so a colour-only request is just an RGBW mix with W at
+        zero. Reporting ``rgb`` would also be rejected by Home Assistant, which
+        only accepts a mode the entity advertises.
+
+        Whether the strip is white-only is decided by *how it was last driven*,
+        not by guessing from the colour: ``rgbw`` is set by every colour
+        command and cleared only by a white request. Keeping the remembered
+        colour across a white request is deliberate, so switching back to
+        colour restores the user's colour rather than white.
+        """
         if self.rgbw is not None:
             return "rgbw"
-        return "white" if self.white_level and not self.rgb else "rgb"
+        return "white" if self.white_level else "rgbw"
+
+    @property
+    def rgbw_mix(self) -> tuple[int, int, int, int] | None:
+        """The RGBW mix to report to Home Assistant, or ``None`` for white only.
+
+        Home Assistant takes the colour wheel's position *and* the white
+        slider's value from ``rgbw_color``. Returning ``None`` while claiming
+        ``color_mode: rgbw`` makes the frontend drop the colour controls
+        entirely — no picker, no white slider — which is exactly what happened
+        before: the attribute was only populated after an explicit
+        ``rgbw_color`` request, so a plain ``turn_on`` had no colour at all.
+
+        So a mix is always produced when the strip is not white-only, in this
+        order of preference:
+
+        1. the exact mix last commanded,
+        2. the last colour, with W at zero,
+        3. a neutral white, for a strip that has never been given a colour.
+
+        The colour is still tracked optimistically: the firmware never echoes
+        it, so these are our own commands, not readings.
+        """
+        if self.color_mode == "white":
+            return None
+        if self.rgbw is not None:
+            return self.rgbw
+        if self.rgb is not None:
+            return (self.rgb[0], self.rgb[1], self.rgb[2], 0)
+        return _DEFAULT_RGBW
 
 
 class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
@@ -317,7 +374,10 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
             write_mode=WRITE_ALL,
         )
         self.runtime.rgb = scaled
-        self.runtime.rgbw = None
+        # A colour-only request is an RGBW mix with W at zero. Recording it as
+        # a mix keeps ``rgbw_color`` populated, which is the attribute the
+        # frontend reads for the colour wheel and the white slider.
+        self.runtime.rgbw = (scaled[0], scaled[1], scaled[2], 0)
         self.runtime.brightness = brightness
         self.runtime.white_level = 0
         self.runtime.effect_name = None
@@ -333,7 +393,10 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         """
         percent = round(level * 100 / 255)
         await self._run(self._client.set_warm_white, percent)
-        self.runtime.rgb = None
+        # The colour channels keep their last commanded values on the device,
+        # so remember them rather than forgetting: switching back to colour
+        # should restore the user's colour, not white. What makes the mode
+        # "white" is ``rgbw`` being cleared below.
         self.runtime.rgbw = None
         self.runtime.white_level = level
         self.runtime.brightness = level
@@ -375,16 +438,18 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         self.async_update_listeners()
 
     async def async_set_brightness(self, brightness: int) -> None:
-        """Change brightness without changing the colour."""
-        if self.runtime.rgbw is not None:
-            red, green, blue, white = self.runtime.rgbw
-            await self.async_set_rgbw((red, green, blue), white, brightness)
-            return
-        if self.runtime.white_level and self.runtime.rgb is None:
+        """Change brightness without changing the colour.
+
+        Which channel to re-issue follows the same rule as
+        :attr:`SurplifeRuntime.color_mode`: brightness on a white-lit strip
+        stays on the white channel, and brightness on a colour-lit strip stays
+        on the colour channels.
+        """
+        if self.runtime.color_mode == "white":
             await self.async_set_white(brightness)
             return
-        rgb = self.runtime.rgb or (255, 255, 255)
-        await self.async_set_rgb(rgb, brightness)
+        red, green, blue, white = self.runtime.rgbw_mix
+        await self.async_set_rgbw((red, green, blue), white, brightness)
 
     # -- effects -----------------------------------------------------------
 

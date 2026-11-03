@@ -119,8 +119,6 @@ class SurplifeLight(CoordinatorEntity[SurplifeCoordinator], LightEntity):
     def color_mode(self) -> ColorMode:
         """Report the channel mix actually driving the strip."""
         mode = self._runtime.color_mode
-        if mode == "rgbw":
-            return ColorMode.RGBW
         if mode == "white":
             return ColorMode.WHITE
         return ColorMode.RGBW
@@ -134,20 +132,30 @@ class SurplifeLight(CoordinatorEntity[SurplifeCoordinator], LightEntity):
 
     @property
     def rgb_color(self) -> tuple[int, int, int] | None:
-        """The commanded RGB colour, or ``None`` in white mode."""
-        return self._runtime.rgb
+        """The colour channels of the current mix.
+
+        Derived from :attr:`rgbw_color` rather than tracked separately: Home
+        Assistant fills ``rgb_color`` in from ``rgbw_color`` anyway when the
+        light only advertises RGBW, and two independent sources could disagree.
+        ``None`` in white-only mode, where the W channel is the light source.
+        """
+        mix = self._runtime.rgbw_mix
+        return None if mix is None else (mix[0], mix[1], mix[2])
 
     @property
     def rgbw_color(self) -> tuple[int, int, int, int] | None:
-        """The commanded RGBW mix, or ``None`` outside RGBW mode.
+        """The full RGBW mix, or ``None`` in white-only mode.
 
         A request for white arrives as ``(0, 0, 0, w)``: no colour at all, only
         the white LED. That is the point of this property — ``rgb_color`` alone
         cannot express it without falling back to simulated white.
+
+        This is never ``None`` while :attr:`color_mode` says ``rgbw``. The
+        frontend reads the colour wheel position and the white slider value
+        from this attribute, so ``None`` here removes the colour controls from
+        the card entirely.
         """
-        if self._runtime.color_mode != "rgbw":
-            return None
-        return self._runtime.rgbw
+        return self._runtime.rgbw_mix
 
     @property
     def effect(self) -> str | None:
@@ -226,17 +234,16 @@ class SurplifeLight(CoordinatorEntity[SurplifeCoordinator], LightEntity):
             await self.coordinator.async_set_brightness(brightness)
         elif not was_on:
             # Re-apply the last known colour so turning on is deterministic
-            # rather than restoring whatever the strip last showed.
-            if runtime.rgbw is not None:
-                red, green, blue, white_level = runtime.rgbw
+            # rather than restoring whatever the strip last showed. The mode
+            # decides which channel to drive: a strip last used for white comes
+            # back white, a strip last used for colour comes back in colour,
+            # and a strip that has never been driven comes back neutral white.
+            if runtime.color_mode == "white":
+                await self.coordinator.async_set_white(runtime.white_level)
+            elif (mix := runtime.rgbw_mix) is not None:
+                red, green, blue, white_level = mix
                 await self.coordinator.async_set_rgbw(
                     (red, green, blue), white_level, brightness
-                )
-            elif runtime.white_level and runtime.rgb is None:
-                await self.coordinator.async_set_white(runtime.white_level)
-            else:
-                await self.coordinator.async_set_rgb(
-                    runtime.rgb or (255, 255, 255), brightness
                 )
 
         if not was_on:
