@@ -169,6 +169,38 @@ def test_empty_dates_become_none() -> None:
     assert scene.start is None and scene.end is None
 
 
+def test_colours_accept_hex_strings() -> None:
+    """Scene definitions are hand-written, so hex must work at the model level."""
+    scene = Scene(name="x", mode="rgb", colors=("#ff0000", "#00c83c"))
+    assert scene.colors == ((255, 0, 0), (0, 200, 60))
+
+
+def test_colours_accept_rgb_commas() -> None:
+    assert Scene(name="x", colors=("1,2,3",)).colors == ((1, 2, 3),)
+
+
+def test_colours_reject_warm_white() -> None:
+    with pytest.raises(ValueError, match="use the 'white' field"):
+        Scene(name="x", colors=("w80",))
+
+
+def test_colours_reject_off() -> None:
+    with pytest.raises(ValueError, match="not a colour"):
+        Scene(name="x", colors=("off",))
+
+
+def test_segments_accept_hex_and_off() -> None:
+    scene = Scene(
+        name="x", mode="segments", segments=("#ff0000", "off", "#0000ff")
+    )
+    assert scene.segments == ((255, 0, 0), None, (0, 0, 255))
+
+
+def test_hex_round_trips_through_the_store() -> None:
+    original = Scene(name="x", mode="rgb", colors=("#ff0000",))
+    assert Scene.from_dict(original.to_dict()) == original
+
+
 def test_colour_validation() -> None:
     with pytest.raises(ValueError, match="invalid colour"):
         Scene(name="x", colors=((1, 2),))

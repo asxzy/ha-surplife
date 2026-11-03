@@ -140,40 +140,19 @@ def scene_from_call(data: dict[str, Any]) -> Scene:
     """Build a validated :class:`Scene` from service call data.
 
     ``colors`` and ``segments`` arrive as either ``#rrggbb`` strings or
-    ``[r, g, b]`` lists; the model wants integer triples. Parsing happens here
-    rather than in the schema so the same conversion serves both forms and the
-    error message names the offending token.
+    ``[r, g, b]`` lists; :class:`Scene` accepts both, so this only has to
+    rename ``name`` to a slug and drop the empty optional fields.
     """
-    from .protocol.spec import parse_color
-
-    def colors(key: str) -> tuple[tuple[int, int, int], ...] | None:
-        raw = data.get(key)
-        if raw is None:
-            return None
-        parsed: list[tuple[int, int, int]] = []
-        for token in raw:
-            if token is None:
-                continue
-            rgb, white = parse_color(token)
-            if rgb is None:
-                # A "black"/"off" segment is meaningful; a white level is not.
-                if white is not None:
-                    raise ValueError(f"{key} does not accept warm-white levels")
-                parsed.append(None)  # type: ignore[arg-type]
-                continue
-            parsed.append(rgb)
-        return tuple(parsed)  # type: ignore[return-value]
-
     payload: dict[str, Any] = {
         "name": normalize_name(data[ATTR_NAME]),
         "mode": data.get(ATTR_MODE, "rgb"),
     }
     if (title := data.get(ATTR_TITLE)) is not None:
         payload["title"] = title
-    if (palette := colors(ATTR_COLORS)) is not None:
-        payload["colors"] = palette
-    if (segments := colors(ATTR_SEGMENTS)) is not None:
-        payload["segments"] = segments
+    if data.get(ATTR_COLORS) is not None:
+        payload["colors"] = data[ATTR_COLORS]
+    if data.get(ATTR_SEGMENTS) is not None:
+        payload["segments"] = data[ATTR_SEGMENTS]
     for key in (
         ATTR_BRIGHTNESS,
         ATTR_WHITE,

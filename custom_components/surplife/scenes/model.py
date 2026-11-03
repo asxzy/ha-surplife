@@ -33,7 +33,7 @@ from ..protocol.constants import (
     EFFECT_NAME_TO_ID,
     SCRIBBLE_EFFECT_NAME_TO_ID,
 )
-from ..protocol.spec import parse_led_spec
+from ..protocol.spec import parse_color, parse_led_spec
 from ..scribble_looks import LOOKS
 
 if TYPE_CHECKING:
@@ -73,9 +73,23 @@ def normalize_name(text: str) -> str:
 
 
 def _as_color(value: Any) -> Color:
-    """Validate one colour into a 3-tuple of 0-255 integers."""
+    """Validate one colour into a 3-tuple of 0-255 integers.
+
+    Accepts the same tokens as everywhere else — ``#rrggbb``, ``r,g,b`` or a
+    three-item sequence — because scene definitions are written by hand in
+    YAML and in the service UI, where hex is the natural form. A warm-white
+    token (``w80``) is rejected: colours here are RGB, and warm white is its
+    own scene mode.
+    """
     if isinstance(value, (str, bytes)):
-        raise ValueError(f"invalid colour {value!r}: expected three 0-255 values")
+        rgb, white = parse_color(value)
+        if white is not None:
+            raise ValueError(
+                f"invalid colour {value!r}: use the 'white' field for warm white"
+            )
+        if rgb is None:
+            raise ValueError(f"invalid colour {value!r}: 'off' is not a colour")
+        return rgb
     try:
         parts = tuple(int(part) for part in value)
     except (TypeError, ValueError) as err:
@@ -85,6 +99,23 @@ def _as_color(value: Any) -> Color:
     if any(not 0 <= part <= 255 for part in parts):
         raise ValueError(f"invalid colour {value!r}: values must be 0-255")
     return parts  # type: ignore[return-value]
+
+
+def _as_segment(value: Any) -> Color | None:
+    """Validate one segment colour, treating "off"/"black" as dark.
+
+    A dark segment is meaningful — it is a gap in the run — so it becomes
+    ``None`` rather than being rejected.
+    """
+    if value is None:
+        return None
+    if isinstance(value, (str, bytes)) and str(value).strip().lower() in (
+        "off",
+        "black",
+        "none",
+    ):
+        return None
+    return _as_color(value)
 
 
 def _as_int(value: Any, low: int, high: int, field: str) -> int:
@@ -199,7 +230,7 @@ class Scene:
         set_field(
             self,
             "segments",
-            tuple(None if part is None else _as_color(part) for part in self.segments),
+            tuple(_as_segment(part) for part in self.segments),
         )
         set_field(self, "tags", parse_tags(self.tags))
         set_field(self, "brightness", _as_int(self.brightness, 0, 255, "brightness"))

@@ -227,7 +227,7 @@ async def test_save_scene_rejects_warm_white_colour(
 ) -> None:
     from homeassistant.exceptions import HomeAssistantError
 
-    with pytest.raises(HomeAssistantError, match="warm-white"):
+    with pytest.raises(HomeAssistantError, match="warm white"):
         await hass.services.async_call(
             DOMAIN,
             "save_scene",
@@ -284,6 +284,60 @@ async def test_import_scenes_replaces_all(hass: HomeAssistant, entry, store) -> 
         blocking=True,
     )
     assert store.names() == ["new"]
+
+
+async def test_import_scenes_accepts_hex_colours(
+    hass: HomeAssistant, entry, store
+) -> None:
+    """The documented YAML form uses hex, so import must accept it.
+
+    This is the shape a user writes by hand in a YAML file; an earlier version
+    only accepted [r, g, b] lists and failed here while its own tests passed.
+    """
+    await hass.services.async_call(
+        DOMAIN,
+        "import_scenes",
+        {
+            "scenes": [
+                {
+                    "name": "valentines",
+                    "mode": "effect",
+                    "effect": "Twinkling Stars",
+                    "colors": ["#ff0000", "#ff2878"],
+                    "start": "02-07",
+                    "end": "02-14",
+                },
+                {
+                    "name": "canada_day",
+                    "mode": "segments",
+                    "segments": ["#ff0000", "#ffffff", "off"],
+                },
+            ]
+        },
+        blocking=True,
+    )
+    assert store.names() == ["canada_day", "valentines"]
+    assert store.require("valentines").colors == ((255, 0, 0), (255, 40, 120))
+    assert store.require("canada_day").segments == ((255, 0, 0), (255, 255, 255), None)
+
+
+async def test_save_scene_then_apply_hex_effect(hass: HomeAssistant, entry, client) -> None:
+    """Hex colours survive the round trip into the wire command."""
+    await hass.services.async_call(
+        DOMAIN,
+        "save_scene",
+        {
+            "name": "hexed",
+            "mode": "effect",
+            "effect": "Chase",
+            "colors": ["#ff0000"],
+        },
+        blocking=True,
+    )
+    await hass.services.async_call(
+        DOMAIN, "apply_scene", {"entity_id": LIGHT, "scene": "hexed"}, blocking=True
+    )
+    assert client.set_effect.call_args.args[1][0] == (255, 0, 0)
 
 
 async def test_import_scenes_rejects_invalid_entry(
