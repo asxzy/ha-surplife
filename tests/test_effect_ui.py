@@ -130,6 +130,61 @@ async def test_speed_slider_reapplies_and_saves(
     assert effect_settings(loaded_entry.options, "Chase").speed == 17
 
 
+async def test_slider_sends_the_new_value_once(
+    hass: HomeAssistant, loaded_entry, patched_client
+) -> None:
+    """Moving a slider must not send the stale value first, or send twice.
+
+    Saving the options dispatches the update listener *eagerly*, inside the save
+    call. So a naive "save, then apply" order made the first command carry the
+    previous saved value while the listener's command carried the new one — two
+    commands, the first visibly wrong. And since both applied the effect, the
+    strip flashed twice.
+    """
+    hass.config_entries.async_update_entry(
+        loaded_entry, options={EFFECTS_KEY: {"Chase": {"speed": 50}}}
+    )
+    coordinator = hass.data[DOMAIN][loaded_entry.entry_id]
+    await coordinator.async_set_effect("Chase")
+    patched_client.set_effect.reset_mock()
+
+    await hass.services.async_call(
+        "number",
+        "set_value",
+        {ATTR_ENTITY_ID: SPEED, "value": 17},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    speeds = [call.kwargs["speed"] for call in patched_client.set_effect.call_args_list]
+    assert speeds == [17], f"expected one command at 17, got {speeds}"
+
+
+async def test_direction_sends_the_new_value_once(
+    hass: HomeAssistant, loaded_entry, patched_client
+) -> None:
+    """The same eager-listener hazard applies to the direction selector."""
+    hass.config_entries.async_update_entry(
+        loaded_entry, options={EFFECTS_KEY: {"Chase": {"direction": 1}}}
+    )
+    coordinator = hass.data[DOMAIN][loaded_entry.entry_id]
+    await coordinator.async_set_effect("Chase")
+    patched_client.set_effect.reset_mock()
+
+    await hass.services.async_call(
+        "select",
+        "select_option",
+        {ATTR_ENTITY_ID: DIRECTION, "option": "right_to_left"},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    directions = [
+        call.kwargs["direction"] for call in patched_client.set_effect.call_args_list
+    ]
+    assert directions == [2], f"expected one command at 2, got {directions}"
+
+
 async def test_density_slider_reapplies_and_saves(
     hass: HomeAssistant, loaded_entry, patched_client
 ) -> None:

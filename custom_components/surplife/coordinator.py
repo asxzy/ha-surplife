@@ -125,6 +125,7 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         self._client = SurplifeClient(self.host, DEFAULT_PORT, timeout=DEFAULT_TIMEOUT)
         self._write_lock = asyncio.Lock()
         self._failures = 0
+        self._skip_reapply = False
         self.runtime = SurplifeRuntime()
 
         super().__init__(
@@ -165,6 +166,24 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
     def device_name(self) -> str:
         """Friendly name for entities."""
         return self.entry.data.get(CONF_NAME) or self.entry.title
+
+    def skip_next_reapply(self) -> None:
+        """Skip the options listener's re-apply for the next save.
+
+        The sliders and the direction selector save to the options *and* apply
+        the effect themselves. Without this their save would also trigger the
+        update listener, sending the same effect a second time — a visible
+        double flash on a strip that is already showing it.
+
+        Only a flag is set here; the listener consumes and clears it.
+        """
+        self._skip_reapply = True
+
+    def consume_skip_reapply(self) -> bool:
+        """Take and clear the skip flag set by :meth:`skip_next_reapply`."""
+        skip = self._skip_reapply
+        self._skip_reapply = False
+        return skip
 
     async def async_load_timers(self) -> None:
         """Read the hardware timers once, after the first state read.

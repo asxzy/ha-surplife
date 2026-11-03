@@ -166,15 +166,20 @@ class SurplifeDirectionSelect(CoordinatorEntity[SurplifeCoordinator], SelectEnti
         runtime.effect_direction = 2 if option == "right_to_left" else 1
         effect = runtime.effect_name
         if effect is not None:
-            await self.coordinator.async_set_effect(effect)
             stored = effect_settings(self.coordinator.entry.options, effect)
             updated = replace_settings(
                 stored or EffectSettings(), direction=runtime.effect_direction
             )
+            # Persist first: the effect command resolves its direction from the
+            # saved value, so saving afterwards would send the old one. The skip
+            # flag is set before saving because Home Assistant dispatches the
+            # update listener eagerly, inside the save call.
+            self.coordinator.skip_next_reapply()
             self.hass.config_entries.async_update_entry(
                 self.coordinator.entry,
                 options=with_effect(self.coordinator.entry.options, effect, updated),
             )
+            await self.coordinator.async_set_effect(effect)
         self.async_write_ha_state()
 
     @property

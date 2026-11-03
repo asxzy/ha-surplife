@@ -104,10 +104,11 @@ class SurplifeEffectNumber(
     async def async_set_native_value(self, value: float) -> None:
         """Store the value, and apply it if an effect is showing.
 
-        The value is written through to the config entry's options as well as
-        the runtime, so it survives the entry being reloaded or Home Assistant
-        restarting. Without that, a slider moved once and then a restart would
-        silently fall back to the panel's saved value.
+        The value is saved to the config entry's options *before* the effect is
+        re-applied. Order matters: ``async_set_effect`` prefers the saved value
+        for the effect over the runtime's, so saving afterwards made the first
+        command carry the previous value and only a second, listener-driven
+        command carry the new one.
         """
         self._attr_native_value = value
         runtime = self.coordinator.runtime
@@ -116,9 +117,12 @@ class SurplifeEffectNumber(
         else:
             runtime.effect_density = int(value)
 
+        # The flag is set *before* saving: Home Assistant dispatches the update
+        # listener eagerly, so it runs inside ``_persist`` rather than after it.
+        self.coordinator.skip_next_reapply()
+        await self._persist(int(value))
         if runtime.effect_name is not None:
             await self.coordinator.async_set_effect(runtime.effect_name)
-        await self._persist(int(value))
         self.async_write_ha_state()
 
     async def _persist(self, value: int) -> None:
