@@ -610,8 +610,17 @@ class SurplifeOptionsFlow(OptionsFlow):
     async def _apply_effect(self, name: str, settings: EffectSettings) -> None:
         """Push the panel's values to the strip, so saving is also applying.
 
+        The options are saved afterwards by :meth:`async_step_effect_settings`,
+        and that save dispatches the entry's update listener eagerly. The
+        listener's job is to re-apply whatever effect is showing, which this
+        call has *already* done — so the skip flag is set here, after a
+        successful apply and before the save, so the strip is not sent the same
+        effect twice (a visible double flash).
+
         Failures are swallowed: the settings are still worth saving when the
-        controller happens to be offline, and the user can apply them later.
+        controller happens to be offline, and the user can apply them later. The
+        flag is deliberately *not* set after a failure, so the listener's
+        best-effort retry still runs.
         """
         coordinator = self._coordinator()
         if coordinator is None:
@@ -626,9 +635,15 @@ class SurplifeOptionsFlow(OptionsFlow):
             )
         except HomeAssistantError as err:
             _LOGGER.debug("could not apply effect %s after saving: %s", name, err)
+            return
+        coordinator.skip_next_reapply()
 
     async def _apply_look(self, name: str, settings: LookSettings) -> None:
-        """Render the panel's values, so saving is also applying."""
+        """Render the panel's values, so saving is also applying.
+
+        Same reasoning as :meth:`_apply_effect`: this render is the one the
+        update listener would otherwise repeat.
+        """
         coordinator = self._coordinator()
         if coordinator is None:
             return
@@ -643,3 +658,5 @@ class SurplifeOptionsFlow(OptionsFlow):
             )
         except HomeAssistantError as err:
             _LOGGER.debug("could not apply look %s after saving: %s", name, err)
+            return
+        coordinator.skip_next_reapply()

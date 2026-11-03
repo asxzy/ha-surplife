@@ -201,6 +201,122 @@ async def test_effect_panel_saves_and_applies(
     assert kwargs["direction"] == 2
 
 
+async def test_effect_panel_sends_the_effect_once(
+    hass: HomeAssistant, loaded_entry, options_flow, patched_client
+) -> None:
+    """Saving must not send the effect twice.
+
+    Two things apply it: the flow itself, and the entry's update listener,
+    which re-pushes the active effect after any options change. Home Assistant
+    dispatches that listener eagerly, so without a skip flag both run and a
+    strip that was already showing the effect flashes a second time.
+    """
+    coordinator = hass.data[DOMAIN][loaded_entry.entry_id]
+    coordinator.runtime.effect_name = "Chase"
+
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"], {"next_step_id": "effect"}
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"effect": "Chase"}
+    )
+    patched_client.set_effect.reset_mock()
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            "color_1": [255, 0, 0],
+            "white_1": 0,
+            "color_2": [0, 0, 255],
+            "white_2": 0,
+            "speed": 30,
+            "density": 70,
+            "direction": "l2r",
+        },
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done()
+
+    assert patched_client.set_effect.call_count == 1, (
+        "saving the panel should send the effect exactly once, got "
+        f"{patched_client.set_effect.call_count}"
+    )
+    kwargs = patched_client.set_effect.call_args.kwargs
+    assert (kwargs["speed"], kwargs["density"], kwargs["direction"]) == (30, 70, 1)
+    # The skip flag must be consumed, or the next unrelated save would be
+    # silently swallowed.
+    assert coordinator.consume_skip_reapply() is False
+
+
+async def test_look_panel_sends_the_look_once(
+    hass: HomeAssistant, loaded_entry, options_flow, patched_client
+) -> None:
+    """The per-LED panel must also render exactly once.
+
+    A look render clears ``effect_name``, so the listener's "re-apply the
+    active effect" branch has nothing to do here. The skip flag is still set as
+    belt-and-braces, and more importantly it must be *consumed*: a flag left
+    set would silently swallow the next unrelated re-apply.
+    """
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"], {"next_step_id": "look"}
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"look": "stripes"}
+    )
+    patched_client.set_scribble.reset_mock()
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            "color_1": [255, 0, 0],
+            "white_1": 0,
+            "color_2": [0, 0, 0],
+            "white_2": 100,
+            "scribble_effect": "1",
+            "speed": 60,
+            "density": 40,
+            "direction": "r2l",
+        },
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done()
+
+    assert patched_client.set_scribble.call_count == 1, (
+        "saving the look panel should render exactly once, got "
+        f"{patched_client.set_scribble.call_count}"
+    )
+    assert patched_client.set_scribble.call_args.kwargs["direction"] == 2
+
+
+async def test_failed_apply_leaves_the_flag_clear(
+    hass: HomeAssistant, loaded_entry, options_flow, patched_client
+) -> None:
+    """An offline controller must not swallow the listener's retry.
+
+    When the panel's own apply fails, there is nothing to skip -- the listener
+    is the best-effort retry, and it may succeed where the direct call did not.
+    """
+    from unittest.mock import Mock
+
+    from homeassistant.exceptions import HomeAssistantError
+
+    coordinator = hass.data[DOMAIN][loaded_entry.entry_id]
+    patched_client.set_effect = Mock(side_effect=HomeAssistantError("offline"))
+
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"], {"next_step_id": "effect"}
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"effect": "Wave"}
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {"color_1": [1, 2, 3], "white_1": 0, "speed": 5, "density": 5},
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done()
+    assert coordinator.consume_skip_reapply() is False
+
+
 async def test_effect_panel_keeps_the_white_channel(
     hass: HomeAssistant, loaded_entry, options_flow, patched_client
 ) -> None:
