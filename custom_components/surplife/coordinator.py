@@ -69,6 +69,8 @@ class SurplifeRuntime:
         white_level: Last warm-white level we commanded, 0-255.
         effect_name: Name of the active effect, if any.
         timers: Cached hardware timers.
+        scene: Name of the last scene applied, tracked optimistically.
+        look: Name of the last per-LED look applied, tracked optimistically.
     """
 
     state: SurplifeState | None = None
@@ -77,6 +79,8 @@ class SurplifeRuntime:
     white_level: int = 0
     effect_name: str | None = None
     timers: list[Timer] = field(default_factory=list)
+    scene: str | None = None
+    look: str | None = None
 
     @property
     def is_on(self) -> bool:
@@ -224,6 +228,7 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         self.runtime.brightness = brightness
         self.runtime.white_level = 0
         self.runtime.effect_name = None
+        self._clear_recipe()
         self.async_update_listeners()
 
     async def async_set_white(self, level: int) -> None:
@@ -234,6 +239,7 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         self.runtime.white_level = level
         self.runtime.brightness = level
         self.runtime.effect_name = None
+        self._clear_recipe()
         self.async_update_listeners()
 
     async def async_set_brightness(self, brightness: int) -> None:
@@ -273,6 +279,7 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
             brightness=round(self.runtime.brightness * 100 / 255),
         )
         self.runtime.effect_name = name
+        self.runtime.look = None
         if self.runtime.state is not None:
             self.runtime.state = _replace_pattern(self.runtime.state, effect_id)
         self.async_update_listeners()
@@ -285,6 +292,7 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         """Apply static segment colours."""
         await self._run(self._client.set_segments, colors)
         self.runtime.effect_name = None
+        self._clear_recipe()
         self.async_update_listeners()
 
     # -- per-LED -----------------------------------------------------------
@@ -298,8 +306,13 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         density: int = 80,
         speed: int = 100,
         enter: bool = True,
+        look: str | None = None,
     ) -> int:
-        """Render a full per-LED configuration."""
+        """Render a full per-LED configuration.
+
+        ``look`` records which built-in look produced ``leds``, purely so the
+        select entity can report it; it does not change the wire payload.
+        """
         paints = await self._run(
             self._client.set_scribble,
             leds,
@@ -310,8 +323,44 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
             speed=speed,
         )
         self.runtime.effect_name = None
+        self.runtime.scene = None
+        self.runtime.look = look
         self.async_update_listeners()
         return int(paints)
+
+    async def async_set_look(
+        self,
+        name: str,
+        *,
+        palette: list[tuple[int, int, int]] | None = None,
+        direction: int = 1,
+        density: int = 80,
+        speed: int = 100,
+        effect: int = 0,
+    ) -> int:
+        """Render one of the built-in named per-LED looks."""
+        from .scribble_looks import build_look
+
+        leds = build_look(name, self.runtime.led_count, palette)
+        return await self.async_set_scribble(
+            leds,
+            effect=effect,
+            direction=direction,
+            density=density,
+            speed=speed,
+            look=name,
+        )
+
+    # -- scenes ------------------------------------------------------------
+
+    async def async_mark_scene(self, name: str) -> None:
+        """Record which scene is currently showing, without any I/O."""
+        self.runtime.scene = name
+        self.async_update_listeners()
+
+    async def async_set_scene(self, scene: Any) -> None:
+        """Apply a :class:`~.scenes.Scene` to this controller."""
+        await scene.async_apply(self)
 
     # -- clock and timers --------------------------------------------------
 
@@ -335,6 +384,11 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         """Disable a hardware timer slot."""
         await self._run(self._client.clear_timer, slot)
         await self.async_get_timers()
+
+    def _clear_recipe(self) -> None:
+        """Forget the scene/look bookkeeping after a direct colour command."""
+        self.runtime.scene = None
+        self.runtime.look = None
 
 
 # ---------------------------------------------------------------------------

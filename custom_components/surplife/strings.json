@@ -121,10 +121,158 @@
     },
     "apply_preset": {
       "name": "Apply preset",
-      "description": "Apply a bundled holiday preset. Target several controllers to keep them in sync \u2014 this is the local replacement for the app's cloud grouping.",
+      "description": "Apply a bundled holiday preset. Target several controllers to keep them in sync — this is the local replacement for the app's cloud grouping.",
       "fields": {
         "preset": {
           "name": "Preset"
+        }
+      }
+    },
+    "apply_look": {
+      "name": "Apply per-LED look",
+      "description": "Render one of the built-in per-LED patterns on the whole strip.",
+      "fields": {
+        "look": {
+          "name": "Look"
+        },
+        "palette": {
+          "name": "Palette",
+          "description": "Optional colours; the rainbow look ignores this."
+        },
+        "direction": {
+          "name": "Direction"
+        },
+        "density": {
+          "name": "Density"
+        },
+        "speed": {
+          "name": "Speed"
+        },
+        "scribble_effect": {
+          "name": "Per-LED effect",
+          "description": "0 static, 1 flowing, 2 twinkling, 5 stars wink, 8 accumulate."
+        }
+      }
+    },
+    "save_scene": {
+      "name": "Save scene",
+      "description": "Create or replace a named scene, optionally bound to a season.",
+      "fields": {
+        "name": {
+          "name": "Name",
+          "description": "Lowercase letters, digits and underscores."
+        },
+        "title": {
+          "name": "Title"
+        },
+        "mode": {
+          "name": "Mode",
+          "description": "Which part of the scene drives the strip."
+        },
+        "colors": {
+          "name": "Colours",
+          "description": "Solid-colour scenes use the first colour; effect scenes cycle through all."
+        },
+        "brightness": {
+          "name": "Brightness",
+          "description": "0-255, used by solid-colour scenes."
+        },
+        "white": {
+          "name": "Warm white level",
+          "description": "0-255, used by warm-white scenes."
+        },
+        "effect": {
+          "name": "Effect",
+          "description": "Native effect name, used by effect scenes."
+        },
+        "speed": {
+          "name": "Speed"
+        },
+        "density": {
+          "name": "Density"
+        },
+        "direction": {
+          "name": "Direction"
+        },
+        "segments": {
+          "name": "Segments",
+          "description": "Up to 20 colours, used by segment scenes."
+        },
+        "pattern": {
+          "name": "Per-LED pattern",
+          "description": "Space-separated tokens such as \"12xred 23xblue/fast\"."
+        },
+        "look": {
+          "name": "Per-LED look"
+        },
+        "scribble_effect": {
+          "name": "Per-LED effect"
+        },
+        "start": {
+          "name": "Season start",
+          "description": "First eligible day as MM-DD; windows wrap the year end."
+        },
+        "end": {
+          "name": "Season end",
+          "description": "Last eligible day as MM-DD, inclusive."
+        },
+        "tags": {
+          "name": "Tags",
+          "description": "Comma-separated labels used by the daily service."
+        },
+        "priority": {
+          "name": "Priority",
+          "description": "Higher wins when several scenes are eligible."
+        }
+      }
+    },
+    "delete_scene": {
+      "name": "Delete scene",
+      "description": "Remove a stored scene.",
+      "fields": {
+        "scene": {
+          "name": "Scene"
+        }
+      }
+    },
+    "apply_scene": {
+      "name": "Apply scene",
+      "description": "Apply a stored scene to one or more controllers.",
+      "fields": {
+        "scene": {
+          "name": "Scene"
+        }
+      }
+    },
+    "apply_scene_for_date": {
+      "name": "Apply scene for a date",
+      "description": "Apply whichever stored scene belongs to a given day, based on seasons and tags.",
+      "fields": {
+        "date": {
+          "name": "Date",
+          "description": "Defaults to today in Home Assistant's time zone."
+        },
+        "topic": {
+          "name": "Tag filter",
+          "description": "Only consider scenes carrying this tag."
+        },
+        "randomize": {
+          "name": "Randomize",
+          "description": "Pick pseudo-randomly among eligible scenes; the pick is seeded from the date."
+        }
+      }
+    },
+    "import_scenes": {
+      "name": "Import scenes",
+      "description": "Load several scenes at once from a list of scene definitions.",
+      "fields": {
+        "scenes": {
+          "name": "Scenes",
+          "description": "A list of scene definitions, each with at least a name and mode."
+        },
+        "replace_all": {
+          "name": "Replace everything",
+          "description": "Delete every existing scene before importing."
         }
       }
     }
@@ -147,6 +295,12 @@
       },
       "direction": {
         "name": "Direction"
+      },
+      "scribble_look": {
+        "name": "Per-LED look"
+      },
+      "scene": {
+        "name": "Scene"
       }
     },
     "button": {
@@ -155,6 +309,11 @@
       },
       "refresh": {
         "name": "Refresh"
+      }
+    },
+    "text": {
+      "scribble_pattern": {
+        "name": "Per-LED pattern"
       }
     }
   }

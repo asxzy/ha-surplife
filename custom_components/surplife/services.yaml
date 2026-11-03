@@ -175,3 +175,315 @@ apply_preset:
             - valentines
             - new_years
             - warm_white
+
+apply_look:
+  name: Apply per-LED look
+  description: >-
+    Render one of the built-in per-LED patterns (stripes, candy cane, rainbow,
+    fireflies and friends) on the whole strip. This is the tap-friendly form of
+    "scribble"; for an exact pattern use "Set per-LED pattern".
+  target:
+    entity:
+      integration: surplife
+      domain: light
+  fields:
+    look:
+      name: Look
+      required: true
+      selector:
+        select:
+          options:
+            - candy_cane
+            - chase
+            - firefly
+            - gradient
+            - rainbow
+            - solid
+            - stripes
+            - twinkle
+            - wreath
+    palette:
+      name: Palette
+      description: >-
+        Optional colours for the look. Leave empty to use the look's own
+        palette. The rainbow look ignores this.
+      selector:
+        color_rgb:
+          multiple: true
+    direction:
+      name: Direction
+      default: l2r
+      selector:
+        select:
+          options:
+            - value: l2r
+              label: Left to right
+            - value: r2l
+              label: Right to left
+    density:
+      name: Density
+      default: 80
+      selector:
+        number:
+          min: 0
+          max: 100
+    speed:
+      name: Speed
+      default: 100
+      selector:
+        number:
+          min: 0
+          max: 100
+    scribble_effect:
+      name: Per-LED effect
+      description: 0 static, 1 flowing, 2 twinkling, 5 stars wink, 8 accumulate.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 8
+          mode: box
+
+save_scene:
+  name: Save scene
+  description: >-
+    Create or replace a named scene. A scene is a reusable recipe — colour,
+    effect, segments, per-LED look or pattern — that can later be applied to any
+    controller, and optionally bound to a season so an automation can apply
+    "whatever belongs to today".
+  fields:
+    name:
+      name: Name
+      description: >-
+        Machine name used to apply the scene later. Lowercase letters, digits
+        and underscores.
+      required: true
+      example: christmas
+      selector:
+        text:
+    title:
+      name: Title
+      description: Friendly label shown in the picker. Defaults to the name.
+      selector:
+        text:
+    mode:
+      name: Mode
+      description: Which part of the scene drives the strip.
+      default: rgb
+      selector:
+        select:
+          options:
+            - value: rgb
+              label: Solid colour
+            - value: white
+              label: Warm white
+            - value: effect
+              label: Native effect
+            - value: segments
+              label: Fixed segments
+            - value: scribble
+              label: Per-LED pattern
+            - value: look
+              label: Per-LED look
+    colors:
+      name: Colours
+      description: >-
+        Solid-colour scenes use the first colour. Effect scenes cycle through
+        all of them.
+      selector:
+        color_rgb:
+          multiple: true
+    brightness:
+      name: Brightness
+      description: 0-255, used by solid-colour scenes.
+      default: 255
+      selector:
+        number:
+          min: 0
+          max: 255
+    white:
+      name: Warm white level
+      description: 0-255, used by warm-white scenes.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 255
+    effect:
+      name: Effect
+      description: Native effect name, used by effect scenes.
+      example: Chase
+      selector:
+        text:
+    speed:
+      name: Speed
+      default: 50
+      selector:
+        number:
+          min: 0
+          max: 100
+    density:
+      name: Density
+      default: 50
+      selector:
+        number:
+          min: 0
+          max: 100
+    direction:
+      name: Direction
+      default: l2r
+      selector:
+        select:
+          options:
+            - value: l2r
+              label: Left to right
+            - value: r2l
+              label: Right to left
+    segments:
+      name: Segments
+      description: Up to 20 colours, used by segment scenes.
+      selector:
+        color_rgb:
+          multiple: true
+    pattern:
+      name: Per-LED pattern
+      description: >-
+        Used by per-LED scenes. Space-separated tokens such as
+        "12xred 23xblue/fast"; "w80" is warm white at level 80.
+      selector:
+        text:
+    look:
+      name: Per-LED look
+      description: Used by look scenes.
+      selector:
+        select:
+          options:
+            - candy_cane
+            - chase
+            - firefly
+            - gradient
+            - rainbow
+            - solid
+            - stripes
+            - twinkle
+            - wreath
+    scribble_effect:
+      name: Per-LED effect
+      description: 0 static, 1 flowing, 2 twinkling, 5 stars wink, 8 accumulate.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 8
+          mode: box
+    start:
+      name: Season start
+      description: >-
+        First day this scene is eligible, as MM-DD. Windows wrap the year end,
+        so 12-01 to 01-06 covers the holidays. Leave empty for all year.
+      example: "11-01"
+      selector:
+        text:
+    end:
+      name: Season end
+      description: Last eligible day, as MM-DD, inclusive.
+      example: "12-26"
+      selector:
+        text:
+    tags:
+      name: Tags
+      description: >-
+        Comma-separated labels. The daily service can be given a tag to restrict
+        itself, e.g. "porch" or "hoa_safe".
+      example: holidays, outdoor
+      selector:
+        text:
+    priority:
+      name: Priority
+      description: >-
+        Tie-breaker when several scenes are eligible. Higher wins in
+        non-random selection. Range -100 to 100.
+      default: 0
+      selector:
+        number:
+          min: -100
+          max: 100
+          mode: box
+
+delete_scene:
+  name: Delete scene
+  description: Remove a stored scene.
+  fields:
+    scene:
+      name: Scene
+      required: true
+      selector:
+        text:
+
+apply_scene:
+  name: Apply scene
+  description: Apply a stored scene to one or more controllers.
+  target:
+    entity:
+      integration: surplife
+      domain: light
+  fields:
+    scene:
+      name: Scene
+      required: true
+      selector:
+        text:
+
+apply_scene_for_date:
+  name: Apply scene for a date
+  description: >-
+    Apply whichever stored scene belongs to a given day, based on the seasons
+    and tags on the scenes. This is the one call an automation needs to make the
+    lighting follow the calendar. The choice is deterministic: the same date and
+    topic always resolve to the same scene, even across restarts.
+  target:
+    entity:
+      integration: surplife
+      domain: light
+  fields:
+    date:
+      name: Date
+      description: Defaults to today in Home Assistant's time zone.
+      selector:
+        date:
+    topic:
+      name: Tag filter
+      description: Only consider scenes carrying this tag.
+      example: holidays
+      selector:
+        text:
+    randomize:
+      name: Randomize
+      description: >-
+        Pick pseudo-randomly among the eligible scenes instead of by priority.
+        The pick is seeded from the date, so it does not change between runs on
+        the same day.
+      default: false
+      selector:
+        boolean:
+
+import_scenes:
+  name: Import scenes
+  description: >-
+    Load several scenes at once from a list of scene definitions — the way to
+    keep your scenes in a YAML file under version control and push them in.
+  fields:
+    scenes:
+      name: Scenes
+      description: A list of scene definitions, each with at least a name and mode.
+      required: true
+      selector:
+        object:
+    replace_all:
+      name: Replace everything
+      description: >-
+        Delete every existing scene before importing. Otherwise scenes with the
+        same name are overwritten and the rest are kept.
+      default: false
+      selector:
+        boolean:
