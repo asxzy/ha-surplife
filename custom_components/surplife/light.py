@@ -19,6 +19,7 @@ from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     ATTR_EFFECT,
     ATTR_RGB_COLOR,
+    ATTR_WHITE,
     ColorMode,
     LightEntity,
     LightEntityFeature,
@@ -135,7 +136,13 @@ class SurplifeLight(CoordinatorEntity[SurplifeCoordinator], LightEntity):
         rgb = kwargs.get(ATTR_RGB_COLOR)
         was_on = runtime.is_on
 
-        if rgb is not None:
+        # The controller drives white and colour through separate channels, so
+        # ``white`` selects the warm-white channel rather than an RGB value.
+        # Without this, a ``white`` request would fall through to the brightness
+        # branch and be sent as grey RGB.
+        if (white := kwargs.get(ATTR_WHITE)) is not None:
+            await self.coordinator.async_set_white(white)
+        elif rgb is not None:
             await self.coordinator.async_set_rgb(tuple(rgb), brightness)
         elif brightness != runtime.brightness and was_on:
             await self.coordinator.async_set_brightness(brightness)

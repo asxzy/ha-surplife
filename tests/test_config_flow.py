@@ -249,3 +249,57 @@ async def test_manual_entry_uses_reported_mac_when_discovered(
     assert result["type"] is FlowResultType.CREATE_ENTRY
     entry = hass.config_entries.async_entries(DOMAIN)[0]
     assert entry.unique_id == "AABBCCDDEEFF"
+
+
+async def test_discovered_device_gets_a_name(hass: HomeAssistant) -> None:
+    """A discovered controller can be named in the same step.
+
+    Without this the entry is titled with the IP address, which is what a user
+    actually sees on the device card.
+    """
+    with (
+        patch(
+            "custom_components.surplife.config_flow.async_discover",
+            return_value=[_discovered()],
+        ),
+        patch("custom_components.surplife.config_flow.SurplifeClient") as factory,
+    ):
+        factory.return_value.get_state = Mock(return_value=_state())
+        factory.return_value.close = Mock()
+
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": config_entries.SOURCE_USER}
+        )
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_HOST: HOST, CONF_NAME: "Soffit West"}
+        )
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["title"] == "Soffit West"
+
+
+async def test_discovered_device_without_a_name_gets_a_distinct_fallback(
+    hass: HomeAssistant,
+) -> None:
+    """Leaving the name blank must not make every controller the same name."""
+    with (
+        patch(
+            "custom_components.surplife.config_flow.async_discover",
+            return_value=[_discovered()],
+        ),
+        patch("custom_components.surplife.config_flow.SurplifeClient") as factory,
+    ):
+        factory.return_value.get_state = Mock(return_value=_state())
+        factory.return_value.close = Mock()
+
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": config_entries.SOURCE_USER}
+        )
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_HOST: HOST, CONF_NAME: ""}
+        )
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    # The last octet distinguishes controllers that share a fallback name.
+    assert result["title"].endswith("78")
+    assert result["title"] != "Surplife"

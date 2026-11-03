@@ -31,6 +31,15 @@ They are, however, fragile in specific ways worth knowing:
   controller **stops answering for up to ~2.6 s**. Polls issued in that window
   time out. Measured over repeated trials; the worst case observed was 2.63 s.
   **verified**
+- **The controller acknowledges writes, including fire-and-forget ones, and the
+  acknowledgement can arrive seconds later.** A paint reply is state-shaped
+  (27 bytes, `EA 81 ...`), so it is indistinguishable from a state reply by
+  content alone — only by the fact that it was not the answer to the current
+  query. Unread acknowledgements therefore poison the *next* read: the client
+  consumed a stale ack as the state frame and failed with
+  `unparseable state reply: not a state frame (missing EA 81)`.
+  **verified** (captured the raw stream: a wrapped frame plus a bare duplicate
+  of the same 27 bytes; reproduced as a `set_scribble` 500 in Home Assistant)
 - UDP discovery replies are lossy: one device in three failed roughly one
   probe in three, so discovery sends several broadcast rounds and merges.
   **verified** (three rounds; a single round found a random subset of the
@@ -38,9 +47,12 @@ They are, however, fragile in specific ways worth knowing:
 
 The first three are transient, so the client retries with a growing delay
 (0.5 s, then 1.0 s) instead of a fixed one — a fixed short delay lands while
-the device is still busy. The coordinator additionally tolerates up to three
-consecutive failed polls before marking entities unavailable, because the
-post-scribble pause can span a whole poll at the default interval.
+the device is still busy. Unread acknowledgements are handled structurally
+rather than by waiting: every fire-and-forget write drains the socket
+afterwards, and the state reader skips frames that are not state frames instead
+of trusting the first reply it sees. The coordinator additionally tolerates up
+to three consecutive failed polls before marking entities unavailable, because
+the post-scribble pause can span a whole poll at the default interval.
 
 ---
 

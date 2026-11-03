@@ -378,3 +378,103 @@ async def test_poll_recovers_after_transient_failure(
 
     assert hass.states.get(LIGHT).state == STATE_ON
     assert hass.data[DOMAIN][entry.entry_id]._failures == 0
+
+
+async def test_white_selects_the_warm_white_channel(
+    hass: HomeAssistant, entry, fake_client
+) -> None:
+    """``light.turn_on`` with ``white`` must use the white channel, not RGB.
+
+    The controller has a separate warm-white channel. Falling through to the
+    brightness branch would send grey RGB instead, which looks different and
+    wastes the strip's white LED.
+    """
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {"entity_id": LIGHT, "white": 180},
+        blocking=True,
+    )
+    fake_client.set_warm_white.assert_called_once_with(71)  # 180/255 -> 71%
+    fake_client.set_color.assert_not_called()
+
+    state = hass.states.get(LIGHT)
+    assert state.attributes["color_mode"] == "white"
+
+
+async def test_white_then_brightness_stays_on_the_white_channel(
+    hass: HomeAssistant, entry, fake_client
+) -> None:
+    """A later brightness change must not silently switch back to RGB."""
+    await hass.services.async_call(
+        "light", "turn_on", {"entity_id": LIGHT, "white": 255}, blocking=True
+    )
+    fake_client.set_warm_white.reset_mock()
+    fake_client.set_color.reset_mock()
+
+    await hass.services.async_call(
+        "light", "turn_on", {"entity_id": LIGHT, "brightness": 100}, blocking=True
+    )
+    fake_client.set_color.assert_not_called()
+    fake_client.set_warm_white.assert_called_once()
+
+
+# -- timer sensor ----------------------------------------------------------
+
+
+async def test_timer_sensor_reports_device_timers(hass: HomeAssistant, entry) -> None:
+    """The timers sensor must reflect the hardware, not an empty cache.
+
+    It previously reported 0 forever: the sensor reads ``runtime.timers``, but
+    nothing ever populated it. The device in fact has one timer configured.
+    """
+    state = hass.states.get("sensor.soffit_west_timers")
+    assert state is not None
+    assert state.state == "1"
+    assert state.attributes["slot_1"].startswith("20:00")
+    assert state.attributes["slot_2"] == "unset"
+
+
+async def test_writing_a_timer_refreshes_the_sensor(
+    hass: HomeAssistant, entry, fake_client
+) -> None:
+    """After a timer write the sensor must show the new list immediately."""
+    fake_client.get_timers.return_value = [
+        Timer(slot=1, active=True, hour=20, minute=0, action=0x23, repeat_mask=0xFE),
+        Timer(slot=5, active=True, hour=6, minute=30, action=0x23, repeat_mask=0x3E),
+    ]
+
+    await hass.services.async_call(
+        "surplife",
+        "set_timer",
+        {
+            "entity_id": LIGHT,
+            "slot": 5,
+            "time": "06:30:00",
+            "action": "on",
+            "repeat": "weekdays",
+        },
+        blocking=True,
+    )
+
+    state = hass.states.get("sensor.soffit_west_timers")
+    assert state.state == "2"
+    assert state.attributes["slot_5"].startswith("06:30")
+
+
+async def test_timer_read_failure_does_not_block_setup(
+    hass: HomeAssistant, entry, fake_client
+) -> None:
+    """A controller that will not answer a timer query is still usable.
+
+    Timers are diagnostic; the light itself works without them.
+    """
+    from custom_components.surplife.protocol import SurplifeConnectionError
+
+    fake_client.get_timers.side_effect = SurplifeConnectionError("no reply")
+    await hass.data[DOMAIN][entry.entry_id].async_load_timers()
+
+    assert hass.states.get(LIGHT).state == STATE_ON
+    # The last known timers are kept rather than wiped, so the sensor still
+    # describes the controller instead of claiming it has none.
+    assert hass.states.get("sensor.soffit_west_timers").state == "1"

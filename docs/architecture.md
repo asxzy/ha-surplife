@@ -72,8 +72,18 @@ that rather than pretending otherwise:
 |---|---|
 | fresh socket drops its first command | retry on a new socket |
 | post-scribble pause of ~2.6 s | retry with growing delay (0.5 s, 1.0 s) |
+| late write acknowledgement in the buffer | drain after every fire-and-forget write |
+| reply is the wrong frame dialect | skip it and keep reading |
 | one poll fails in isolation | keep the last known state, stay available |
 | three polls fail in a row | report the entity unavailable |
+
+The third and fourth rows are one bug seen twice. The controller acknowledges
+writes — paints especially — seconds after they are sent. A paint reply is
+state-shaped, so a stale one is indistinguishable from the real answer by
+content alone; the only defence is to never leave one unread. Every write now
+drains the socket, and the state reader skips frames that are not state frames
+(`EA 81`) rather than trusting the first reply. Before this, `set_scribble`
+failed intermittently with `not a state frame (missing EA 81)`.
 
 The last row matters. A single missed poll used to mark every entity
 unavailable, which is both alarming and wrong when the device is merely busy

@@ -137,6 +137,20 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         """Friendly name for entities."""
         return self.entry.data.get(CONF_NAME) or self.entry.title
 
+    async def async_load_timers(self) -> None:
+        """Read the hardware timers once, after the first state read.
+
+        Timers are only needed for the diagnostic sensor, and reading them is a
+        second round trip. Doing it once at setup (and again whenever a timer is
+        written) keeps the poll loop to a single query, which matters because
+        these controllers stop answering for seconds when pushed.
+        """
+        try:
+            await self.async_get_timers()
+        except (HomeAssistantError, SurplifeError) as err:
+            # A diagnostic sensor is not worth failing setup over.
+            _LOGGER.debug("could not read timers from %s: %s", self.host, err)
+
     # -- polling -----------------------------------------------------------
 
     async def _async_update_data(self) -> SurplifeRuntime:
@@ -309,17 +323,18 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         """Read the hardware timer slots."""
         timers = await self._run(self._client.get_timers)
         self.runtime.timers = timers
+        self.async_update_listeners()
         return timers
 
     async def async_set_timer(self, **kwargs: Any) -> None:
         """Write one hardware timer slot."""
         await self._run(self._client.set_timer, **kwargs)
-        await self.async_request_refresh()
+        await self.async_get_timers()
 
     async def async_clear_timer(self, slot: int) -> None:
         """Disable a hardware timer slot."""
         await self._run(self._client.clear_timer, slot)
-        await self.async_request_refresh()
+        await self.async_get_timers()
 
 
 # ---------------------------------------------------------------------------

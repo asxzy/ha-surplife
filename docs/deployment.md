@@ -70,7 +70,9 @@ Recommended order:
    data:
      pattern: "20xred 15xblue/fast"
    ```
-6. Read the timers and confirm they match what the app shows:
+6. Read the timers and confirm they match what the app shows. In Home
+   Assistant, `sensor.soffit_*_timers` should report the number of active slots
+   with a readable `slot_N` attribute for each:
    ```bash
    python3 tools/surplife_cli.py 192.168.1.50 timers
    ```

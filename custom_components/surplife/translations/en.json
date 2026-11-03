@@ -5,7 +5,8 @@
         "title": "Add Surplife controller",
         "description": "Discovered controllers are listed below. To add one manually, choose \"Enter an IP address\" and type the address of the controller.",
         "data": {
-          "host": "Controller"
+          "host": "Controller",
+          "name": "Name"
         }
       },
       "manual": {

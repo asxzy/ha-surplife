@@ -157,6 +157,38 @@ class SurplifeClient:
         self._pace()
         self._sock.sendall(frame)
 
+    def _drain_input(self) -> None:
+        """Discard bytes the device has already sent that we never read.
+
+        Write commands are sent without waiting for a reply, but the device
+        still answers some of them (paints especially) — sometimes seconds
+        later. Those acknowledgements otherwise sit in the receive buffer and
+        get mistaken for the reply to the *next* query, which surfaces as
+        "not a state frame".
+        """
+        if self._sock is None:
+            return
+        self._sock.setblocking(False)
+        dropped = 0
+        try:
+            while True:
+                data = self._sock.recv(4096)
+                if not data:
+                    break
+                dropped += len(data)
+        except (BlockingIOError, TimeoutError):
+            pass
+        except OSError:
+            pass
+        finally:
+            if self._sock is not None:
+                self._sock.settimeout(self.read_timeout)
+            # Anything that was already parsed out of an earlier read is stale
+            # for the same reason.
+            self._reader = FrameReader()
+        if dropped:
+            _LOGGER.debug("dropped %d stale byte(s) from %s", dropped, self.host)
+
     def _read_frame(self, timeout: float) -> Frame | None:
         """Read one frame, or return ``None`` on timeout."""
         if self._sock is None:
@@ -206,6 +238,11 @@ class SurplifeClient:
                 self.connect()
                 self._send(inner, version)
                 if not expect_reply:
+                    # Writes are fire-and-forget, but the controller still
+                    # acknowledges some of them (paints, seconds later). Clear
+                    # the socket so that ack cannot be read as the reply to a
+                    # later query.
+                    self._drain_input()
                     return None
                 frame = self._read_frame(
                     read_timeout if read_timeout is not None else self.read_timeout
@@ -230,18 +267,32 @@ class SurplifeClient:
     def get_state(self) -> SurplifeState:
         """Query and parse the device state frame.
 
+        More than one reply can be waiting — the device acks some earlier
+        write commands late — so every reply is inspected until one looks like
+        a state frame. Draining first, then skipping, means a stale
+        acknowledgement cannot hide the real answer.
+
         Raises:
             SurplifeConnectionError: if the device does not answer.
-            SurplifeError: if the reply cannot be parsed.
+            SurplifeError: if no state frame arrives.
         """
         with self._lock:
-            frame = self._exchange(build_state_query(), VERSION_EXTENDED, expect_reply=True)
-        if frame is None:
-            raise SurplifeConnectionError("no state reply")
-        try:
-            return parse_state(frame.inner)
-        except ValueError as err:
-            raise SurplifeError(f"unparseable state reply: {err}") from err
+            self.connect()
+            self._drain_input()
+            frame = self._exchange(
+                build_state_query(), VERSION_EXTENDED, expect_reply=True
+            )
+            last_error: ValueError | None = None
+            while frame is not None:
+                try:
+                    return parse_state(frame.inner)
+                except ValueError as err:
+                    # Not a state frame: an acknowledgement that arrived late.
+                    last_error = err
+                frame = self._read_frame(self.read_timeout)
+        if last_error is not None:
+            raise SurplifeError(f"unparseable state reply: {last_error}")
+        raise SurplifeConnectionError("no state reply")
 
     # -- power and colour --------------------------------------------------
 

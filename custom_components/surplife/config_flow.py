@@ -37,6 +37,16 @@ _LOGGER = logging.getLogger(__name__)
 
 MANUAL_OPTION = "__manual__"
 
+
+def _default_name(host: str) -> str:
+    """A usable fallback name when the user does not supply one.
+
+    ``DEFAULT_NAME`` alone would make every controller in the house the same
+    name, so the last octet is appended -- enough to tell three soffits apart
+    without making the user type anything.
+    """
+    return f"{DEFAULT_NAME} {host.rsplit('.', 1)[-1]}"
+
 MANUAL_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_HOST): str,
@@ -68,7 +78,7 @@ class SurplifeConfigFlow(ConfigFlow, domain=DOMAIN):
                 return await self.async_step_manual()
             return await self._async_validate(
                 host=device.host,
-                name=user_input.get(CONF_NAME) or device.host,
+                name=user_input.get(CONF_NAME) or _default_name(device.host),
                 mac=device.mac,
                 hw_version=device.hw_version,
                 model_info=device.model_info,
@@ -103,7 +113,11 @@ class SurplifeConfigFlow(ConfigFlow, domain=DOMAIN):
                         SelectSelectorConfig(
                             options=options, mode=SelectSelectorMode.LIST
                         )
-                    )
+                    ),
+                    # Asking for the name here rather than in a second step
+                    # keeps adding a controller to one screen. Leaving it blank
+                    # still gives a usable name, so it never blocks.
+                    vol.Optional(CONF_NAME, default=""): str,
                 }
             ),
             description_placeholders={"count": str(len(supported))},
