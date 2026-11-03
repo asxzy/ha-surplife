@@ -3,6 +3,10 @@
 Target in this installation: Home Assistant **2026.10.4** at
 `http://192.168.1.10:8123`, timezone America/Edmonton.
 
+> Addresses and MACs throughout the docs and tests are **placeholders**, not a
+> real network. Substitute your own host and controller addresses; the shape is
+> what matters, not the numbers.
+
 ## Preconditions
 
 - The controllers are on the same L2 network as Home Assistant. This component

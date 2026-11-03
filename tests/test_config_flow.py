@@ -301,5 +301,7 @@ async def test_discovered_device_without_a_name_gets_a_distinct_fallback(
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
     # The last octet distinguishes controllers that share a fallback name.
-    assert result["title"].endswith("78")
+    # Derived from HOST rather than hardcoded, so redacting the address cannot
+    # silently break the test again.
+    assert result["title"].endswith(HOST.rsplit(".", 1)[-1])
     assert result["title"] != "Surplife"
