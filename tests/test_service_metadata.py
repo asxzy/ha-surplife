@@ -211,6 +211,106 @@ def test_entity_strings_have_names(platform: str) -> None:
         assert spec.get("name"), f"entity.{platform}.{key} has no name"
 
 
+# -- options dialog --------------------------------------------------------
+
+#: Every step the options flow can show. Each needs a ``title``, or the dialog
+#: header renders as the raw step id.
+OPTIONS_STEPS = [
+    "init",
+    "effect",
+    "effect_settings",
+    "look",
+    "look_settings",
+    "interval",
+]
+
+
+def test_every_options_step_has_a_title() -> None:
+    steps = _strings()["options"]["step"]
+    for step in OPTIONS_STEPS:
+        assert step in steps, f"options step {step!r} has no strings entry"
+        assert steps[step].get("title"), f"options step {step!r} has no title"
+
+
+def test_every_options_step_has_a_description() -> None:
+    """The panel is the documentation for what an effect does."""
+    steps = _strings()["options"]["step"]
+    for step in OPTIONS_STEPS:
+        assert steps[step].get("description"), (
+            f"options step {step!r} has no description"
+        )
+
+
+def test_menu_entries_are_labelled() -> None:
+    """A menu option without a label renders as its raw step id."""
+    menu = _strings()["options"]["step"]["init"]["menu_options"]
+    from custom_components.surplife import config_flow
+
+    offered = {
+        "effect": config_flow.STEP_EFFECT,
+        "look": config_flow.STEP_LOOK,
+        "interval": config_flow.STEP_INTERVAL,
+    }
+    for key, step in offered.items():
+        assert key in menu, f"menu option {key!r} has no label"
+        assert menu[key], f"menu option {key!r} has an empty label"
+        assert step == key, (
+            f"menu id {key!r} does not match the step id {step!r}; "
+            "Home Assistant resolves the label by the menu id"
+        )
+
+
+def test_effect_panel_labels_every_possible_field() -> None:
+    """The schema is generated, so a missing label shows as ``color_7``."""
+    from custom_components.surplife.effect_profile import MAX_PROTOCOL_COLOURS
+
+    data = _strings()["options"]["step"]["effect_settings"]["data"]
+    for slot in range(1, MAX_PROTOCOL_COLOURS + 1):
+        assert f"color_{slot}" in data, f"color_{slot} has no label"
+        assert f"white_{slot}" in data, f"white_{slot} has no label"
+    for field in ("speed", "density", "direction"):
+        assert field in data, f"{field} has no label"
+
+
+def test_look_panel_labels_every_field_it_can_show() -> None:
+    from custom_components.surplife.scribble_looks import LOOK_LIST
+
+    data = _strings()["options"]["step"]["look_settings"]["data"]
+    widest = max(look.palette_size for look in LOOK_LIST if look.supports_palette)
+    for slot in range(1, widest + 1):
+        assert f"color_{slot}" in data, f"color_{slot} has no label"
+        assert f"white_{slot}" in data, f"white_{slot} has no label"
+    assert "scribble_effect" in data
+
+
+def test_options_placeholders_are_supplied() -> None:
+    """A ``{placeholder}`` with no value renders literally to the user."""
+    import string
+
+    steps = _strings()["options"]["step"]
+    supplied = {
+        "init": {"effects_configured", "effects_total", "looks_configured", "looks_total"},
+        "effect": set(),
+        "effect_settings": {"effect", "description"},
+        "look": {"count"},
+        "look_settings": {"look", "description"},
+        "interval": set(),
+    }
+    for step, names in supplied.items():
+        text = " ".join(
+            value
+            for value in steps[step].values()
+            if isinstance(value, str)
+        )
+        found = {
+            name
+            for _, name, _, _ in string.Formatter().parse(text)
+            if name
+        }
+        missing = found - names
+        assert not missing, f"options step {step!r} has unfilled {sorted(missing)}"
+
+
 def test_every_entity_platform_is_registered() -> None:
     """A platform module that is never forwarded is dead code."""
     from custom_components.surplife import PLATFORMS
