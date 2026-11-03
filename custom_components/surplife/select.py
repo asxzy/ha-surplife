@@ -170,14 +170,14 @@ class SurplifeDirectionSelect(CoordinatorEntity[SurplifeCoordinator], SelectEnti
             updated = replace_settings(
                 stored or EffectSettings(), direction=runtime.effect_direction
             )
+            options = with_effect(self.coordinator.entry.options, effect, updated)
             # Persist first: the effect command resolves its direction from the
-            # saved value, so saving afterwards would send the old one. The skip
-            # flag is set before saving because Home Assistant dispatches the
+            # saved value, so saving afterwards would send the old one. The save
+            # is claimed before it happens because Home Assistant dispatches the
             # update listener eagerly, inside the save call.
-            self.coordinator.skip_next_reapply()
+            self.coordinator.expect_no_reapply(options)
             self.hass.config_entries.async_update_entry(
-                self.coordinator.entry,
-                options=with_effect(self.coordinator.entry.options, effect, updated),
+                self.coordinator.entry, options=options
             )
             await self.coordinator.async_set_effect(effect)
         self.async_write_ha_state()

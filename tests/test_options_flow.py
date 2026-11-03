@@ -287,7 +287,7 @@ async def test_look_panel_sends_the_look_once(
     assert patched_client.set_scribble.call_args.kwargs["direction"] == 2
 
 
-async def test_failed_apply_leaves_the_flag_clear(
+async def test_failed_apply_leaves_no_claim(
     hass: HomeAssistant, loaded_entry, options_flow, patched_client
 ) -> None:
     """An offline controller must not swallow the listener's retry.
@@ -315,6 +315,55 @@ async def test_failed_apply_leaves_the_flag_clear(
     assert result["type"] is FlowResultType.CREATE_ENTRY
     await hass.async_block_till_done()
     assert coordinator.consume_skip_reapply() is False
+
+
+async def test_a_no_op_save_does_not_swallow_the_next_change(
+    hass: HomeAssistant, loaded_entry, patched_client
+) -> None:
+    """A claim must never outlive the save it was made for.
+
+    Home Assistant returns early from ``async_update_entry`` when nothing
+    changed, so the update listener never runs and a bare skip *flag* would
+    survive. It would then silently suppress the next genuine re-apply. Keying
+    the claim to the exact options payload makes a stale claim unmatchable, and
+    it is cleared on consumption either way.
+    """
+    coordinator = hass.data[DOMAIN][loaded_entry.entry_id]
+    await coordinator.async_set_effect("Chase")
+
+    # Claim one payload, then save a different one: the listener must run.
+    coordinator.expect_no_reapply({"effects": {"Wave": {"speed": 1}}})
+    patched_client.set_effect.reset_mock()
+    hass.config_entries.async_update_entry(
+        loaded_entry, options={EFFECTS_KEY: {"Chase": {"speed": 90}}}
+    )
+    await hass.async_block_till_done()
+    assert patched_client.set_effect.call_count == 1
+    assert patched_client.set_effect.call_args.kwargs["speed"] == 90
+
+
+async def test_a_claim_is_consumed_even_when_it_does_not_match(
+    hass: HomeAssistant, loaded_entry
+) -> None:
+    """Consumption always clears, so a mismatch cannot linger either."""
+    coordinator = hass.data[DOMAIN][loaded_entry.entry_id]
+    coordinator.expect_no_reapply({"a": 1})
+    # The saved options are not the claimed ones, so the listener must run...
+    assert coordinator.consume_skip_reapply() is False
+    # ...and the stale claim must be gone, not left to match something later.
+    assert coordinator.consume_skip_reapply() is False
+
+
+async def test_a_claim_matches_the_payload_it_was_made_for(
+    hass: HomeAssistant, loaded_entry
+) -> None:
+    """The happy path, stated directly: same options in, claim honoured."""
+    coordinator = hass.data[DOMAIN][loaded_entry.entry_id]
+    hass.config_entries.async_update_entry(
+        loaded_entry, options={EFFECTS_KEY: {"Chase": {"speed": 20}}}
+    )
+    coordinator.expect_no_reapply(dict(loaded_entry.options))
+    assert coordinator.consume_skip_reapply() is True
 
 
 async def test_effect_panel_keeps_the_white_channel(

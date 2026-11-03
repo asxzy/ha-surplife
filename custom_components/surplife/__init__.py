@@ -107,8 +107,8 @@ async def _async_update_options(hass: HomeAssistant, entry: ConfigEntry) -> None
     # is offline must not make saving the panel fail -- the settings are already
     # stored by the time this runs, and the next poll or command will apply them.
     #
-    # The sliders and the direction selector have already applied their change
-    # and ask to skip this, so it does not send the same effect twice.
+    # The sliders, the direction selector and the Configure panel have already
+    # applied this exact options payload and claimed it, so it is not sent again.
     if coordinator.consume_skip_reapply():
         return
     effect = coordinator.runtime.effect_name

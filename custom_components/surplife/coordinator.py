@@ -18,6 +18,7 @@ from __future__ import annotations
 import asyncio
 import datetime as dt
 import logging
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any, Final
 
@@ -125,7 +126,7 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         self._client = SurplifeClient(self.host, DEFAULT_PORT, timeout=DEFAULT_TIMEOUT)
         self._write_lock = asyncio.Lock()
         self._failures = 0
-        self._skip_reapply = False
+        self._applied_options: dict[str, Any] | None = None
         self.runtime = SurplifeRuntime()
 
         super().__init__(
@@ -167,23 +168,34 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         """Friendly name for entities."""
         return self.entry.data.get(CONF_NAME) or self.entry.title
 
-    def skip_next_reapply(self) -> None:
-        """Skip the options listener's re-apply for the next save.
+    def expect_no_reapply(self, options: Mapping[str, Any]) -> None:
+        """Record that ``options`` has just been applied to the strip by hand.
 
-        The sliders and the direction selector save to the options *and* apply
-        the effect themselves. Without this their save would also trigger the
-        update listener, sending the same effect a second time — a visible
-        double flash on a strip that is already showing it.
+        The sliders, the direction selector and the Configure panel all save to
+        the options *and* apply the change themselves. Without this, the entry's
+        update listener would re-apply the same effect, sending it twice and
+        flashing a strip that is already showing it.
 
-        Only a flag is set here; the listener consumes and clears it.
+        The claim is stored as the exact options dict rather than a bare flag,
+        because Home Assistant does **not** dispatch the listener when a save
+        changes nothing. A bare flag would then survive a no-op save and swallow
+        the next genuine change, so the match is made on the payload instead: a
+        stale claim can never match a different options dict.
         """
-        self._skip_reapply = True
+        self._applied_options = dict(options)
 
     def consume_skip_reapply(self) -> bool:
-        """Take and clear the skip flag set by :meth:`skip_next_reapply`."""
-        skip = self._skip_reapply
-        self._skip_reapply = False
-        return skip
+        """Take the pending claim and report whether it covers this change.
+
+        Always clears, so a claim that does not match cannot linger. Returns
+        ``True`` only when the options being saved are exactly the ones already
+        applied.
+        """
+        expected = self._applied_options
+        if expected is None:
+            return False
+        self._applied_options = None
+        return dict(self.entry.options) == expected
 
     async def async_load_timers(self) -> None:
         """Read the hardware timers once, after the first state read.

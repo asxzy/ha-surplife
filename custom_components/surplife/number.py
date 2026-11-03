@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+from typing import Any
 
 from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
@@ -109,6 +110,11 @@ class SurplifeEffectNumber(
         for the effect over the runtime's, so saving afterwards made the first
         command carry the previous value and only a second, listener-driven
         command carry the new one.
+
+        Saving also dispatches the update listener, which re-applies the active
+        effect. This method applies it itself, so the save is claimed first.
+        The claim has to be made before saving because Home Assistant dispatches
+        the listener eagerly, inside ``async_update_entry``.
         """
         self._attr_native_value = value
         runtime = self.coordinator.runtime
@@ -117,16 +123,18 @@ class SurplifeEffectNumber(
         else:
             runtime.effect_density = int(value)
 
-        # The flag is set *before* saving: Home Assistant dispatches the update
-        # listener eagerly, so it runs inside ``_persist`` rather than after it.
-        self.coordinator.skip_next_reapply()
-        await self._persist(int(value))
+        options = self._updated_options(int(value))
+        if options is not None:
+            self.coordinator.expect_no_reapply(options)
+            self.hass.config_entries.async_update_entry(
+                self.coordinator.entry, options=options
+            )
         if runtime.effect_name is not None:
             await self.coordinator.async_set_effect(runtime.effect_name)
         self.async_write_ha_state()
 
-    async def _persist(self, value: int) -> None:
-        """Save this slider's value against the active effect, if there is one.
+    def _updated_options(self, value: int) -> dict[str, Any] | None:
+        """The options dict with this slider's value saved, or ``None``.
 
         Speed and density are per-effect settings, so there is nowhere to store
         them when no effect is showing. In that case the runtime value is still
@@ -134,7 +142,7 @@ class SurplifeEffectNumber(
         """
         effect = self.coordinator.runtime.effect_name
         if effect is None:
-            return
+            return None
         stored = effect_settings(self.coordinator.entry.options, effect)
         settings = stored or EffectSettings()
         updated = (
@@ -142,7 +150,4 @@ class SurplifeEffectNumber(
             if self._key == "speed"
             else replace_settings(settings, density=value)
         )
-        self.hass.config_entries.async_update_entry(
-            self.coordinator.entry,
-            options=with_effect(self.coordinator.entry.options, effect, updated),
-        )
+        return with_effect(self.coordinator.entry.options, effect, updated)

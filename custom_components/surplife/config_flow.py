@@ -613,14 +613,13 @@ class SurplifeOptionsFlow(OptionsFlow):
         The options are saved afterwards by :meth:`async_step_effect_settings`,
         and that save dispatches the entry's update listener eagerly. The
         listener's job is to re-apply whatever effect is showing, which this
-        call has *already* done — so the skip flag is set here, after a
-        successful apply and before the save, so the strip is not sent the same
-        effect twice (a visible double flash).
+        call has *already* done — so the resulting options are claimed here, and
+        the listener's repeat is skipped instead of flashing the strip twice.
 
         Failures are swallowed: the settings are still worth saving when the
-        controller happens to be offline, and the user can apply them later. The
-        flag is deliberately *not* set after a failure, so the listener's
-        best-effort retry still runs.
+        controller happens to be offline, and the user can apply them later.
+        Nothing is claimed after a failure, so the listener's best-effort retry
+        still runs.
         """
         coordinator = self._coordinator()
         if coordinator is None:
@@ -636,7 +635,7 @@ class SurplifeOptionsFlow(OptionsFlow):
         except HomeAssistantError as err:
             _LOGGER.debug("could not apply effect %s after saving: %s", name, err)
             return
-        coordinator.skip_next_reapply()
+        coordinator.expect_no_reapply(with_effect(self._options, name, settings))
 
     async def _apply_look(self, name: str, settings: LookSettings) -> None:
         """Render the panel's values, so saving is also applying.
@@ -659,4 +658,4 @@ class SurplifeOptionsFlow(OptionsFlow):
         except HomeAssistantError as err:
             _LOGGER.debug("could not apply look %s after saving: %s", name, err)
             return
-        coordinator.skip_next_reapply()
+        coordinator.expect_no_reapply(with_look(self._options, name, settings))
