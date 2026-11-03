@@ -394,11 +394,10 @@ class SurplifeOptionsFlow(OptionsFlow):
 
         if user_input is not None:
             settings = self._effect_from_form(profile, stored, user_input)
-            await self._apply_effect(name, settings)
+            options = with_effect(self._options, name, settings)
+            await self._apply_effect(name, settings, options)
             self._pending_effect = None
-            return self.async_create_entry(
-                title="", data=with_effect(self._options, name, settings)
-            )
+            return self.async_create_entry(title="", data=options)
 
         fields: dict[Any, Any] = {}
         for slot in range(profile.panel_colours):
@@ -532,11 +531,10 @@ class SurplifeOptionsFlow(OptionsFlow):
 
         if user_input is not None:
             settings = self._look_from_form(look, stored, user_input)
-            await self._apply_look(name, settings)
+            options = with_look(self._options, name, settings)
+            await self._apply_look(name, settings, options)
             self._pending_look = None
-            return self.async_create_entry(
-                title="", data=with_look(self._options, name, settings)
-            )
+            return self.async_create_entry(title="", data=options)
 
         fields: dict[Any, Any] = {}
         slots = look.palette_size if look.supports_palette else 0
@@ -607,14 +605,22 @@ class SurplifeOptionsFlow(OptionsFlow):
             return None
         return container.get(self.config_entry.entry_id)
 
-    async def _apply_effect(self, name: str, settings: EffectSettings) -> None:
+    async def _apply_effect(
+        self,
+        name: str,
+        settings: EffectSettings,
+        options: dict[str, Any],
+    ) -> None:
         """Push the panel's values to the strip, so saving is also applying.
 
-        The options are saved afterwards by :meth:`async_step_effect_settings`,
-        and that save dispatches the entry's update listener eagerly. The
-        listener's job is to re-apply whatever effect is showing, which this
-        call has *already* done — so the resulting options are claimed here, and
-        the listener's repeat is skipped instead of flashing the strip twice.
+        ``options`` is the exact dict the flow is about to save, passed in rather
+        than rebuilt, so the claim can never differ from the save by a key and
+        silently let the listener re-apply.
+
+        The save dispatches the entry's update listener eagerly, and that
+        listener re-applies whatever effect is showing -- which this call has
+        *already* done. Claiming the options suppresses the repeat, so an
+        already-correct strip does not flash twice.
 
         Failures are swallowed: the settings are still worth saving when the
         controller happens to be offline, and the user can apply them later.
@@ -635,9 +641,14 @@ class SurplifeOptionsFlow(OptionsFlow):
         except HomeAssistantError as err:
             _LOGGER.debug("could not apply effect %s after saving: %s", name, err)
             return
-        coordinator.expect_no_reapply(with_effect(self._options, name, settings))
+        coordinator.expect_no_reapply(options)
 
-    async def _apply_look(self, name: str, settings: LookSettings) -> None:
+    async def _apply_look(
+        self,
+        name: str,
+        settings: LookSettings,
+        options: dict[str, Any],
+    ) -> None:
         """Render the panel's values, so saving is also applying.
 
         Same reasoning as :meth:`_apply_effect`: this render is the one the
@@ -658,4 +669,4 @@ class SurplifeOptionsFlow(OptionsFlow):
         except HomeAssistantError as err:
             _LOGGER.debug("could not apply look %s after saving: %s", name, err)
             return
-        coordinator.expect_no_reapply(with_look(self._options, name, settings))
+        coordinator.expect_no_reapply(options)
