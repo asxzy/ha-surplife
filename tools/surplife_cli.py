@@ -9,7 +9,9 @@ and for reproducing protocol evidence.
     python3 tools/surplife_cli.py 192.168.1.50 info
     python3 tools/surplife_cli.py 192.168.1.50 on
     python3 tools/surplife_cli.py 192.168.1.50 color 255 0 0
+    python3 tools/surplife_cli.py 192.168.1.50 color 0,0,0,100
     python3 tools/surplife_cli.py 192.168.1.50 white 80
+    python3 tools/surplife_cli.py 192.168.1.50 rgbw 255 0 0 80
     python3 tools/surplife_cli.py 192.168.1.50 effect wave --speed 60
     python3 tools/surplife_cli.py 192.168.1.50 effects
     python3 tools/surplife_cli.py 192.168.1.50 segments red green blue
@@ -17,6 +19,12 @@ and for reproducing protocol evidence.
     python3 tools/surplife_cli.py 192.168.1.50 timers
     python3 tools/surplife_cli.py 192.168.1.50 sync-clock
     python3 tools/surplife_cli.py 192.168.1.50 get-time
+
+Colour is RGBW. ``color`` takes ``R G B`` or a single token, and a four-part
+token is RGBW where the fourth value is the W level 0-100 — so ``color
+0,0,0,100`` lights the white LED alone instead of imitating white with RGB.
+``white 80`` sets only the W channel and leaves the colour channels alone, and
+``rgbw R G B W`` sets both together.
 
 Every command prints the state frame it reads back afterwards, so the effect of
 a change is visible rather than assumed.
@@ -28,6 +36,7 @@ import argparse
 import importlib.util
 import sys
 from pathlib import Path
+from typing import Any
 
 # Load the vendored protocol package directly from disk rather than through
 # ``custom_components.surplife``: that package's ``__init__`` imports Home
@@ -62,8 +71,10 @@ from protocol import (  # noqa: E402
 from protocol.constants import (  # noqa: E402
     DIRECTIONS,
     SCRIBBLE_EFFECT_NAME_TO_ID,
+    WRITE_ALL,
 )
 from protocol.spec import parse_color, parse_led_spec  # noqa: E402
+
 
 def show_state(client: SurplifeClient) -> None:
     """Print the decoded state frame."""
@@ -92,7 +103,7 @@ def main(argv: list[str] | None = None) -> int:
         "command",
         nargs="?",
         default="info",
-        help="info, on, off, color, white, effect, effects, segments, "
+        help="info, on, off, color, white, rgbw, effect, effects, segments, "
         "scribble, timers, get-time, sync-clock",
     )
     parser.add_argument("args", nargs="*", help="command arguments")
@@ -148,19 +159,49 @@ def _run_command(client: SurplifeClient, opts: argparse.Namespace) -> int:
 
     elif command == "color":
         if len(opts.args) == 1:
-            rgb, _ = parse_color(opts.args[0])
-            if rgb is None:
-                raise ValueError("colour mode needs an RGB value, not a white level")
+            rgb, white = parse_color(opts.args[0])
+            if rgb is None and white is None:
+                raise ValueError("colour mode needs an RGB or RGBW value")
+            if white:
+                # W is present, so this is an RGBW request: light the white LED
+                # (colour channels dark for a bare ``w80``) alongside the colour.
+                red, green, blue = rgb or (0, 0, 0)
+                client.set_levels(
+                    red=red,
+                    green=green,
+                    blue=blue,
+                    white=white,
+                    write_mode=WRITE_ALL,
+                )
+            else:
+                client.set_color(*rgb)  # type: ignore[misc]
         elif len(opts.args) == 3:
-            rgb = tuple(int(value) for value in opts.args)  # type: ignore[assignment]
+            red, green, blue = (int(value) for value in opts.args)
+            client.set_color(red, green, blue)
+        elif len(opts.args) == 4:
+            red, green, blue, white = (int(value) for value in opts.args)
+            client.set_levels(
+                red=red, green=green, blue=blue, white=white, write_mode=WRITE_ALL
+            )
         else:
-            raise ValueError("color takes one name/hex, or three R G B values")
-        client.set_color(*rgb)  # type: ignore[misc]
+            raise ValueError(
+                "color takes one name/hex/RGBW token, three R G B values, "
+                "or four R G B W values"
+            )
         show_state(client)
 
     elif command == "white":
         level = int(opts.args[0]) if opts.args else 100
         client.set_warm_white(level)
+        show_state(client)
+
+    elif command == "rgbw":
+        if len(opts.args) != 4:
+            raise ValueError("rgbw takes four values: R G B W (W is 0-100)")
+        red, green, blue, white = (int(value) for value in opts.args)
+        client.set_levels(
+            red=red, green=green, blue=blue, white=white, write_mode=WRITE_ALL
+        )
         show_state(client)
 
     elif command == "effects":
@@ -198,7 +239,18 @@ def _run_command(client: SurplifeClient, opts: argparse.Namespace) -> int:
     elif command == "segments":
         if not opts.args:
             raise ValueError("segments needs at least one colour")
-        client.set_segments([parse_color(token)[0] for token in opts.args])
+        entries: list[Any] = []
+        for token in opts.args:
+            rgb, white = parse_color(token)
+            if rgb is None and white is None:
+                entries.append(None)
+            elif rgb is None:
+                entries.append((0, 0, 0, white))
+            elif white is not None:
+                entries.append((*rgb, white))
+            else:
+                entries.append(rgb)
+        client.set_segments(entries)
         show_state(client)
 
     elif command == "scribble":

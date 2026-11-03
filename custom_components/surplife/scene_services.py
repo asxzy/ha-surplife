@@ -136,12 +136,51 @@ APPLY_LOOK_SCHEMA = vol.Schema(
 )
 
 
+def _colour_entries(value: Any, *, allow_off: bool = False) -> list[Any]:
+    """Flatten colour-field input into tokens a :class:`Scene` accepts.
+
+    The UI sends ``[{"color": [r, g, b], "white": n}, ...]``; YAML sends a list
+    of strings or triples. A white level is folded into a fourth element, giving
+    the scene an RGBW entry, so the W channel is not silently dropped.
+
+    Args:
+        value: Whatever the service field received.
+        allow_off: Whether ``off``/``black`` entries are meaningful, as they are
+            for segments (a dark gap in the run).
+
+    Raises:
+        ValueError: if an entry carries neither a colour nor a white level.
+    """
+    if not isinstance(value, (list, tuple)):
+        value = [value]
+    entries: list[Any] = []
+    for item in value:
+        if isinstance(item, dict):
+            rgb = item.get("color")
+            white = item.get("white")
+            if white is not None and rgb is not None:
+                entries.append((*rgb, int(white)))
+            elif white is not None:
+                entries.append((0, 0, 0, int(white)))
+            elif rgb is not None:
+                entries.append(rgb)
+            elif allow_off:
+                entries.append(None)
+            else:
+                raise ValueError("a colour entry needs a colour or a white level")
+        else:
+            entries.append(item)
+    return entries
+
+
 def scene_from_call(data: dict[str, Any]) -> Scene:
     """Build a validated :class:`Scene` from service call data.
 
-    ``colors`` and ``segments`` arrive as either ``#rrggbb`` strings or
-    ``[r, g, b]`` lists; :class:`Scene` accepts both, so this only has to
-    rename ``name`` to a slug and drop the empty optional fields.
+    ``colors`` and ``segments`` arrive in one of two shapes: plain tokens
+    (``#rrggbb`` strings or ``[r, g, b]`` lists) from YAML and scripts, or the
+    UI's ``{"color": [r, g, b], "white": n}`` objects. Both are reduced here to
+    the tokens :class:`Scene` accepts, with a white level folded into an RGBW
+    tuple so the W channel survives the trip.
     """
     payload: dict[str, Any] = {
         "name": normalize_name(data[ATTR_NAME]),
@@ -150,9 +189,9 @@ def scene_from_call(data: dict[str, Any]) -> Scene:
     if (title := data.get(ATTR_TITLE)) is not None:
         payload["title"] = title
     if data.get(ATTR_COLORS) is not None:
-        payload["colors"] = data[ATTR_COLORS]
+        payload["colors"] = _colour_entries(data[ATTR_COLORS])
     if data.get(ATTR_SEGMENTS) is not None:
-        payload["segments"] = data[ATTR_SEGMENTS]
+        payload["segments"] = _colour_entries(data[ATTR_SEGMENTS], allow_off=True)
     for key in (
         ATTR_BRIGHTNESS,
         ATTR_WHITE,
@@ -255,11 +294,13 @@ async def async_setup_scene_services(hass: HomeAssistant) -> None:
         palette = None
         if (raw := call.data.get(ATTR_PALETTE)) is not None:
             palette = []
-            for token in raw:
-                rgb, _white = parse_color(token)
+            for token in _colour_entries(raw, allow_off=False):
+                rgb, white = parse_color(token)
                 if rgb is None:
                     raise ValueError("the palette does not accept warm-white levels")
-                palette.append(rgb)
+                # A look palette is a list of colours; a white level becomes an
+                # RGBW tuple, which the look builder ignores beyond the colour.
+                palette.append((*rgb, white) if white is not None else rgb)
         direction = DIRECTIONS.get(
             str(call.data[ATTR_DIRECTION]).lower(), DIRECTIONS["l2r"]
         )

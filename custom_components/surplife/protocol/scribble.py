@@ -15,17 +15,21 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Iterable, NamedTuple
 
-from .constants import BLINK_NONE, BLINK_SLOW, BLINK_FAST
+from .constants import BLINK_FAST, BLINK_NONE, BLINK_SLOW
 
 
 class ScribbleLED(NamedTuple):
     """One LED's desired setting.
 
-    Colour and white are mutually exclusive:
+    The wire format packs a colour record as ``H/2 S V 00 WLVL``, so all three
+    combinations are expressible:
 
-    * ``rgb`` set — colour mode; brightness comes from the RGB triple.
-    * ``white`` set — white mode; ``white`` is the level, 0-100.
-    * both ``None`` — the LED is off.
+    * ``rgb`` set, ``white`` unset — colour only.
+    * ``rgb`` unset, ``white`` set — the white LED only, no colour. This is how
+      a real white is asked for; it does not simulate one from RGB.
+    * both set — an RGBW mix, colour plus white together.
+
+    Both unset means the LED is dark. ``white`` is a level 0-100.
     """
 
     rgb: tuple[int, int, int] | None = None

@@ -45,20 +45,37 @@ _WHITE_LEVEL = re.compile(r"^w(\d+)$")
 _OFF_TOKENS = ("black", "off", "none")
 
 
-def parse_color(token: Any) -> tuple[tuple[int, int, int] | None, int | None]:
+def parse_color(
+    token: Any,
+) -> tuple[tuple[int, int, int] | None, int | None]:
     """Parse one colour token into ``(rgb, white_level)``.
 
-    Accepts a colour name, ``#rrggbb``, ``r,g,b``, or ``w<n>`` for a warm-white
-    level. ``black``, ``off`` and ``none`` mean "dark" and return
-    ``(None, None)``. A list or tuple of three integers is taken as RGB.
+    Accepts a colour name, ``#rrggbb``, ``r,g,b``, ``r,g,b,w``, or ``w<n>`` for
+    a white level. ``black``, ``off`` and ``none`` mean "dark" and return
+    ``(None, None)``. A list or tuple of three integers is taken as RGB; four
+    integers are RGBW.
+
+    **The white level is always a 0-100 percentage** — from ``w<n>`` and from
+    the fourth element of an RGBW token alike. Home Assistant's ``rgbw_color``
+    uses 0-255 instead, so the conversion happens at that boundary, not here.
+    Keeping one unit inside the protocol layer means the value can be written
+    straight into the wire byte without a second chance to get it wrong.
+
+    Selecting white through the W channel is deliberate: the controller drives
+    colour and white separately, so ``255,255,255`` (a simulated RGB white) and
+    ``0,0,0,100`` (the actual white LED) are different requests. The latter
+    leaves the colour channels dark and lights the white LED, which is brighter
+    and a truer white on this hardware.
 
     Raises:
         ValueError: if the token is not a recognised colour.
     """
     if isinstance(token, (list, tuple)):
         values = [int(value) for value in token]
+        if len(values) == 4:
+            return (values[0], values[1], values[2]), _as_white_level(values[3])
         if len(values) != 3:
-            raise ValueError(f"expected 3 RGB values, got {len(values)}")
+            raise ValueError(f"expected 3 RGB or 4 RGBW values, got {len(values)}")
         return (values[0], values[1], values[2]), None
 
     text = str(token).strip().lower()
@@ -67,10 +84,7 @@ def parse_color(token: Any) -> tuple[tuple[int, int, int] | None, int | None]:
 
     match = _WHITE_LEVEL.match(text)
     if match:
-        level = int(match.group(1))
-        if not 0 <= level <= 100:
-            raise ValueError(f"white level {level} is outside 0-100")
-        return None, level
+        return None, _as_white_level(int(match.group(1)))
 
     if text in COLOR_NAMES:
         return COLOR_NAMES[text], None
@@ -87,15 +101,29 @@ def parse_color(token: Any) -> tuple[tuple[int, int, int] | None, int | None]:
         return (red, green, blue), None
 
     if "," in text:
-        parts = text.split(",")
-        if len(parts) != 3:
-            raise ValueError(f"expected 3 RGB values in {token!r}")
+        parts = [part.strip() for part in text.split(",")]
+        if len(parts) not in (3, 4):
+            raise ValueError(f"expected 3 RGB or 4 RGBW values in {token!r}")
         try:
-            return tuple(int(part) for part in parts), None  # type: ignore[return-value]
+            values = [int(part) for part in parts]
         except ValueError as err:
             raise ValueError(f"invalid RGB triple {token!r}") from err
+        if len(values) == 4:
+            return (values[0], values[1], values[2]), _as_white_level(values[3])
+        return tuple(values), None  # type: ignore[return-value]
 
     raise ValueError(f"unrecognised colour {token!r}")
+
+
+def _as_white_level(value: int) -> int:
+    """Validate a W-channel level.
+
+    Raises:
+        ValueError: if it is outside 0-100.
+    """
+    if not 0 <= value <= 100:
+        raise ValueError(f"white level {value} is outside 0-100")
+    return value
 
 
 def parse_led_spec(spec: str, led_count: int) -> list[ScribbleLED]:

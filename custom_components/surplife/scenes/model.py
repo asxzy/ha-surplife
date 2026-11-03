@@ -40,6 +40,9 @@ if TYPE_CHECKING:
     from ..coordinator import SurplifeCoordinator
 
 Color = tuple[int, int, int]
+#: An RGBW entry: colour channels plus the W-channel level 0-100. A pure-white
+#: entry is ``(0, 0, 0, level)``.
+RGBW = tuple[int, int, int, int]
 
 #: How a scene drives the strip. Each mode reads exactly one payload field,
 #: which keeps validation and error messages unambiguous.
@@ -72,36 +75,46 @@ def normalize_name(text: str) -> str:
     return slug
 
 
-def _as_color(value: Any) -> Color:
-    """Validate one colour into a 3-tuple of 0-255 integers.
+def _as_color(value: Any) -> Color | RGBW:
+    """Validate one colour into a 3- or 4-tuple of 0-255 integers.
 
-    Accepts the same tokens as everywhere else — ``#rrggbb``, ``r,g,b`` or a
-    three-item sequence — because scene definitions are written by hand in
-    YAML and in the service UI, where hex is the natural form. A warm-white
-    token (``w80``) is rejected: colours here are RGB, and warm white is its
-    own scene mode.
+    Accepts the same tokens as everywhere else — ``#rrggbb``, ``r,g,b``,
+    ``r,g,b,w`` or a sequence of three or four items — because scene
+    definitions are written by hand in YAML and in the service UI, where hex is
+    the natural form. A warm-white token (``w80``) is rejected: warm white is
+    its own scene mode.
+
+    A four-item value carries a W-channel level. ``(0, 0, 0, 255)`` means "the
+    white LED only", which is a genuine white rather than an RGB imitation, so
+    it is kept as RGBW rather than being flattened.
     """
     if isinstance(value, (str, bytes)):
         rgb, white = parse_color(value)
-        if white is not None:
+        if rgb is None and white is not None:
             raise ValueError(
                 f"invalid colour {value!r}: use the 'white' field for warm white"
             )
         if rgb is None:
             raise ValueError(f"invalid colour {value!r}: 'off' is not a colour")
+        if white is not None:
+            return (*rgb, white)
         return rgb
     try:
         parts = tuple(int(part) for part in value)
     except (TypeError, ValueError) as err:
         raise ValueError(f"invalid colour {value!r}") from err
-    if len(parts) != 3:
-        raise ValueError(f"invalid colour {value!r}: expected three values")
+    if len(parts) not in (3, 4):
+        raise ValueError(f"invalid colour {value!r}: expected three or four values")
     if any(not 0 <= part <= 255 for part in parts):
         raise ValueError(f"invalid colour {value!r}: values must be 0-255")
+    if len(parts) == 4 and parts[3] > 100:
+        raise ValueError(
+            f"invalid colour {value!r}: the W level is 0-100, got {parts[3]}"
+        )
     return parts  # type: ignore[return-value]
 
 
-def _as_segment(value: Any) -> Color | None:
+def _as_segment(value: Any) -> Color | RGBW | None:
     """Validate one segment colour, treating "off"/"black" as dark.
 
     A dark segment is meaningful — it is a gap in the run — so it becomes
@@ -191,14 +204,14 @@ class Scene:
     name: str
     title: str = ""
     mode: str = "rgb"
-    colors: tuple[Color, ...] = (WHITE,)
+    colors: tuple[Color | RGBW, ...] = (WHITE,)
     brightness: int = 255
     white: int = 0
     effect: str | None = None
     speed: int = 50
     density: int = 50
     direction: str = "l2r"
-    segments: tuple[Color | None, ...] = ()
+    segments: tuple[Color | RGBW | None, ...] = ()
     pattern: str | None = None
     look: str | None = None
     scribble_effect: int = 0
@@ -283,8 +296,16 @@ class Scene:
 
     def describe(self) -> str:
         """One-line summary, used in entity attributes."""
+
+        def _colour(entry: Sequence[int]) -> str:
+            red, green, blue = entry[:3]
+            text = f"#{red:02x}{green:02x}{blue:02x}"
+            if len(entry) == 4 and entry[3]:
+                text += f"+w{entry[3]}"
+            return text
+
         detail = {
-            "rgb": lambda: ", ".join(f"#{red:02x}{green:02x}{blue:02x}" for red, green, blue in self.colors),
+            "rgb": lambda: ", ".join(_colour(color) for color in self.colors),
             "white": lambda: f"warm white {self.white}",
             "effect": lambda: f"{self.effect} {self.speed}%/{self.density}%",
             "segments": lambda: f"{len(self.segments)} segments",
@@ -418,7 +439,16 @@ class Scene:
                 speed=self.speed,
             )
         else:
-            await coordinator.async_set_rgb(self.colors[0], self.brightness)
+            colour = self.colors[0]
+            if len(colour) == 4:
+                red, green, blue, white = colour
+                # Scene definitions carry the W level as 0-100 (the wire unit);
+                # the coordinator works in Home Assistant's 0-255.
+                await coordinator.async_set_rgbw(
+                    (red, green, blue), round(white * 255 / 100), self.brightness
+                )
+            else:
+                await coordinator.async_set_rgb(colour, self.brightness)
 
         if not coordinator.runtime.is_on:
             await coordinator.async_set_power(True)
@@ -478,4 +508,4 @@ def known_scribble_effects() -> tuple[str, ...]:
     return tuple(sorted(SCRIBBLE_EFFECT_NAME_TO_ID))
 
 
-ColorList = Sequence[Color]
+ColorList = Sequence[Color | RGBW]

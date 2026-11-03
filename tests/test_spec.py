@@ -40,15 +40,31 @@ from custom_components.surplife.protocol.spec import (
         ("none", (None, None)),
         ([1, 2, 3], ((1, 2, 3), None)),
         ((9, 8, 7), ((9, 8, 7), None)),
+        # RGBW: the fourth value is the W level, always 0-100.
+        ("255,0,0,80", ((255, 0, 0), 80)),
+        ("0,0,0,100", ((0, 0, 0), 100)),
+        ([255, 0, 0, 40], ((255, 0, 0), 40)),
+        ((1, 2, 3, 4), ((1, 2, 3), 4)),
     ],
 )
 def test_parse_color(token, expected) -> None:
     assert parse_color(token) == expected
 
 
+@pytest.mark.parametrize("token", ["255,0,0,101", [255, 0, 0, 101], "0,0,0,255"])
+def test_parse_color_rejects_a_w_level_above_100(token) -> None:
+    """The W level is a percentage, not a 0-255 byte.
+
+    Home Assistant's ``rgbw_color`` uses 0-255, so a value like 255 is a real
+    mistake worth reporting rather than silently clamping to full.
+    """
+    with pytest.raises(ValueError, match="white level"):
+        parse_color(token)
+
+
 @pytest.mark.parametrize(
     "token",
-    ["mauve", "#fff", "#gggggg", "1,2", "1,2,3,4", "1,x,3", "w", "w101", [1, 2]],
+    ["mauve", "#fff", "#gggggg", "1,2", "1,2,3,4,5", "1,x,3", "w", "w101", [1, 2]],
 )
 def test_parse_color_rejects(token) -> None:
     with pytest.raises(ValueError):

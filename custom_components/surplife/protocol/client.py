@@ -311,12 +311,44 @@ class SurplifeClient:
         with self._lock:
             self._exchange(commands.warm_white(level))
 
+    def set_levels(
+        self,
+        *,
+        red: int = 0,
+        green: int = 0,
+        blue: int = 0,
+        white: int = 0,
+        write_mode: int | None = None,
+    ) -> None:
+        """Set colour and/or the W channel in one ``E0 01`` command.
+
+        Args:
+            red, green, blue: RGB channels, 0-255.
+            white: W channel level, 0-100.
+            write_mode: Explicit channel selector. ``WRITE_ALL`` writes both,
+                so the W channel can be lit while the colour channels are
+                dark — a true white rather than a simulated RGB white.
+
+        **Verified**: the firmware accepts the combined frame; it does not
+        echo any of it back, so the coordinator tracks it optimistically.
+        """
+        with self._lock:
+            self._exchange(
+                commands.levels(
+                    red=red,
+                    green=green,
+                    blue=blue,
+                    white=white,
+                    write_mode=write_mode,
+                )
+            )
+
     # -- effects -----------------------------------------------------------
 
     def set_effect(
         self,
         effect_id: int,
-        colors: list[tuple[int, int, int]] | None = None,
+        colors: list[tuple[int, ...]] | None = None,
         *,
         speed: int = 50,
         density: int = 50,
@@ -338,7 +370,7 @@ class SurplifeClient:
                 )
             )
 
-    def set_segments(self, colors: list[tuple[int, int, int] | None]) -> None:
+    def set_segments(self, colors: list[tuple[int, ...] | None]) -> None:
         """Apply up to 20 static segment colours."""
         with self._lock:
             self._exchange(commands.segments(colors))
@@ -397,18 +429,6 @@ class SurplifeClient:
         speed: int,
     ) -> bytes:
         led = group.leds
-        if led.white:
-            return commands.scribble_paint(
-                led_count=led_count,
-                indices=group.indices,
-                white=led.white,
-                effect_id=effect_id,
-                direction=direction,
-                density=density,
-                speed=speed,
-                blink_mode=led.blink_mode,
-                blink_speed=led.blink_speed,
-            )
         red, green, blue = led.rgb or (0, 0, 0)
         return commands.scribble_paint(
             led_count=led_count,
@@ -416,6 +436,7 @@ class SurplifeClient:
             red=red,
             green=green,
             blue=blue,
+            white=led.white or 0,
             effect_id=effect_id,
             direction=direction,
             density=density,

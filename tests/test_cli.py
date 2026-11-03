@@ -92,9 +92,33 @@ def test_color_by_triple(cli, client) -> None:
     client.set_color.assert_called_once_with(1, 2, 3)
 
 
-def test_color_rejects_white_level(cli, client) -> None:
-    """``w80`` is a white level, not a colour, so ``color`` must refuse it."""
-    assert run(cli, "color", "w80") == 1
+def test_color_accepts_a_white_level(cli, client) -> None:
+    """``w80`` is a white-LED request, not an RGB colour.
+
+    The W channel is addressable on its own, so this lights the white LED with
+    the colour channels dark instead of rejecting the input or faking white
+    from RGB.
+    """
+    assert run(cli, "color", "w80") == 0
+    client.set_levels.assert_called_once_with(
+        red=0, green=0, blue=0, white=80, write_mode=cli.WRITE_ALL
+    )
+    client.set_color.assert_not_called()
+
+
+def test_color_by_rgbw_triple(cli, client) -> None:
+    """A four-part token mixes colour and white."""
+    assert run(cli, "color", "255,0,0,80") == 0
+    client.set_levels.assert_called_once_with(
+        red=255, green=0, blue=0, white=80, write_mode=cli.WRITE_ALL
+    )
+
+
+def test_rgbw_command(cli, client) -> None:
+    assert run(cli, "rgbw", "255", "0", "0", "80") == 0
+    client.set_levels.assert_called_once_with(
+        red=255, green=0, blue=0, white=80, write_mode=cli.WRITE_ALL
+    )
 
 
 def test_white(cli, client) -> None:

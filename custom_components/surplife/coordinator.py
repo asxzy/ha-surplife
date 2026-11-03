@@ -49,6 +49,7 @@ from .protocol import (
     SurplifeState,
     Timer,
 )
+from .protocol.constants import WRITE_ALL
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -66,7 +67,10 @@ class SurplifeRuntime:
         state: The last state frame read from the device.
         rgb: Last RGB colour we commanded, or ``None`` when in white mode.
         brightness: Last brightness we commanded, 0-255.
-        white_level: Last warm-white level we commanded, 0-255.
+        white_level: Last W-channel level we commanded, 0-255.
+        rgbw: Last RGBW mix we commanded, or ``None`` when the strip is driven
+            by colour alone or white alone. When set, ``rgb`` is the colour
+            channels and ``white_level`` the W channel, together.
         effect_name: Name of the active effect, if any.
         timers: Cached hardware timers.
         scene: Name of the last scene applied, tracked optimistically.
@@ -77,6 +81,7 @@ class SurplifeRuntime:
     rgb: tuple[int, int, int] | None = None
     brightness: int = 255
     white_level: int = 0
+    rgbw: tuple[int, int, int, int] | None = None
     effect_name: str | None = None
     timers: list[Timer] = field(default_factory=list)
     scene: str | None = None
@@ -94,7 +99,9 @@ class SurplifeRuntime:
 
     @property
     def color_mode(self) -> str:
-        """``white`` when in warm-white mode, else ``rgb``."""
+        """``rgbw`` for a mix, ``white`` for the white channel alone, else ``rgb``."""
+        if self.rgbw is not None:
+            return "rgbw"
         return "white" if self.white_level and not self.rgb else "rgb"
 
 
@@ -221,10 +228,23 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         self.async_update_listeners()
 
     async def async_set_rgb(self, rgb: tuple[int, int, int], brightness: int) -> None:
-        """Set an RGB colour at a Home Assistant brightness (0-255)."""
+        """Set an RGB colour at a Home Assistant brightness (0-255).
+
+        The W channel is explicitly written to zero: ``light.turn_on`` with a
+        colour means "show this colour", so leaving white lit from a previous
+        white request would tint the result.
+        """
         scaled = _scale(rgb, brightness)
-        await self._run(self._client.set_color, *scaled)
+        await self._run(
+            self._client.set_levels,
+            red=scaled[0],
+            green=scaled[1],
+            blue=scaled[2],
+            white=0,
+            write_mode=WRITE_ALL,
+        )
         self.runtime.rgb = scaled
+        self.runtime.rgbw = None
         self.runtime.brightness = brightness
         self.runtime.white_level = 0
         self.runtime.effect_name = None
@@ -232,18 +252,61 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         self.async_update_listeners()
 
     async def async_set_white(self, level: int) -> None:
-        """Set warm-white brightness, 0-255."""
+        """Set white-channel brightness, 0-255.
+
+        Only the W channel is written (``WRITE_WHITE``), so the colour channels
+        keep whatever they had. This is the path ``light.turn_on`` takes for
+        ``white:`` — the white LED, not a simulated RGB white.
+        """
         percent = round(level * 100 / 255)
         await self._run(self._client.set_warm_white, percent)
         self.runtime.rgb = None
+        self.runtime.rgbw = None
         self.runtime.white_level = level
         self.runtime.brightness = level
         self.runtime.effect_name = None
         self._clear_recipe()
         self.async_update_listeners()
 
+    async def async_set_rgbw(
+        self, rgb: tuple[int, int, int], white: int, brightness: int
+    ) -> None:
+        """Set an RGBW mix: colour channels plus the W channel, together.
+
+        Args:
+            rgb: Colour channels, 0-255.
+            white: W channel level, 0-255, as Home Assistant reports it.
+            brightness: Overall brightness, 0-255. Scales ``rgb`` the same way
+                :meth:`async_set_rgb` does; ``white`` is already a level.
+
+        A pure white request arrives as ``rgb=(0, 0, 0)`` with ``white`` set.
+        That is exactly the case this method exists for: the strip lights its
+        white LED and no colour, instead of three colour LEDs imitating white.
+        """
+        scaled = _scale(rgb, brightness)
+        percent = round(white * 100 / 255)
+        await self._run(
+            self._client.set_levels,
+            red=scaled[0],
+            green=scaled[1],
+            blue=scaled[2],
+            white=percent,
+            write_mode=WRITE_ALL,
+        )
+        self.runtime.rgb = scaled if any(scaled) else None
+        self.runtime.white_level = white
+        self.runtime.brightness = max(brightness, white)
+        self.runtime.rgbw = (scaled[0], scaled[1], scaled[2], white)
+        self.runtime.effect_name = None
+        self._clear_recipe()
+        self.async_update_listeners()
+
     async def async_set_brightness(self, brightness: int) -> None:
         """Change brightness without changing the colour."""
+        if self.runtime.rgbw is not None:
+            red, green, blue, white = self.runtime.rgbw
+            await self.async_set_rgbw((red, green, blue), white, brightness)
+            return
         if self.runtime.white_level and self.runtime.rgb is None:
             await self.async_set_white(brightness)
             return
@@ -260,7 +323,7 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         density: int = 50,
         direction: int = 1,
         option: int = 0,
-        colors: list[tuple[int, int, int]] | None = None,
+        colors: list[tuple[int, ...]] | None = None,
     ) -> None:
         """Apply a native ``E1 21`` effect by name."""
         from .protocol.constants import EFFECT_NAME_TO_ID
@@ -286,9 +349,7 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
 
     # -- segments ----------------------------------------------------------
 
-    async def async_set_segments(
-        self, colors: list[tuple[int, int, int] | None]
-    ) -> None:
+    async def async_set_segments(self, colors: list[tuple[int, ...] | None]) -> None:
         """Apply static segment colours."""
         await self._run(self._client.set_segments, colors)
         self.runtime.effect_name = None

@@ -44,6 +44,7 @@ def client():
         instance.get_state = Mock(side_effect=_state)
         instance.set_power = Mock()
         instance.set_color = Mock()
+        instance.set_levels = Mock()
         instance.set_warm_white = Mock()
         instance.set_effect = Mock()
         instance.set_segments = Mock()
@@ -367,7 +368,9 @@ async def test_apply_rgb_scene(hass: HomeAssistant, entry, client, store) -> Non
     await hass.services.async_call(
         DOMAIN, "apply_scene", {"entity_id": LIGHT, "scene": "red"}, blocking=True
     )
-    client.set_color.assert_called_with(255, 0, 0)
+    client.set_levels.assert_called_with(
+        red=255, green=0, blue=0, white=0, write_mode=0x00
+    )
 
 
 async def test_apply_white_scene(hass: HomeAssistant, entry, client) -> None:
@@ -477,14 +480,14 @@ async def test_apply_scene_broadcasts(hass: HomeAssistant, entry, client) -> Non
     await hass.services.async_call(
         DOMAIN, "save_scene", {"name": "bright", "mode": "rgb"}, blocking=True
     )
-    client.set_color.reset_mock()
+    client.set_levels.reset_mock()
     await hass.services.async_call(
         DOMAIN,
         "apply_scene",
         {"entity_id": [LIGHT, "light.soffit_east"], "scene": "bright"},
         blocking=True,
     )
-    assert client.set_color.call_count == 2
+    assert client.set_levels.call_count == 2
 
 
 async def test_apply_unknown_scene_reports(hass: HomeAssistant, entry) -> None:
@@ -728,7 +731,9 @@ async def test_scene_select_applies_a_scene(hass: HomeAssistant, entry, client) 
         {"entity_id": "select.soffit_west_scene", "option": "red"},
         blocking=True,
     )
-    client.set_color.assert_called_with(255, 0, 0)
+    client.set_levels.assert_called_with(
+        red=255, green=0, blue=0, white=0, write_mode=0x00
+    )
     assert hass.states.get("select.soffit_west_scene").state == "red"
 
 

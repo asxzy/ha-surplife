@@ -87,24 +87,49 @@ def power(turn_on: bool) -> bytes:
     return bytes([OP_POWER, POWER_ON_BYTE if turn_on else POWER_OFF_BYTE, 0x0F])
 
 
-def color(red: int, green: int, blue: int) -> bytes:
-    """Build a whole-strip colour command (``E0 01 00 A1 H/2 S V ...``).
+def levels(
+    *,
+    red: int = 0,
+    green: int = 0,
+    blue: int = 0,
+    white: int = 0,
+    write_mode: int | None = None,
+) -> bytes:
+    """Build a combined ``E0 01`` level command.
 
-    **Verified**: renders on hardware. Note that the device does **not** echo
-    this colour in its state frame — see :mod:`.state`.
+    This is the one place the colour and white channels are packed, so the
+    single-channel shortcuts (:func:`color`, :func:`warm_white`) and the
+    combined RGBW form cannot drift apart.
+
+    Args:
+        red, green, blue: RGB channels, 0-255.
+        white: W channel level, 0-100.
+        write_mode: Which channels the device should rewrite. Defaults to
+            ``WRITE_ALL`` when both colour and white are present (a real RGBW
+            mix), otherwise the single channel being set. The firmware ignores
+            channels whose mode is not selected, which is what makes "set the
+            W channel without disturbing RGB" possible.
+
+    **Verified**: renders on hardware. The device does **not** echo any of this
+    in its state frame, so callers must track it optimistically.
     """
     h2, s, v = rgb_to_hsv_bytes(red, green, blue)
+    if write_mode is None:
+        if white and (red or green or blue):
+            write_mode = WRITE_ALL
+        else:
+            write_mode = WRITE_WHITE if white else WRITE_COLOR
     return bytes(
         [
             OP_LEVEL,
             SUB_LEVEL,
             0x00,
-            WRITE_COLOR,
+            _clamp(write_mode, 0, 0xFF, "write mode"),
             h2,
             s,
             v,
-            0x00,  # white temperature
-            0x00,  # white brightness
+            0x00,  # white temperature: no cold-white LED on this hardware
+            _clamp(white, 0, 100, "white level"),
             0x00,
             0x00,
             0x14,  # constant
@@ -112,6 +137,15 @@ def color(red: int, green: int, blue: int) -> bytes:
             0x00,
         ]
     )
+
+
+def color(red: int, green: int, blue: int) -> bytes:
+    """Build a whole-strip colour command (``E0 01 00 A1 H/2 S V ...``).
+
+    **Verified**: renders on hardware. Note that the device does **not** echo
+    this colour in its state frame — see :mod:`.state`.
+    """
+    return levels(red=red, green=green, blue=blue, write_mode=WRITE_COLOR)
 
 
 def warm_white(level: int) -> bytes:
@@ -123,24 +157,7 @@ def warm_white(level: int) -> bytes:
     **Verified**: renders on hardware. The strip has no cold-white LED, so the
     temperature byte stays at zero.
     """
-    return bytes(
-        [
-            OP_LEVEL,
-            SUB_LEVEL,
-            0x00,
-            WRITE_WHITE,
-            0x00,  # hue
-            0x00,  # saturation
-            0x00,  # value
-            0x00,  # white temperature
-            _clamp(level, 0, 100, "white level"),
-            0x00,
-            0x00,
-            0x14,
-            0x00,
-            0x00,
-        ]
-    )
+    return levels(white=level, write_mode=WRITE_WHITE)
 
 
 def brightness(level: int) -> bytes:
@@ -164,7 +181,7 @@ def brightness(level: int) -> bytes:
 
 def effect(
     effect_id: int,
-    colors: list[tuple[int, int, int]] | None = None,
+    colors: list[tuple[int, ...]] | None = None,
     *,
     speed: int = 50,
     density: int = 50,
@@ -176,11 +193,12 @@ def effect(
 
     Inner layout::
 
-        e1 21 01 64 PP OO DD NN SS 00 00 00 00 00 00 CC [H/2 S V 00 00] x CC
+        e1 21 01 64 PP OO DD NN SS 00 00 00 00 00 00 CC [H/2 S V 00 WLVL] x CC
 
     Args:
         effect_id: One of :class:`~.constants.ExtendedEffect` (1-22, 101, 102).
-        colors: Up to 8 RGB colours. Defaults to a single white.
+        colors: Up to 8 colours, each an RGB triple or an RGBW tuple whose
+            fourth value is the W-channel level 0-100. Defaults to white.
         speed: Animation speed 0-100.
         density: Animation density 0-100.
         direction: ``0x01`` left→right, ``0x02`` right→left.
@@ -188,7 +206,8 @@ def effect(
         brightness: Value byte applied to every colour, 0-100.
 
     **Verified**: every effect ID round-trips through the state frame's effect
-    and speed bytes.
+    and speed bytes. The W byte shares the layout of the verified ``E1 26``
+    paint colour record.
     """
     _clamp(effect_id, 1, 0xFF, "effect id")
     _clamp(speed, 0, 100, "speed")
@@ -221,11 +240,11 @@ def effect(
             len(palette),
         ]
     )
-    for red, green, blue in palette:
-        h2, s, v = rgb_to_hsv_bytes(red, green, blue)
+    for entry in palette:
+        h2, s, v = rgb_to_hsv_bytes(*entry[:3])
         # Scale the value by the requested brightness so callers can dim an
         # effect without recomputing colours.
-        msg.extend([h2, s, round(v * brightness / 100), 0x00, 0x00])
+        msg.extend([h2, s, round(v * brightness / 100), 0x00, _white_of(entry)])
     return bytes(msg)
 
 
@@ -234,18 +253,24 @@ def effect(
 # --------------------------------------------------------------------------
 
 
-def segments(colors: list[tuple[int, int, int] | None]) -> bytes:
+def segments(
+    colors: list[tuple[int, int, int] | tuple[int, int, int, int] | None],
+) -> bytes:
     """Build an ``E1 22`` segment-colour command.
 
     Inner layout::
 
-        e1 22 00 00 00 00 14 [H/2 S V 00 00] x 20
+        e1 22 00 00 00 00 14 [H/2 S V 00 WLVL] x 20
 
     Args:
-        colors: Up to 20 RGB triples, or ``None``/``(0, 0, 0)`` for an off
-            segment. Missing trailing segments are turned off.
+        colors: Up to 20 entries, or ``None``/``(0, 0, 0)`` for an off segment.
+            An entry may be an RGB triple or an RGBW tuple, where the fourth
+            value is the W-channel level 0-100. A pure-white segment is
+            ``(0, 0, 0, level)``: colour channels dark, white LED lit. Missing
+            trailing segments are turned off.
 
-    **Verified**: renders 20 fixed zones; unspecified segments go dark.
+    **Verified**: renders 20 fixed zones; unspecified segments go dark. The
+    per-colour W byte is the same field that the verified ``E1 26`` paint uses.
     """
     if len(colors) > SEGMENT_COUNT:
         raise ValueError(
@@ -254,12 +279,19 @@ def segments(colors: list[tuple[int, int, int] | None]) -> bytes:
     msg = bytearray([OP_EFFECT, SUB_EFFECT_SEGMENTS, 0x00, 0x00, 0x00, 0x00, SEGMENT_COUNT])
     for index in range(SEGMENT_COUNT):
         rgb = colors[index] if index < len(colors) else None
-        if rgb is None or tuple(rgb) == (0, 0, 0):
+        if rgb is None or tuple(rgb[:3]) == (0, 0, 0) and not _white_of(rgb):
             msg.extend([0x00, 0x00, 0x00, 0x00, 0x00])
         else:
-            h2, s, v = rgb_to_hsv_bytes(*rgb)
-            msg.extend([h2, s, v, 0x00, 0x00])
+            h2, s, v = rgb_to_hsv_bytes(*rgb[:3])
+            msg.extend([h2, s, v, 0x00, _white_of(rgb)])
     return bytes(msg)
+
+
+def _white_of(entry: tuple[int, ...] | None) -> int:
+    """Extract the W-channel level from an RGB or RGBW entry."""
+    if entry is None or len(entry) < 4:
+        return 0
+    return _clamp(int(entry[3]), 0, 100, "white level")
 
 
 # --------------------------------------------------------------------------
@@ -322,19 +354,19 @@ def scribble_paint(
 
         e1 26 EFFECT DIR DENSITY SPEED BLINK H/2 S V 00 WLVL BLINKSPD <bitmap>
 
-    Colour and white are mutually exclusive: pass ``white`` for white mode
-    (then ``red``/``green``/``blue`` are ignored), or RGB for colour mode.
-    An off LED is a paint with everything zeroed.
+    An LED's colour record is ``H/2 S V 00 WLVL``, so colour and white can be
+    combined: pass both for an RGBW mix, only ``white`` for the white LED
+    alone, or only RGB for colour alone. An off LED is a paint with everything
+    zeroed.
 
     **Verified**: the device keeps a per-LED framebuffer, so each paint affects
     only its bitmap-selected LEDs and leaves the rest untouched.
     """
-    if white:
-        h2 = s = v = 0
-        white_level = _clamp(white, 0, 100, "white")
-    else:
+    if red or green or blue:
         h2, s, v = rgb_to_hsv_bytes(red, green, blue)
-        white_level = 0
+    else:
+        h2 = s = v = 0
+    white_level = _clamp(white, 0, 100, "white") if white else 0
 
     msg = bytes(
         [

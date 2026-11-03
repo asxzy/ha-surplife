@@ -11,9 +11,13 @@ import datetime as dt
 import pytest
 
 from custom_components.surplife.protocol import commands, framing
+from custom_components.surplife.protocol.constants import (
+    WRITE_ALL,
+    WRITE_COLOR,
+    WRITE_WHITE,
+)
 
 from . import golden
-
 
 # ---------------------------------------------------------------------------
 # Power
@@ -72,6 +76,42 @@ def test_warm_white_uses_white_write_mode() -> None:
 
 def test_color_uses_colour_write_mode() -> None:
     assert commands.color(1, 2, 3)[3] == 0xA1
+
+
+def test_levels_white_only_leaves_colour_channels_dark() -> None:
+    """``levels(white=...)`` is the white LED, not an RGB imitation.
+
+    This is the distinction the UI needs: a white request must not brighten
+    three colour LEDs. Only the W byte carries a value.
+    """
+    frame = commands.levels(white=100, write_mode=WRITE_ALL)
+    assert frame[3] == WRITE_ALL
+    assert frame[4:7] == b"\x00\x00\x00"  # hue, saturation, value
+    assert frame[8] == 100  # W level
+
+
+def test_levels_rgbw_sets_both_channels() -> None:
+    frame = commands.levels(red=255, green=0, blue=0, white=80, write_mode=WRITE_ALL)
+    assert frame[3] == WRITE_ALL
+    assert frame[4:7] == bytes([0, 100, 100])  # red as H/2 S V
+    assert frame[8] == 80
+
+
+def test_levels_infers_all_when_mixing() -> None:
+    """A colour plus white with no explicit mode is a mix, so write both."""
+    assert commands.levels(red=1, green=2, blue=3, white=10)[3] == WRITE_ALL
+    assert commands.levels(red=1, green=2, blue=3)[3] == WRITE_COLOR
+    assert commands.levels(white=10)[3] == WRITE_WHITE
+
+
+def test_color_and_warm_white_are_the_shortcuts() -> None:
+    """The single-channel helpers must produce the same bytes as before."""
+    assert commands.color(255, 0, 0) == commands.levels(
+        red=255, green=0, blue=0, write_mode=WRITE_COLOR
+    )
+    assert commands.warm_white(100) == commands.levels(
+        white=100, write_mode=WRITE_WHITE
+    )
 
 
 @pytest.mark.parametrize("level", [-1, 101])

@@ -15,6 +15,7 @@ from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     ATTR_EFFECT,
     ATTR_RGB_COLOR,
+    ATTR_RGBW_COLOR,
     ColorMode,
 )
 from homeassistant.const import (
@@ -70,6 +71,7 @@ def fake_client():
         client.get_state = Mock(side_effect=lambda: _state())
         client.set_power = Mock()
         client.set_color = Mock()
+        client.set_levels = Mock()
         client.set_warm_white = Mock()
         client.set_effect = Mock()
         client.set_segments = Mock()
@@ -117,9 +119,9 @@ async def test_light_is_created(hass: HomeAssistant, entry) -> None:
 
 
 async def test_light_reports_supported_features(hass: HomeAssistant, entry) -> None:
-    """RGB, white and effects are advertised; colour temp is not."""
+    """RGBW, white and effects are advertised; colour temp is not."""
     attributes = hass.states.get(LIGHT).attributes
-    assert ColorMode.RGB in attributes["supported_color_modes"]
+    assert ColorMode.RGBW in attributes["supported_color_modes"]
     assert ColorMode.WHITE in attributes["supported_color_modes"]
     assert ColorMode.COLOR_TEMP not in attributes["supported_color_modes"]
     assert attributes["supported_features"] & 4  # EFFECT
@@ -145,13 +147,16 @@ async def test_turn_off(hass: HomeAssistant, entry, fake_client) -> None:
 
 
 async def test_turn_on_with_rgb(hass: HomeAssistant, entry, fake_client) -> None:
+    """An RGB request writes the colour channels and zeroes the W channel."""
     await hass.services.async_call(
         "light",
         "turn_on",
         {ATTR_ENTITY_ID: LIGHT, ATTR_RGB_COLOR: (255, 0, 0), ATTR_BRIGHTNESS: 255},
         blocking=True,
     )
-    fake_client.set_color.assert_called_once_with(255, 0, 0)
+    fake_client.set_levels.assert_called_once_with(
+        red=255, green=0, blue=0, white=0, write_mode=0x00
+    )
 
 
 async def test_rgb_is_scaled_by_brightness(hass: HomeAssistant, entry, fake_client) -> None:
@@ -162,7 +167,9 @@ async def test_rgb_is_scaled_by_brightness(hass: HomeAssistant, entry, fake_clie
         {ATTR_ENTITY_ID: LIGHT, ATTR_RGB_COLOR: (255, 0, 0), ATTR_BRIGHTNESS: 128},
         blocking=True,
     )
-    fake_client.set_color.assert_called_once_with(128, 0, 0)
+    fake_client.set_levels.assert_called_once_with(
+        red=128, green=0, blue=0, white=0, write_mode=0x00
+    )
 
 
 async def test_rgb_state_is_optimistic(hass: HomeAssistant, entry) -> None:
@@ -175,7 +182,48 @@ async def test_rgb_state_is_optimistic(hass: HomeAssistant, entry) -> None:
     )
     state = hass.states.get(LIGHT)
     assert state.attributes["rgb_color"] == (0, 0, 255)
-    assert state.attributes["color_mode"] == ColorMode.RGB
+    assert state.attributes["color_mode"] == ColorMode.RGBW
+
+
+async def test_white_is_the_w_channel_not_an_rgb_mix(
+    hass: HomeAssistant, entry, fake_client
+) -> None:
+    """``rgbw_color=(0, 0, 0, 255)`` must light the white LED alone.
+
+    This is the whole point of the RGBW model. Emulating white with three
+    colour LEDs wastes them, looks different, and is dimmer.
+    """
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: LIGHT, ATTR_RGBW_COLOR: (0, 0, 0, 255)},
+        blocking=True,
+    )
+    fake_client.set_levels.assert_called_once_with(
+        red=0, green=0, blue=0, white=100, write_mode=0x00
+    )
+    fake_client.set_color.assert_not_called()
+
+    state = hass.states.get(LIGHT)
+    assert state.attributes["rgbw_color"] == (0, 0, 0, 255)
+    assert state.attributes["color_mode"] == ColorMode.RGBW
+
+
+async def test_rgbw_mix_uses_both_channels(
+    hass: HomeAssistant, entry, fake_client
+) -> None:
+    """A partial mix writes colour and white together."""
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: LIGHT, ATTR_RGBW_COLOR: (255, 0, 0, 128), ATTR_BRIGHTNESS: 255},
+        blocking=True,
+    )
+    fake_client.set_levels.assert_called_once_with(
+        red=255, green=0, blue=0, white=50, write_mode=0x00
+    )
+    state = hass.states.get(LIGHT)
+    assert state.attributes["rgbw_color"] == (255, 0, 0, 128)
 
 
 async def test_effect_can_be_set(hass: HomeAssistant, entry, fake_client) -> None:

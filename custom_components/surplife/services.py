@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import functools
 import logging
+from typing import Any
 
 import voluptuous as vol
-
 from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import HomeAssistantError
@@ -135,12 +135,46 @@ def _user_errors(handler):
     return wrapper
 
 
+def _colour_tokens(value: Any) -> list[Any]:
+    """Normalise a colour field into a list of parseable tokens.
+
+    The UI sends a list of objects (``{"color": [r, g, b], "white": 80}``),
+    while YAML and the CLI send plain tokens. Both shapes have to reach
+    :func:`parse_color`, so an object is flattened here:
+
+    * only ``color`` — the RGB triple.
+    * only ``white`` — ``w<n>``, the white LED alone.
+    * both — ``(r, g, b, n)``, an RGBW mix.
+    """
+    if value is None:
+        return []
+    if not isinstance(value, (list, tuple)):
+        value = [value]
+    tokens: list[Any] = []
+    for item in value:
+        if isinstance(item, dict):
+            rgb = item.get("color")
+            white = item.get("white")
+            if white is not None and rgb is not None:
+                tokens.append((*rgb, int(white)))
+            elif white is not None:
+                tokens.append(f"w{int(white)}")
+            elif rgb is not None:
+                tokens.append(rgb)
+        else:
+            tokens.append(item)
+    return tokens
+
+
 async def async_setup_services(hass: HomeAssistant) -> None:
     """Register the integration's services."""
 
     @_user_errors
     async def _set_segments(call: ServiceCall) -> None:
-        colors = [parse_color(token)[0] for token in call.data[ATTR_COLORS]]
+        colors = [
+            parse_color(token)[0]
+            for token in _colour_tokens(call.data[ATTR_COLORS])
+        ]
         for coordinator in _coordinators(hass, call.data[ATTR_ENTITY_ID]):
             await coordinator.async_set_segments(colors)
 
