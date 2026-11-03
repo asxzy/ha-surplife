@@ -8,11 +8,13 @@ leaves out.
 
 from __future__ import annotations
 
+import datetime as dt
 import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 
 from .const import DOMAIN
 from .coordinator import SurplifeCoordinator
@@ -69,9 +71,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if unloaded:
         coordinator: SurplifeCoordinator = hass.data[DOMAIN].pop(entry.entry_id)
         await coordinator.async_shutdown()
-        if not any(
-            key for key in hass.data[DOMAIN] if key not in _NON_ENTRY_KEYS
-        ):
+        if not any(key for key in hass.data[DOMAIN] if key not in _NON_ENTRY_KEYS):
             async_unload_services(hass)
             async_unload_scene_services(hass)
     return unloaded
@@ -82,5 +82,33 @@ _NON_ENTRY_KEYS = frozenset({SCENE_STORE_KEY})
 
 
 async def _async_update_options(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Reload the entry when its options change."""
-    await hass.config_entries.async_reload(entry.entry_id)
+    """Apply an options change without needlessly reloading the entry.
+
+    Most options are *data* the coordinator reads on demand: an effect's saved
+    palette and parameters, a look's palette. Reloading for those would tear
+    down every entity and discard the optimistic colour/brightness state the
+    firmware never echoes, so the panel would appear to "forget" what it just
+    applied. Only the poll interval needs a reload, because it is baked into the
+    coordinator's timer at construction.
+    """
+    coordinator: SurplifeCoordinator | None = hass.data.get(DOMAIN, {}).get(
+        entry.entry_id
+    )
+    if coordinator is None:
+        return
+
+    interval = dt.timedelta(seconds=coordinator.scan_interval)
+    if coordinator.update_interval != interval:
+        coordinator.update_interval = interval
+        _LOGGER.debug("poll interval for %s is now %s", coordinator.host, interval)
+
+    # Re-push whatever is showing so an edit to the active effect is visible
+    # immediately rather than on the next unrelated command. A controller that
+    # is offline must not make saving the panel fail -- the settings are already
+    # stored by the time this runs, and the next poll or command will apply them.
+    effect = coordinator.runtime.effect_name
+    if effect is not None:
+        try:
+            await coordinator.async_set_effect(effect)
+        except HomeAssistantError as err:
+            _LOGGER.debug("could not re-apply %s after options change: %s", effect, err)

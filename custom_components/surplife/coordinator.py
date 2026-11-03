@@ -31,9 +31,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from .const import (
     CONF_FIRMWARE_INFO,
     CONF_HW_VERSION,
-    CONF_LED_COUNT,
     CONF_MAC,
-    CONF_MODEL_INFO,
     DEFAULT_PORT,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_TIMEOUT,
@@ -41,6 +39,7 @@ from .const import (
     MANUFACTURER,
     MODEL,
 )
+from .effect_profile import palette_for
 from .protocol import (
     ScribbleLED,
     SurplifeClient,
@@ -50,6 +49,7 @@ from .protocol import (
     Timer,
 )
 from .protocol.constants import WRITE_ALL
+from .settings import effect_settings, look_settings, merge_colours
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -72,6 +72,10 @@ class SurplifeRuntime:
             by colour alone or white alone. When set, ``rgb`` is the colour
             channels and ``white_level`` the W channel, together.
         effect_name: Name of the active effect, if any.
+        palette: The colours last commanded to an effect, as RGBW tuples.
+        effect_speed: Effect speed last commanded, 0-100.
+        effect_density: Effect density last commanded, 0-100.
+        effect_direction: ``0x01`` left-to-right or ``0x02`` right-to-left.
         timers: Cached hardware timers.
         scene: Name of the last scene applied, tracked optimistically.
         look: Name of the last per-LED look applied, tracked optimistically.
@@ -83,6 +87,10 @@ class SurplifeRuntime:
     white_level: int = 0
     rgbw: tuple[int, int, int, int] | None = None
     effect_name: str | None = None
+    palette: list[tuple[int, ...]] = field(default_factory=lambda: [(255, 255, 255)])
+    effect_speed: int = 50
+    effect_density: int = 50
+    effect_direction: int = 1
     timers: list[Timer] = field(default_factory=list)
     scene: str | None = None
     look: str | None = None
@@ -123,8 +131,18 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
             hass,
             _LOGGER,
             name=f"{DOMAIN} {self.host}",
-            update_interval=dt.timedelta(seconds=DEFAULT_SCAN_INTERVAL),
+            update_interval=dt.timedelta(seconds=self.scan_interval),
         )
+
+    @property
+    def scan_interval(self) -> int:
+        """Seconds between polls, from the options or the default.
+
+        The Configure dialog exposes this, so it has to be read from the options
+        rather than hard-coded -- otherwise the field saves a value that nothing
+        ever uses.
+        """
+        return int(self.entry.options.get("scan_interval", DEFAULT_SCAN_INTERVAL))
 
     # -- device metadata ---------------------------------------------------
 
@@ -319,29 +337,80 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         self,
         name: str,
         *,
-        speed: int = 50,
-        density: int = 50,
-        direction: int = 1,
+        speed: int | None = None,
+        density: int | None = None,
+        direction: int | None = None,
         option: int = 0,
         colors: list[tuple[int, ...]] | None = None,
     ) -> None:
-        """Apply a native ``E1 21`` effect by name."""
+        """Apply a native ``E1 21`` effect by name.
+
+        Every parameter is optional and resolves in one of three ways, in this
+        order: the value passed by the caller, the value saved for *this* effect
+        in the Configure panel, then the runtime's last commanded value. That
+        ordering is what makes the panel feel like remembered settings: picking
+        ``Wave`` from the light card restores what Wave was configured with,
+        while an automation that passes ``speed=`` still wins for that one call.
+        """
         from .protocol.constants import EFFECT_NAME_TO_ID
 
         effect_id = EFFECT_NAME_TO_ID.get(name.lower())
         if effect_id is None:
             raise HomeAssistantError(f"{self.device_name}: unknown effect {name!r}")
+
+        saved = effect_settings(self.entry.options, name)
+        palette = palette_for(
+            name,
+            colors
+            if colors is not None
+            else list(saved.colors)
+            if saved is not None and saved.colors
+            else self.runtime.palette,
+        )
+        resolved_speed = (
+            speed if speed is not None else (saved.speed if saved else None)
+        )
+        resolved_density = (
+            density if density is not None else (saved.density if saved else None)
+        )
+        resolved_direction = (
+            direction if direction is not None else (saved.direction if saved else None)
+        )
         await self._run(
             self._client.set_effect,
             effect_id,
-            colors or [self.runtime.rgb or (255, 255, 255)],
-            speed=speed,
-            density=density,
-            direction=direction,
+            palette,
+            speed=self.runtime.effect_speed
+            if resolved_speed is None
+            else resolved_speed,
+            density=(
+                self.runtime.effect_density
+                if resolved_density is None
+                else resolved_density
+            ),
+            direction=(
+                self.runtime.effect_direction
+                if resolved_direction is None
+                else resolved_direction
+            ),
             option=option,
             brightness=round(self.runtime.brightness * 100 / 255),
         )
         self.runtime.effect_name = name
+        self.runtime.palette = palette
+        self.runtime.effect_speed = (
+            self.runtime.effect_speed if resolved_speed is None else resolved_speed
+        )
+        self.runtime.effect_density = (
+            self.runtime.effect_density
+            if resolved_density is None
+            else resolved_density
+        )
+        self.runtime.effect_direction = (
+            self.runtime.effect_direction
+            if resolved_direction is None
+            else resolved_direction
+        )
         self.runtime.look = None
         if self.runtime.state is not None:
             self.runtime.state = _replace_pattern(self.runtime.state, effect_id)
@@ -393,22 +462,43 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         self,
         name: str,
         *,
-        palette: list[tuple[int, int, int]] | None = None,
-        direction: int = 1,
-        density: int = 80,
-        speed: int = 100,
-        effect: int = 0,
+        palette: list[tuple[int, ...]] | None = None,
+        direction: int | None = None,
+        density: int | None = None,
+        speed: int | None = None,
+        effect: int | None = None,
     ) -> int:
-        """Render one of the built-in named per-LED looks."""
-        from .scribble_looks import build_look
+        """Render one of the built-in named per-LED looks.
 
-        leds = build_look(name, self.runtime.led_count, palette)
+        A look remembers its own palette and animation parameters, so picking
+        it from the look select restores what was configured for it rather than
+        snapping back to the look's built-in defaults. Anything passed
+        explicitly wins for that call, which is what scenes and the service use.
+        """
+        from .scribble_looks import LOOKS, build_look
+
+        saved = look_settings(self.entry.options, name)
+        if palette is None and saved is not None and saved.palette:
+            defaults = LOOKS[name].palette if name in LOOKS else ()
+            resolved_palette = list(
+                merge_colours(tuple(defaults), {"palette": saved.palette})
+            )
+        else:
+            resolved_palette = palette
+
+        leds = build_look(name, self.runtime.led_count, resolved_palette)
         return await self.async_set_scribble(
             leds,
-            effect=effect,
-            direction=direction,
-            density=density,
-            speed=speed,
+            effect=effect if effect is not None else (saved.effect if saved else 0),
+            direction=(
+                direction
+                if direction is not None
+                else (saved.direction if saved else 1)
+            ),
+            density=(
+                density if density is not None else (saved.density if saved else 80)
+            ),
+            speed=speed if speed is not None else (saved.speed if saved else 100),
             look=name,
         )
 

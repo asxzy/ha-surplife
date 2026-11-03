@@ -38,9 +38,29 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import SurplifeCoordinator, SurplifeRuntime
+from .effect_profile import profile_for
 from .protocol.constants import EFFECT_NAMES
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def _hex(colour: tuple[int, ...]) -> str:
+    """Render an RGB triple as ``#rrggbb``."""
+    return "#{:02x}{:02x}{:02x}".format(*colour[:3])
+
+
+def _hexw(colour: tuple[int, ...]) -> str:
+    """Render an RGBW colour as ``#rrggbb`` plus its W level.
+
+    The W level is a separate channel, not a shade of the colour, so appending
+    it as a percentage is more honest than pretending it is part of the hex. A
+    zero level is omitted, because that is just a colour with the white LED
+    off.
+    """
+    if len(colour) == 4 and colour[3]:
+        return f"{_hex(colour)} w{colour[3]}"
+    return _hex(colour)
+
 
 #: The controller drives four channels: R, G, B and a single warm-white LED.
 #: It has no cold-white LED, so ``ColorMode.COLOR_TEMP`` would be a lie and a
@@ -70,7 +90,9 @@ class SurplifeLight(CoordinatorEntity[SurplifeCoordinator], LightEntity):
     _attr_name = None
     _attr_supported_color_modes = SUPPORTED_COLOR_MODES
     _attr_supported_features = LightEntityFeature.EFFECT
-    _attr_effect_list = list(EFFECT_NAMES.values())
+    #: Immutable, because Home Assistant compares effect lists by identity in
+    #: some paths and commandeers the list if it is a mutable class default.
+    _attr_effect_list: tuple[str, ...] = tuple(EFFECT_NAMES.values())
 
     def __init__(self, coordinator: SurplifeCoordinator) -> None:
         """Initialise the light."""
@@ -134,16 +156,36 @@ class SurplifeLight(CoordinatorEntity[SurplifeCoordinator], LightEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Expose the config-entry id.
+        """Expose the config-entry id and the active effect's capabilities.
 
         The ``surplife.*`` services accept light entity ids and need to resolve
         each one back to its coordinator. Putting the entry id in the state
         attributes keeps that lookup to a plain state read, so the services do
         not have to walk the entity registry.
+
+        The effect details let a dashboard show the controls that match what is
+        running — the palette the effect was given, and which of the speed,
+        density and direction sliders it responds to.
         """
+        effect = self._runtime.effect_name
+        profile = profile_for(effect) if effect else None
         return {
             "surplife_entry_id": self.coordinator.entry.entry_id,
             "pattern": self._runtime.state.pattern if self._runtime.state else None,
+            "palette": [
+                _hex(colour) if len(colour) == 3 else _hexw(colour)
+                for colour in self._runtime.palette
+            ],
+            "effect_speed": self._runtime.effect_speed,
+            "effect_density": self._runtime.effect_density,
+            "effect_direction": (
+                "left_to_right"
+                if self._runtime.effect_direction == 1
+                else "right_to_left"
+            ),
+            "palette_mode": profile.palette.value if profile else None,
+            "effect_uses_density": profile.density if profile else None,
+            "effect_uses_direction": profile.direction if profile else None,
         }
 
     # -- commands ----------------------------------------------------------
@@ -153,10 +195,11 @@ class SurplifeLight(CoordinatorEntity[SurplifeCoordinator], LightEntity):
         runtime = self._runtime
 
         if (effect := kwargs.get(ATTR_EFFECT)) is not None:
-            await self.coordinator.async_set_effect(
-                effect,
-                colors=[runtime.rgb or (255, 255, 255)],
-            )
+            # No palette is passed: the coordinator restores the colours saved
+            # for this effect in the Configure panel, falling back to whatever
+            # is showing. Passing one colour here is what made multi-colour
+            # effects impossible to configure from the light card.
+            await self.coordinator.async_set_effect(effect)
             if not runtime.is_on:
                 await self.coordinator.async_set_power(True)
             return

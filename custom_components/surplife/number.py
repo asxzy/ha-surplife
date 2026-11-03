@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import contextlib
+
 from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -12,6 +14,12 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import SurplifeCoordinator
+from .settings import (
+    EffectSettings,
+    effect_settings,
+    replace_settings,
+    with_effect,
+)
 
 
 async def async_setup_entry(
@@ -44,6 +52,10 @@ class SurplifeEffectNumber(
     The device reports speed in its state frame but not density, and the value
     only takes effect when an effect is next applied, so both are restored
     locally and sent with the next effect command.
+
+    Changing one of these while an effect is showing re-applies that effect
+    immediately, so the slider is a live control rather than a value that sits
+    waiting for the next effect change.
     """
 
     _attr_native_min_value = 0
@@ -76,10 +88,8 @@ class SurplifeEffectNumber(
         """Restore the last value."""
         await super().async_added_to_hass()
         if (last := await self.async_get_last_state()) is not None:
-            try:
+            with contextlib.suppress(TypeError, ValueError):
                 self._attr_native_value = float(last.state)
-            except (TypeError, ValueError):
-                pass
 
     @property
     def native_value(self) -> float:
@@ -87,9 +97,48 @@ class SurplifeEffectNumber(
         if self._key == "speed" and self.coordinator.runtime.state is not None:
             # Speed is genuinely reported by the device, so prefer it.
             return float(self.coordinator.runtime.state.speed)
+        if self._key == "density":
+            return float(self.coordinator.runtime.effect_density)
         return float(self._attr_native_value or 0)
 
     async def async_set_native_value(self, value: float) -> None:
-        """Store the value for the next effect command."""
+        """Store the value, and apply it if an effect is showing.
+
+        The value is written through to the config entry's options as well as
+        the runtime, so it survives the entry being reloaded or Home Assistant
+        restarting. Without that, a slider moved once and then a restart would
+        silently fall back to the panel's saved value.
+        """
         self._attr_native_value = value
+        runtime = self.coordinator.runtime
+        if self._key == "speed":
+            runtime.effect_speed = int(value)
+        else:
+            runtime.effect_density = int(value)
+
+        if runtime.effect_name is not None:
+            await self.coordinator.async_set_effect(runtime.effect_name)
+        await self._persist(int(value))
         self.async_write_ha_state()
+
+    async def _persist(self, value: int) -> None:
+        """Save this slider's value against the active effect, if there is one.
+
+        Speed and density are per-effect settings, so there is nowhere to store
+        them when no effect is showing. In that case the runtime value is still
+        used for the next effect, which is the useful behaviour anyway.
+        """
+        effect = self.coordinator.runtime.effect_name
+        if effect is None:
+            return
+        stored = effect_settings(self.coordinator.entry.options, effect)
+        settings = stored or EffectSettings()
+        updated = (
+            replace_settings(settings, speed=value)
+            if self._key == "speed"
+            else replace_settings(settings, density=value)
+        )
+        self.hass.config_entries.async_update_entry(
+            self.coordinator.entry,
+            options=with_effect(self.coordinator.entry.options, effect, updated),
+        )
