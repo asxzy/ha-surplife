@@ -34,7 +34,7 @@ uses, so you can tell them apart before applying anything:
 
 ```
 Wave — 1 colour
-Static Gradient — 8 colours
+Static Gradient — 4 colours
 Rainbow Bridge — no colour · saved
 Static Fill — 1 colour
 ```
@@ -52,6 +52,11 @@ Pick one and you get only the fields that do something:
 Gradient` shows four, because a gradient's whole point is multiple stops.
 Neither shows direction or density, because a still image has nothing to
 reverse or repeat.
+
+Four is a **UI** limit, chosen so the gradient form stays a phone-sized form
+rather than seventeen controls. The wire format itself carries eight colours, so
+an automation or service call may still pass up to eight; the panel never
+overrules it.
 
 Saving the panel **applies it immediately** and stores it. Selecting that effect
 later — from the light card, the effect selector, or an automation — restores

@@ -160,6 +160,8 @@ async def test_gradient_effect_asks_for_several_colours(
     )
     fields = _fields(result)
     assert {"color_1", "color_2", "color_3", "color_4"} <= set(fields)
+    # Four useful stops, not the wire's full eight plus eight white sliders.
+    assert "color_5" not in fields
     # A still image has nothing to reverse or repeat.
     assert "direction" not in fields
     assert "density" not in fields

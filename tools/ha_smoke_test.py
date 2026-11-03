@@ -128,7 +128,6 @@ async def run() -> int:
         #    catch: the form opens and every field is missing, which looks like
         #    "the integration has no options" rather than an error.
         try:
-
             flow = await hass.config_entries.options.async_init("smoke")
             steps_seen = [flow.get("step_id")]
             # Walk into the effect panel for a multi-colour effect.
@@ -147,6 +146,7 @@ async def run() -> int:
                 flow.get("type") == "form"
                 and "color_1" in fields
                 and "color_4" in fields
+                and "color_5" not in fields
                 and "direction" not in fields
                 and bool(serialized)
             )

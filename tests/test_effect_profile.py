@@ -56,10 +56,24 @@ def test_rainbow_bridge_takes_no_colour() -> None:
     assert profile.panel_colours == 0
 
 
-def test_gradient_effects_offer_the_full_protocol_width() -> None:
-    """A gradient's whole point is multiple stops."""
+def test_gradient_effects_offer_a_useful_number_of_stops() -> None:
+    """A gradient's whole point is multiple stops, but not seventeen controls.
+
+    The panel is a phone form; offering the protocol's full eight slots plus
+    eight white sliders is a wall of fields. Four stops is the useful number,
+    and ``palette_for`` still carries all eight for automations.
+    """
+    from custom_components.surplife.effect_profile import GRADIENT_STOPS
+
+    assert GRADIENT_STOPS == 4
     for name in ("Static Gradient", "Gradient Meteor", "Gradient Overlay"):
-        assert profile_for(name).panel_colours == MAX_PROTOCOL_COLOURS
+        assert profile_for(name).panel_colours == GRADIENT_STOPS
+
+
+def test_the_panel_offers_fewer_colours_than_the_wire_allows() -> None:
+    """The UI limit and the wire limit are deliberately different numbers."""
+    for name in EFFECT_NAMES.values():
+        assert profile_for(name).panel_colours <= MAX_PROTOCOL_COLOURS
 
 
 def test_unknown_effect_gets_a_permissive_profile() -> None:

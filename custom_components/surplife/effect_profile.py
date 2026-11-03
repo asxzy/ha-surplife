@@ -111,12 +111,20 @@ _SINGLE: Final = {
 }
 
 #: How many pickers to offer for the palette effects. Two is enough for the
-#: common two-tone holiday looks; gradient effects get the full protocol width
-#: because their whole point is a multi-stop blend.
+#: common two-tone holiday looks; gradients get more because their whole point
+#: is a multi-stop blend.
+#:
+#: This is a **UI** choice, not a wire limit: ``palette_for`` still lets an
+#: automation pass up to :data:`MAX_PROTOCOL_COLOURS`. Eight pickers plus eight
+#: white-level sliders is seventeen controls on one phone screen, which is the
+#: wall-of-fields problem the panel exists to avoid, so a gradient asks for the
+#: four stops that are useful in practice.
+GRADIENT_STOPS: Final = 4
+
 _PANEL_COLOURS: Final = {
-    "Static Gradient": MAX_PROTOCOL_COLOURS,
-    "Gradient Meteor": MAX_PROTOCOL_COLOURS,
-    "Gradient Overlay": MAX_PROTOCOL_COLOURS,
+    "Static Gradient": GRADIENT_STOPS,
+    "Gradient Meteor": GRADIENT_STOPS,
+    "Gradient Overlay": GRADIENT_STOPS,
     "Fireworks": 3,
     "Collision": 3,
     "Volcano": 3,
