@@ -69,11 +69,27 @@ set_segments:
   fields:
     colors:
       name: Colours
-      description: Up to 20 colours. Missing trailing segments are turned off.
+      description: >-
+        Up to 20 colours. Missing trailing segments are turned off. Set
+        "White level" to drive the W channel instead of simulating white from
+        RGB.
       required: true
       selector:
-        color_rgb:
+        object:
           multiple: true
+          label_field: color
+          fields:
+            color:
+              label: Colour
+              selector:
+                color_rgb:
+            white:
+              label: White level (W channel, 0-100)
+              selector:
+                number:
+                  min: 0
+                  max: 100
+                  mode: slider
 
 set_timer:
   name: Set timer
@@ -208,8 +224,14 @@ apply_look:
         Optional colours for the look. Leave empty to use the look's own
         palette. The rainbow look ignores this.
       selector:
-        color_rgb:
+        object:
           multiple: true
+          label_field: color
+          fields:
+            color:
+              label: Colour
+              selector:
+                color_rgb:
     direction:
       name: Direction
       default: l2r
@@ -289,10 +311,23 @@ save_scene:
       name: Colours
       description: >-
         Solid-colour scenes use the first colour. Effect scenes cycle through
-        all of them.
+        all of them. Add a white level to drive the W channel on that entry.
       selector:
-        color_rgb:
+        object:
           multiple: true
+          label_field: color
+          fields:
+            color:
+              label: Colour
+              selector:
+                color_rgb:
+            white:
+              label: White level (W channel, 0-100)
+              selector:
+                number:
+                  min: 0
+                  max: 100
+                  mode: slider
     brightness:
       name: Brightness
       description: 0-255, used by solid-colour scenes.
@@ -341,10 +376,25 @@ save_scene:
               label: Right to left
     segments:
       name: Segments
-      description: Up to 20 colours, used by segment scenes.
+      description: >-
+        Up to 20 colours, used by segment scenes. Add a white level to drive
+        the W channel on that segment.
       selector:
-        color_rgb:
+        object:
           multiple: true
+          label_field: color
+          fields:
+            color:
+              label: Colour
+              selector:
+                color_rgb:
+            white:
+              label: White level (W channel, 0-100)
+              selector:
+                number:
+                  min: 0
+                  max: 100
+                  mode: slider
     pattern:
       name: Per-LED pattern
       description: >-

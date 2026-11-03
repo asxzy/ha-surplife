@@ -51,7 +51,9 @@ async def test_every_registered_service_is_documented(
 ) -> None:
     documented = set(_documented())
     undocumented = _registered(hass) - documented
-    assert not undocumented, f"registered but not in services.yaml: {sorted(undocumented)}"
+    assert not undocumented, (
+        f"registered but not in services.yaml: {sorted(undocumented)}"
+    )
 
 
 async def test_documented_fields_match_the_schema(
@@ -100,6 +102,57 @@ async def test_required_fields_are_marked_required(
 def _schema_keys(schema) -> set[str]:
     """The field names a voluptuous schema accepts."""
     return {str(getattr(key, "schema", key)) for key in schema.schema}
+
+
+def test_services_yaml_passes_home_assistant_validation() -> None:
+    """``services.yaml`` must survive Home Assistant's own loader.
+
+    The loader runs the whole file through one schema and, on any error,
+    logs a warning and returns ``{}`` — so a single bad selector silently
+    removes **every** field from **every** service in the integration. The
+    failure is invisible from the outside: the services still exist and still
+    work when called from YAML, they just render no inputs at all, which reads
+    as "there is nowhere to pick a colour".
+
+    Checking field names and handler signatures does not catch it, because the
+    file is structurally fine; only the selector options are wrong.
+    """
+    from homeassistant.helpers.service import _SERVICES_SCHEMA
+
+    document = _documented()
+    validated = _SERVICES_SCHEMA(document)
+    assert set(validated) == set(document)
+
+
+def test_multi_colour_selectors_offer_a_colour_picker() -> None:
+    """The colour fields must render as pickers, not blank rows.
+
+    ``color_rgb`` takes a single ``[r, g, b]`` and has no ``multiple`` option,
+    so a list of colours needs the ``object`` selector wrapping it. This pins
+    that shape, and checks the field really contains a colour picker.
+    """
+    document = _documented()
+    for service, field in (
+        ("set_segments", "colors"),
+        ("apply_look", "palette"),
+        ("save_scene", "colors"),
+        ("save_scene", "segments"),
+    ):
+        selector = document[service]["fields"][field]["selector"]
+        assert "object" in selector, f"{service}.{field} must use the object selector"
+        config = selector["object"]
+        assert config.get("multiple") is True
+        nested = config["fields"]["color"]["selector"]
+        assert "color_rgb" in nested, f"{service}.{field} has no colour picker"
+
+    for service, field in (
+        ("set_segments", "colors"),
+        ("save_scene", "segments"),
+    ):
+        white = document[service]["fields"][field]["selector"]["object"]["fields"][
+            "white"
+        ]
+        assert white["selector"]["number"]["max"] == 100
 
 
 def test_strings_cover_every_service() -> None:
