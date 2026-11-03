@@ -95,6 +95,10 @@ data:
   repeat: everyday
 ```
 
+A full walkthrough — including the calendar automation, timers and the
+symptoms that look like bugs but are not — is in
+[`docs/usage.md`](docs/usage.md).
+
 ## Per-LED ("scribble") painting
 
 The wire protocol takes a full per-LED pattern; the app calls this
@@ -163,6 +167,7 @@ three controllers, or use the `surplife.apply_preset` service with
 - [`docs/protocol_0xB6.md`](docs/protocol_0xB6.md) — verified wire protocol
 - [`docs/device_db.md`](docs/device_db.md) — shipped device-database evidence
 - [`docs/app_evidence.md`](docs/app_evidence.md) — app UI labels and limits
+- [`docs/usage.md`](docs/usage.md) — **how to use it**, day to day
 - [`docs/scenes_and_looks.md`](docs/scenes_and_looks.md) — scenes, looks, calendar
 - [`docs/architecture.md`](docs/architecture.md) — component design
 
