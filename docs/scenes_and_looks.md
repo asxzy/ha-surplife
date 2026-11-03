@@ -81,14 +81,22 @@ automation would drift and no test could assert output.
 
 | Entity | Purpose |
 |---|---|
+| `select.<name>_per_led_look` | pick one of the nine looks — **start here** |
 | `text.<name>_per_led_pattern` | type a pattern, e.g. `12xred 23xblue/fast` |
-| `select.<name>_per_led_look` | pick one of the nine looks |
 
-The text entity's state *is* the current pattern, so it survives a restart via
-`RestoreEntity`. It validates the whole string before sending, so a typo cannot
-half-paint the strip.
+Pick a look and the strip is painted. The look takes a palette of ordinary
+colour pickers in **Configure → Configure a per-LED look**, so the everyday case
+needs no syntax at all.
 
-Grammar, unchanged from `surplife.set_scribble` and the CLI:
+The text entity is the escape hatch for anything the nine looks do not cover. It
+is **disabled by default**, because a pattern string is a command and learning
+one should be a choice: enable it in the entity's settings if you want it. Its
+state *is* the current pattern, so it survives a restart via `RestoreEntity`,
+and it validates the whole string before sending, so a typo cannot half-paint
+the strip.
+
+Grammar, unchanged from `surplife.set_scribble` and the CLI. This is what the
+opt-in text entity accepts; you do not need it to use the nine looks:
 
 ```
 space-separated tokens

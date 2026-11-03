@@ -55,6 +55,12 @@ class SurplifeScribblePatternText(
     _attr_has_entity_name = True
     _attr_translation_key = "scribble_pattern"
     _attr_icon = "mdi:draw"
+    # This is the escape hatch, not the way in. Picking a look from
+    # ``select.<name>_per_led_look`` covers the everyday cases without typing
+    # anything, so the raw grammar is disabled by default and only appears for
+    # someone who deliberately enables it. A pattern string is a command, and
+    # nobody should have to learn a command syntax to paint the roof.
+    _attr_entity_registry_enabled_default = False
     # Home Assistant validates the entity's state against these bounds, and a
     # freshly created entity has no pattern yet, so the minimum must be 0 even
     # though *applying* an empty pattern is rejected in `async_set_value`.

@@ -14,6 +14,7 @@ import pytest
 from homeassistant.const import CONF_HOST, CONF_NAME
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.surplife.const import DOMAIN
@@ -201,7 +202,9 @@ async def test_save_scene_is_an_upsert(hass: HomeAssistant, entry, store) -> Non
     assert store.require("repeat").speed == 90
 
 
-async def test_save_scene_accepts_rgb_triples(hass: HomeAssistant, entry, store) -> None:
+async def test_save_scene_accepts_rgb_triples(
+    hass: HomeAssistant, entry, store
+) -> None:
     await hass.services.async_call(
         DOMAIN,
         "save_scene",
@@ -223,9 +226,7 @@ async def test_save_scene_reports_bad_effect(hass: HomeAssistant, entry) -> None
         )
 
 
-async def test_save_scene_rejects_warm_white_colour(
-    hass: HomeAssistant, entry
-) -> None:
+async def test_save_scene_rejects_warm_white_colour(hass: HomeAssistant, entry) -> None:
     from homeassistant.exceptions import HomeAssistantError
 
     with pytest.raises(HomeAssistantError, match="warm white"):
@@ -322,7 +323,9 @@ async def test_import_scenes_accepts_hex_colours(
     assert store.require("canada_day").segments == ((255, 0, 0), (255, 255, 255), None)
 
 
-async def test_save_scene_then_apply_hex_effect(hass: HomeAssistant, entry, client) -> None:
+async def test_save_scene_then_apply_hex_effect(
+    hass: HomeAssistant, entry, client
+) -> None:
     """Hex colours survive the round trip into the wire command."""
     await hass.services.async_call(
         DOMAIN,
@@ -341,9 +344,7 @@ async def test_save_scene_then_apply_hex_effect(hass: HomeAssistant, entry, clie
     assert client.set_effect.call_args.args[1][0] == (255, 0, 0)
 
 
-async def test_import_scenes_rejects_invalid_entry(
-    hass: HomeAssistant, entry
-) -> None:
+async def test_import_scenes_rejects_invalid_entry(hass: HomeAssistant, entry) -> None:
     from homeassistant.exceptions import HomeAssistantError
 
     with pytest.raises(HomeAssistantError, match="unknown effect"):
@@ -529,7 +530,13 @@ async def _plan_season(hass: HomeAssistant) -> None:
         await hass.services.async_call(
             DOMAIN,
             "save_scene",
-            {"name": name, "mode": "effect", "effect": effect, "start": start, "end": end},
+            {
+                "name": name,
+                "mode": "effect",
+                "effect": effect,
+                "start": start,
+                "end": end,
+            },
             blocking=True,
         )
     await hass.services.async_call(
@@ -595,7 +602,9 @@ async def test_apply_scene_for_date_with_nothing_eligible_reports(
     from homeassistant.exceptions import HomeAssistantError
 
     await hass.services.async_call(
-        DOMAIN, "save_scene", {"name": "winter", "start": "12-01", "end": "12-31"},
+        DOMAIN,
+        "save_scene",
+        {"name": "winter", "start": "12-01", "end": "12-31"},
         blocking=True,
     )
     with pytest.raises(HomeAssistantError, match="no scene matches"):
@@ -661,7 +670,22 @@ async def test_apply_look_reports_bad_name(hass: HomeAssistant, entry) -> None:
 
 
 async def test_scribble_pattern_text_entity(hass: HomeAssistant, entry, client) -> None:
+    """The raw grammar box is an opt-in escape hatch, not the everyday control.
+
+    Picking a look covers the everyday cases, so the text entity starts
+    disabled: nobody should have to learn a command syntax to paint the roof.
+    This test enables it the way a user would, then exercises it.
+    """
     entity_id = "text.soffit_west_per_led_pattern"
+    registry = er.async_get(hass)
+    entity = registry.async_get(entity_id)
+    assert entity is not None
+    assert entity.disabled_by is er.RegistryEntryDisabler.INTEGRATION
+    assert hass.states.get(entity_id) is None
+
+    registry.async_update_entity(entity_id, disabled_by=None)
+    await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
     assert hass.states.get(entity_id) is not None
 
     await hass.services.async_call(
@@ -679,6 +703,10 @@ async def test_scribble_pattern_rejects_bad_input(
     hass: HomeAssistant, entry, client
 ) -> None:
     entity_id = "text.soffit_west_per_led_pattern"
+    er.async_get(hass).async_update_entity(entity_id, disabled_by=None)
+    await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+
     client.set_scribble.reset_mock()
     with pytest.raises(HomeAssistantError):
         await hass.services.async_call(

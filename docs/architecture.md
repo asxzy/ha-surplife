@@ -162,8 +162,8 @@ Verified to find all three controllers reliably across repeated runs. **Verified
 | `light.<name>` | on/off, RGB, warm white, 24 effects |
 | `select.<name>_effect` | effect picker (also on the light) |
 | `select.<name>_direction` | animation direction |
-| `text.<name>_per_led_pattern` | per-LED pattern editor |
 | `select.<name>_per_led_look` | nine curated per-LED patterns |
+| `text.<name>_per_led_pattern` | raw pattern editor (disabled by default) |
 | `select.<name>_scene` | stored scenes, or today's scene |
 | `number.<name>_effect_speed` | 0-100, read from the device |
 | `number.<name>_effect_density` | 0-100, local only |
