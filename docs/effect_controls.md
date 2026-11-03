@@ -2,11 +2,11 @@
 
 The light card gives you three controls: a colour wheel, a brightness slider and
 an effect dropdown. That is the right shape for a plain colour, and the wrong
-shape for this firmware's 24 effects. `Static Gradient` wants a first and a last
-colour. `Rainbow Bridge` wants no colour at all. `Chase` wants a speed and a
-direction but not a density. No single RGB picker expresses any of that, so the
-only way to find out what an effect does would be to send a command and look at
-the strip.
+shape for this firmware's 24 effects. `Static Gradient` blends several colours.
+`Rainbow Bridge` takes no colour at all. `Static Fill` has nothing to reverse and
+nothing to repeat. No single RGB picker expresses any of that, so the only way
+to find out what an effect does would be to send a command and look at the
+strip.
 
 This integration therefore puts the per-effect controls in the device's
 **Configure** dialog, and makes the light card the everyday control.
