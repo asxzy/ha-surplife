@@ -291,7 +291,7 @@ def test_options_placeholders_are_supplied() -> None:
     supplied = {
         "init": {"effects_configured", "effects_total", "looks_configured", "looks_total"},
         "effect": set(),
-        "effect_settings": {"effect", "description"},
+        "effect_settings": {"effect", "description", "rows", "max"},
         "look": {"count"},
         "look_settings": {"look", "description"},
         "interval": set(),

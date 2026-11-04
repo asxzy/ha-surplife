@@ -52,7 +52,7 @@
       },
       "effect_settings": {
         "title": "Configure {effect}",
-        "description": "{description}\n\nLeave a colour empty to keep the colour the strip is already showing. Set a white level to light the white LED as well as, or instead of, the colour.",
+        "description": "{description}\n\nThis effect takes up to {max} colour(s); {rows} can be set right now. Turn on \"Add another colour\" to add one more, or \"Remove the last colour\" to take one away.\n\nLeave a colour empty to keep the colour the strip is already showing. Set a white level to light the white LED as well as, or instead of, the colour.",
         "data": {
           "color_1": "First colour",
           "color_2": "Second colour",
@@ -72,7 +72,9 @@
           "white_8": "Eighth colour: white level",
           "speed": "Speed",
           "density": "Density",
-          "direction": "Direction"
+          "direction": "Direction",
+          "add_colour": "Add another colour",
+          "remove_colour": "Remove the last colour"
         }
       },
       "look": {

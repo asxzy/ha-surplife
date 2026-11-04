@@ -11,6 +11,25 @@ strip.
 This integration therefore puts the per-effect controls in the device's
 **Configure** dialog, and makes the light card the everyday control.
 
+## Finding the colour wheel
+
+**The colour control is hidden behind an icon, and the dialog does not open on
+it.** This is easy to miss, and it is not something the integration can change.
+
+Home Assistant's light dialog opens on **brightness** — its frontend hard-codes
+that default and gives integrations no way to override it. The colour wheel is
+the third icon in the row beneath the slider:
+
+```
+[ power ]  [ bulb ]  [ colour wheel ]  [ W ]
+                        ^^^^^^^^^^^
+                        click this
+```
+
+The bulb is brightness. The rainbow circle is the colour wheel. The **W** is the
+white LED channel. Once you click the rainbow, the wheel stays open for that
+entity.
+
 ## Colouring a pattern from the light card
 
 Pick a pattern from the card's **Effect** dropdown, then move the **colour
@@ -30,8 +49,8 @@ colours — a gradient, or a three-colour burst — use the Configure panel belo
 | You want to… | Use |
 |---|---|
 | Turn the strip on or off | The light card |
-| Set a plain colour, or a real white | The light card, with **Static** selected |
-| Set overall brightness | The light card's brightness slider |
+| Set a plain colour, or a real white | The light card's **rainbow icon**, with **Static** selected |
+| Set overall brightness | The light card's bulb icon |
 | Recolour the pattern that is running | The light card's colour wheel |
 | Leave pattern mode | **Effect → Static** on the light card |
 | Set several colours for an effect | **Configure → Configure an effect** |
@@ -50,29 +69,51 @@ uses, so you can tell them apart before applying anything:
 
 ```
 Wave — 1 colour
-Static Gradient — 4 colours
+Chase — 1-8 colours
+Static Gradient — 1-4 colours
 Rainbow Bridge — no colour · saved
-Static Fill — 1 colour
 ```
 
 Pick one and you get only the fields that do something:
 
-* **Colour pickers**, one per palette slot the effect uses. Each has its own
+* **Colour rows**, one per colour the effect currently has. Each has its own
   **white level**, so you can light the real white LED alongside or instead of
   the colour. This is not simulated white: `#000000` with a white level of 100
   drives the W channel and no colour channel at all.
+* **Add another colour** / **Remove the last colour**, which grow or shrink the
+  palette by one row without saving.
 * **Speed** and **Density** sliders, shown only when the effect responds to them.
 * **Direction**, shown only when reversing means something.
 
-`Rainbow Bridge` shows no colour pickers, because it paints its own. `Static
-Gradient` shows four, because a gradient's whole point is multiple stops.
-Neither shows direction or density, because a still image has nothing to
-reverse or repeat.
+### Building a multi-colour palette
 
-Four is a **UI** limit, chosen so the gradient form stays a phone-sized form
-rather than seventeen controls. The wire format itself carries eight colours, so
-an automation or service call may still pass up to eight; the panel never
-overrules it.
+The panel starts with the number of colours the effect is designed around — one
+for `Wave`, two for `Chase`, four for `Static Gradient` — and grows one colour at
+a time, the way the phone app does:
+
+1. Pick the first colour.
+2. Turn on **Add another colour** and submit. The form comes back with one more
+   row, and everything already picked still filled in.
+3. Repeat until the effect's cap. The tick disappears at the cap.
+4. **Remove the last colour** drops the last row the same way, without saving.
+
+Nothing is written to the controller until you press Submit without one of those
+two ticks on, so you can build the whole palette first and send it once.
+
+The caps are per effect, not one number for everything:
+
+| Effect | Colours |
+|---|---|
+| `Wave`, `Meteor`, `Breathe`, `Jump`, `Strobe`, `Twinkling Stars`, `Horse Racing`, `Static Fill` | 1 |
+| `Chase`, `Streamer`, `Building Blocks`, `Flowing Water`, `Cycle`, `Stars wink`, `Warning`, `Comet`, `Superluminal` | up to 8 |
+| `Collision`, `Fireworks`, `Volcano` | up to 3 |
+| `Static Gradient`, `Gradient Meteor`, `Gradient Overlay` | up to 4 |
+| `Rainbow Bridge` | none — it paints its own |
+
+A single-colour effect shows one picker and no Add tick, because a second colour
+would be inert. The wire format itself carries eight colours, so an automation
+or service call may still pass up to eight regardless; the panel never overrules
+it.
 
 Saving the panel **applies it immediately** and stores it. Selecting that effect
 later — from the light card, the effect selector, or an automation — restores

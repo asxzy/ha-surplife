@@ -17,6 +17,7 @@ from homeassistant.const import CONF_HOST, CONF_NAME
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.selector import (
+    BooleanSelector,
     ColorRGBSelector,
     NumberSelector,
     NumberSelectorConfig,
@@ -281,6 +282,13 @@ class SurplifeOptionsFlow(OptionsFlow):
         """Initialise the flow."""
         self._pending_effect: str | None = None
         self._pending_look: str | None = None
+        #: How many colour rows the effect panel is showing. Rows are added and
+        #: removed by round trip, so the count has to survive between renders.
+        self._panel_rows: int = 0
+        #: Colours read back from the form during an add/remove round trip, so a
+        #: colour already picked is not lost when the form is re-rendered.
+        #: Positional, and ``None`` for an empty row.
+        self._draft_rows: list[list[int] | None] | None = None
 
     @property
     def _options(self) -> dict[str, Any]:
@@ -358,7 +366,11 @@ class SurplifeOptionsFlow(OptionsFlow):
             hint = {
                 PaletteMode.SINGLE: "1 colour",
                 PaletteMode.GENERATED: "no colour",
-                PaletteMode.COLOURS: f"{settings.panel_colours} colours",
+                PaletteMode.COLOURS: (
+                    f"1-{settings.max_colours} colours"
+                    if settings.max_colours > 1
+                    else "1 colour"
+                ),
             }[settings.palette]
             configured = (
                 " · saved" if effect_settings(self._options, name) is not None else ""
@@ -385,7 +397,20 @@ class SurplifeOptionsFlow(OptionsFlow):
     async def async_step_effect_settings(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """The generated panel for one effect."""
+        """The generated panel for one effect, one colour row at a time.
+
+        **Why the palette is added one colour at a time.** Home Assistant fixes
+        a form's schema when the form is shown, so a field cannot appear in
+        response to a click without a round trip. Effects take between one and
+        eight colours, and showing eight pickers on ``Wave`` (which uses one)
+        wastes the user's attention on seven inert controls.
+
+        So the form shows exactly the colours the effect currently has, plus an
+        **Add another colour** tick that returns to this step with one more row
+        -- but only while the effect's own cap has not been reached. The result
+        behaves like the phone app: colours are built up one at a time, and the
+        form never offers a slot the effect ignores.
+        """
         name = self._pending_effect
         if name is None:  # defensive: the picker always sets this
             return await self.async_step_effect()
@@ -393,15 +418,52 @@ class SurplifeOptionsFlow(OptionsFlow):
         stored = effect_settings(self._options, name) or EffectSettings()
 
         if user_input is not None:
+            # A tick on either toggle is a round trip, not a save: it changes
+            # how many rows the form has and shows it again. The colours already
+            # on the form are read back **by position** so adding or removing a
+            # row never shuffles the ones above it, and nothing is retyped.
+            if user_input.pop("add_colour", False) and (
+                self._panel_rows < profile.max_colours
+            ):
+                self._draft_rows = self._rows_from_form(user_input)
+                self._panel_rows += 1
+                self._draft_rows.append(None)
+                return await self.async_step_effect_settings()
+            if user_input.pop("remove_colour", False) and self._panel_rows > 1:
+                self._draft_rows = self._rows_from_form(user_input)
+                self._panel_rows -= 1
+                del self._draft_rows[self._panel_rows :]
+                return await self.async_step_effect_settings()
+
             settings = self._effect_from_form(profile, stored, user_input)
             options = with_effect(self._options, name, settings)
             await self._apply_effect(name, settings, options)
             self._pending_effect = None
+            self._panel_rows = 0
+            self._draft_rows = None
             return self.async_create_entry(title="", data=options)
 
+        # First visit to this effect: start from however many colours it is
+        # stored with, falling back to the palette the effect is designed
+        # around. Never fewer than one for a palette effect, never more than
+        # the cap. An effect that paints its own colours gets no rows at all.
+        if profile.palette is PaletteMode.GENERATED:
+            rows = 0
+        elif self._panel_rows:
+            rows = self._panel_rows
+        else:
+            rows = max(1, min(len(stored.colors) or profile.panel_colours,
+                              profile.max_colours))
+        self._panel_rows = rows
+        draft = (
+            self._draft_rows
+            if self._draft_rows is not None
+            else [list(colour) for colour in stored.colors]
+        )
+
         fields: dict[Any, Any] = {}
-        for slot in range(profile.panel_colours):
-            default = stored.colors[slot] if slot < len(stored.colors) else None
+        for slot in range(rows):
+            default = draft[slot] if slot < len(draft) else None
             fields[
                 vol.Optional(
                     f"color_{slot + 1}",
@@ -427,25 +489,65 @@ class SurplifeOptionsFlow(OptionsFlow):
                 )
             ] = _direction_selector()
 
+        if 0 < rows < profile.max_colours:
+            fields[vol.Optional("add_colour", default=False)] = BooleanSelector()
+        if rows > 1:
+            fields[vol.Optional("remove_colour", default=False)] = BooleanSelector()
+
         return self.async_show_form(
             step_id=STEP_EFFECT_SETTINGS,
             data_schema=vol.Schema(fields),
             description_placeholders={
                 "effect": name,
                 "description": profile.description,
+                "rows": str(rows),
+                "max": str(profile.max_colours),
             },
         )
 
-    def _effect_from_form(
-        self, profile: Any, stored: EffectSettings, user_input: dict[str, Any]
-    ) -> EffectSettings:
-        """Turn the submitted effect panel into settings."""
-        colours: list[tuple[int, int, int, int]] = []
-        for slot in range(profile.panel_colours):
+    def _rows_from_form(self, user_input: dict[str, Any]) -> list[list[int] | None]:
+        """Read the colour rows currently on the form, position by position.
+
+        Used by the add/remove round trips, where the row count is about to
+        change: positions must be preserved so adding a row does not shuffle
+        the colours the user already picked. An empty row stays ``None`` in its
+        place rather than being dropped, which would silently renumber the ones
+        after it.
+        """
+        rows: list[list[int] | None] = []
+        for slot in range(self._panel_rows):
             colour = _colour_of(
                 user_input.get(f"color_{slot + 1}"),
                 user_input.get(f"white_{slot + 1}"),
             )
+            rows.append(list(colour) if colour is not None else None)
+        return rows
+
+    def _effect_from_form(
+        self, profile: Any, stored: EffectSettings, user_input: dict[str, Any]
+    ) -> EffectSettings:
+        """Turn the submitted effect panel into settings.
+
+        Rows are read in order up to the effect's cap. A row left empty is
+        skipped rather than treated as black, so clearing the second colour of
+        a gradient leaves a one-stop gradient instead of a black stop.
+        """
+        colours: list[tuple[int, int, int, int]] = []
+        rows = self._panel_rows or profile.panel_colours
+        draft = self._draft_rows
+        for slot in range(min(rows, profile.max_colours)):
+            colour = _colour_of(
+                user_input.get(f"color_{slot + 1}"),
+                user_input.get(f"white_{slot + 1}"),
+            )
+            if colour is None and draft is not None and slot < len(draft):
+                # An untouched row keeps whatever the round trip carried over.
+                stored_row = draft[slot]
+                colour = (
+                    (stored_row[0], stored_row[1], stored_row[2], stored_row[3])
+                    if stored_row
+                    else None
+                )
             if colour is not None:
                 colours.append(colour)
 

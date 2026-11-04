@@ -584,3 +584,231 @@ async def test_unreachable_controller_does_not_lose_the_settings(
     )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert loaded_entry.options[EFFECTS_KEY]["Wave"]["speed"] == 5
+
+
+# -- building a palette one colour at a time -------------------------------
+
+
+async def test_colour_can_be_added_one_at_a_time(
+    hass: HomeAssistant, loaded_entry, options_flow
+) -> None:
+    """A palette effect grows a colour per round trip, like the phone app.
+
+    Home Assistant fixes a form's schema when the form is shown, so the only
+    way to let a user add a colour is to return to the step with a larger
+    schema. This asserts that the tick really does grow the form rather than
+    being a checkbox that saves and does nothing.
+    """
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"], {"next_step_id": "effect"}
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"effect": "Chase"}
+    )
+    assert _fields(result)["color_2"]
+    assert "color_3" not in _fields(result)
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            "color_1": [255, 0, 0],
+            "white_1": 0,
+            "color_2": [0, 0, 255],
+            "white_2": 0,
+            "speed": 50,
+            "density": 50,
+            "direction": "l2r",
+            "add_colour": True,
+        },
+    )
+    # Still a form, not a saved entry: adding a colour must not commit yet.
+    assert result["type"] is FlowResultType.FORM
+    fields = _fields(result)
+    assert "color_3" in fields
+    # The colours already picked are carried over, so nothing is retyped.
+    assert _default(result, "color_1") == [255, 0, 0]
+    assert _default(result, "color_2") == [0, 0, 255]
+
+
+async def test_added_colour_is_saved_in_order(
+    hass: HomeAssistant, loaded_entry, options_flow, patched_client
+) -> None:
+    """Three colours survive as three, in the order they were picked."""
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"], {"next_step_id": "effect"}
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"effect": "Chase"}
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            "color_1": [255, 0, 0],
+            "white_1": 0,
+            "color_2": [0, 255, 0],
+            "white_2": 0,
+            "speed": 50,
+            "density": 50,
+            "direction": "l2r",
+            "add_colour": True,
+        },
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            "color_1": [255, 0, 0],
+            "white_1": 0,
+            "color_2": [0, 255, 0],
+            "white_2": 0,
+            "color_3": [0, 0, 255],
+            "white_3": 0,
+            "speed": 50,
+            "density": 50,
+            "direction": "l2r",
+        },
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert loaded_entry.options[EFFECTS_KEY]["Chase"]["colors"] == [
+        [255, 0, 0, 0],
+        [0, 255, 0, 0],
+        [0, 0, 255, 0],
+    ]
+
+
+async def test_single_colour_effect_offers_no_add_button(
+    hass: HomeAssistant, loaded_entry, options_flow
+) -> None:
+    """``Wave`` uses one colour, so it must not offer to add more.
+
+    Offering eight slots to an effect that reads one is the wall-of-fields
+    problem the generated panel exists to avoid.
+    """
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"], {"next_step_id": "effect"}
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"effect": "Wave"}
+    )
+    fields = _fields(result)
+    assert "color_1" in fields
+    assert "color_2" not in fields
+    assert "add_colour" not in fields
+    assert "remove_colour" not in fields
+
+
+async def test_add_button_disappears_at_the_cap(
+    hass: HomeAssistant, loaded_entry, options_flow
+) -> None:
+    """A gradient stops offering to add once it has the most useful stops.
+
+    The panel's cap is a UI choice -- four stops for a gradient -- so the Add
+    tick must vanish at four, not keep growing towards the wire's eight.
+    """
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"], {"next_step_id": "effect"}
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"effect": "Static Gradient"}
+    )
+    for expected in (4,):
+        assert f"color_{expected}" in _fields(result)
+    # Already at the cap on first open, so no Add tick at all.
+    assert "add_colour" not in _fields(result)
+    assert "color_5" not in _fields(result)
+
+
+async def test_colour_can_be_removed_again(
+    hass: HomeAssistant, loaded_entry, options_flow
+) -> None:
+    """Remove takes a row away without saving, and keeps the earlier colours."""
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"], {"next_step_id": "effect"}
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"effect": "Chase"}
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            "color_1": [255, 0, 0],
+            "white_1": 0,
+            "color_2": [0, 0, 255],
+            "white_2": 0,
+            "speed": 50,
+            "density": 50,
+            "direction": "l2r",
+            "add_colour": True,
+        },
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            "color_1": [255, 0, 0],
+            "white_1": 0,
+            "color_2": [0, 255, 0],
+            "white_2": 0,
+            "color_3": [0, 0, 255],
+            "white_3": 0,
+            "speed": 50,
+            "density": 50,
+            "direction": "l2r",
+            "remove_colour": True,
+        },
+    )
+    assert result["type"] is FlowResultType.FORM
+    fields = _fields(result)
+    assert "color_3" not in fields
+    assert _default(result, "color_1") == [255, 0, 0]
+    assert _default(result, "color_2") == [0, 255, 0]
+
+
+async def test_holes_between_colours_keep_their_positions(
+    hass: HomeAssistant, loaded_entry, options_flow, patched_client
+) -> None:
+    """An empty middle row must not renumber the colours after it.
+
+    Adding a row reads the form back position by position. If an empty row were
+    dropped, the colour below it would slide up and silently become a different
+    stop of the gradient.
+    """
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"], {"next_step_id": "effect"}
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"effect": "Chase"}
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            "color_1": [255, 0, 0],
+            "white_1": 0,
+            # Row 2 is left out entirely, which is what an untouched optional
+            # colour picker submits.
+            "speed": 50,
+            "density": 50,
+            "direction": "l2r",
+            "add_colour": True,
+        },
+    )
+    assert result["type"] is FlowResultType.FORM
+    # The third row is new and empty; the first is untouched.
+    assert _fields(result)["color_3"]
+    assert _default(result, "color_1") == [255, 0, 0]
+    # An empty row stays empty rather than being filled with the colour below.
+    from voluptuous import UNDEFINED
+
+    assert _default(result, "color_2") is UNDEFINED
+
+
+async def test_panel_description_has_no_raw_markdown() -> None:
+    """Descriptions render as plain text, so ``**bold**`` would show literally."""
+    import json
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parent.parent
+    for name in ("translations/en.json", "strings.json"):
+        data = json.loads(
+            (root / "custom_components/surplife" / name).read_text()
+        )
+        text = data["options"]["step"]["effect_settings"]["description"]
+        assert "**" not in text, f"{name} has raw markdown in a description"

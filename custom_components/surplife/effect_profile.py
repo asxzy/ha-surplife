@@ -39,8 +39,9 @@ is the safe default: the firmware accepts a palette and uses what it needs.
 number of colours each effect renders cannot be measured on this hardware,
 because the state frame never echoes colour and the firmware exposes no
 read-back for it. So :attr:`EffectProfile.panel_colours` is what the *panel
-offers*, not a wire limit; :func:`palette_for` only enforces the protocol's own
-hard limits and never discards colours a caller passed for a palette effect.
+starts with* and :attr:`EffectProfile.max_colours` is what it lets you add, not
+a wire limit; :func:`palette_for` only enforces the protocol's own hard limits
+and never discards colours a caller passed for a palette effect.
 """
 
 from __future__ import annotations
@@ -77,8 +78,11 @@ class EffectProfile:
 
     Attributes:
         palette: How the palette is consumed.
-        panel_colours: How many colour pickers the panel should show. Zero for
-            an effect that paints its own colours.
+        panel_colours: How many colour rows the panel starts with. Zero for an
+            effect that paints its own colours.
+        max_colours: The most colours the panel will let you add, which is the
+            effect's own cap rather than the protocol ceiling. ``0`` for an
+            effect that paints its own colours.
         direction: Whether the direction control does anything.
         density: Whether the density control does anything.
         speed: Whether the speed control does anything.
@@ -87,6 +91,7 @@ class EffectProfile:
 
     palette: PaletteMode = PaletteMode.COLOURS
     panel_colours: int = 2
+    max_colours: int = 2
     direction: bool = True
     density: bool = True
     speed: bool = True
@@ -191,6 +196,7 @@ def profile_for(name: str) -> EffectProfile:
         return EffectProfile(
             palette=PaletteMode.GENERATED,
             panel_colours=0,
+            max_colours=0,
             direction=direction,
             density=density,
             description=description,
@@ -199,6 +205,7 @@ def profile_for(name: str) -> EffectProfile:
         return EffectProfile(
             palette=PaletteMode.SINGLE,
             panel_colours=1,
+            max_colours=1,
             direction=direction,
             density=density,
             description=description,
@@ -206,6 +213,11 @@ def profile_for(name: str) -> EffectProfile:
     return EffectProfile(
         palette=PaletteMode.COLOURS,
         panel_colours=_PANEL_COLOURS.get(canonical, 2),
+        # Effects with a known useful count stop at it -- four stops for a
+        # gradient, three for the three-colour bursts. Effects with no such
+        # evidence are left open to the protocol ceiling, since the panel now
+        # grows one row at a time and no longer has a wall-of-fields cost.
+        max_colours=_PANEL_COLOURS.get(canonical, MAX_PROTOCOL_COLOURS),
         direction=direction,
         density=density,
         description=description,
@@ -238,5 +250,14 @@ def palette_for(
 
 
 def panel_colours(name: str) -> int:
-    """How many colour pickers to show for an effect."""
+    """How many colour rows the panel starts with for an effect."""
     return profile_for(name).panel_colours
+
+
+def max_colours(name: str) -> int:
+    """The most colours the panel will let you add for an effect.
+
+    This is the effect's own cap, not the protocol ceiling. Effects that paint
+    their own colours return ``0`` so a caller never offers an inert picker.
+    """
+    return profile_for(name).max_colours
