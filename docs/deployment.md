@@ -35,6 +35,47 @@ rsync -a custom_components/surplife/ \
 
 Restart Home Assistant.
 
+### What HACS needs in a release archive
+
+This integration sets `"zip_release": true` with `"filename": "surplife.zip"`, so
+HACS downloads that asset instead of the repository branch. HACS extracts the
+archive **directly** into `/config/custom_components/surplife/` and never strips
+a leading directory, so the archive must have the integration files at its
+**root**:
+
+```
+manifest.json
+__init__.py
+coordinator.py
+light.py
+protocol/
+translations/
+```
+
+Do **not** wrap them in `custom_components/surplife/`. That produces
+
+```
+/config/custom_components/surplife/custom_components/surplife/__init__.py
+```
+
+Home Assistant looks only at `/config/custom_components/surplife/__init__.py`,
+finds nothing, and never loads the integration — no entities, no services, no
+config entry. HACS still reports the release as installed, because it tracks its
+own record rather than the files. The symptom is the confusing pair of "HACS
+says it is up to date" and "the integration is not there at all".
+
+Build the asset with the checked-in script, which enforces the layout and drops
+`__pycache__`, `*.pyc`, and AppleDouble `._*` files:
+
+```bash
+python3 tools/build_release.py            # -> dist/surplife.zip
+python3 tools/build_release.py --check    # verify an existing archive
+```
+
+Attach `dist/surplife.zip` to the GitHub release named after the version in
+`manifest.json`. `tests/test_release_layout.py` fails if the archive regresses to
+the nested shape.
+
 **Keep backups and old copies outside `custom_components/`.** Home Assistant
 scans every subdirectory there as a potential integration, so a copy left at
 `custom_components/surplife.old` is loaded alongside the real one. It carries
@@ -154,6 +195,7 @@ as `mon,wed,fri`.
 
 | Symptom | Likely cause |
 |---|---|
+| HACS says up to date but no entities/services exist | the release zip is nested; see "What HACS needs in a release archive" |
 | `cannot_connect` in the config flow | wrong IP, or port 5577 blocked |
 | Entity goes `unavailable` | device lost power or Wi-Fi; the coordinator's poll failed |
 | Colour reverts after a poll | expected if something *else* changed it — the device does not report colour, so HA cannot see external changes |
