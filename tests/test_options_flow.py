@@ -982,36 +982,33 @@ async def test_recolour_adds_a_row_without_saving(
     assert tuple(_default(result, "color_2")) == (0, 255, 0)
 
 
-async def test_an_untouched_row_is_skipped_not_treated_as_black(
+async def test_a_new_row_starts_from_the_previous_colour(
     hass: HomeAssistant, loaded_entry, options_flow
 ) -> None:
-    """Clearing a row must shorten the palette, not fade it to black.
+    """A new row must not look like a black LED.
 
-    A row with no default is the only way to submit no colour at all, so this
-    adds a row (which has none) and submits without filling it in.
+    A colour picker with no default renders **black**, which reads as "this LED
+    is off" rather than "this row is new" -- and a user who submits it has added
+    a black stop they never chose. Seeding it from the previous colour makes it
+    visibly a starting point to adjust.
     """
-    await _start_effect(hass, "Chase", [(255, 0, 0, 0)])
+    await _start_effect(hass, "Chase", [(255, 0, 0, 0), (0, 0, 255, 0)])
     await hass.config_entries.options.async_configure(
         options_flow["flow_id"], {"next_step_id": "recolour"}
     )
-    # Add a second row, which starts empty.
     result = await hass.config_entries.options.async_configure(
         options_flow["flow_id"],
-        {"color_1": [255, 0, 0], "white_1": 0, "add_colour": True},
+        {
+            "color_1": [255, 0, 0],
+            "white_1": 0,
+            "color_2": [0, 0, 255],
+            "white_2": 0,
+            "add_colour": True,
+        },
     )
     assert result["type"] is FlowResultType.FORM
-    assert "color_2" in _fields(result)
-
-    # Submit leaving the second row empty.
-    result = await hass.config_entries.options.async_configure(
-        options_flow["flow_id"], {"color_1": [255, 0, 0], "white_1": 0}
-    )
-    assert result["type"] is FlowResultType.CREATE_ENTRY
-
-    entry = hass.config_entries.async_entries(DOMAIN)[0]
-    saved = entry.options[EFFECTS_KEY]["Chase"]["colors"]
-    assert len(saved) == 1, f"the empty row became a colour: {saved}"
-    assert tuple(saved[0]) == (255, 0, 0, 0)
+    # The third row copies the second, rather than being black.
+    assert tuple(_default(result, "color_3")) == (0, 0, 255)
 
 
 async def test_recolour_keeps_the_white_channel(

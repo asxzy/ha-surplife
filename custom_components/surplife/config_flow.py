@@ -247,6 +247,19 @@ def _bounded(value: Any, low: int, high: int) -> int:
     return max(low, min(high, int(value)))
 
 
+def _last_colour(rows: list[list[int] | None]) -> list[int] | None:
+    """The last row that has a colour, for seeding a newly added row.
+
+    A colour picker with no default renders black, which reads as "this LED is
+    off" rather than "this row is new". Copying the previous colour gives the
+    new row a visible starting point, and the user adjusts it from there.
+    """
+    for row in reversed(rows):
+        if row:
+            return list(row)
+    return None
+
+
 def _colour_of(rgb: Any, white: Any) -> tuple[int, int, int, int] | None:
     """Combine one colour picker and its W level into an RGBW tuple.
 
@@ -440,7 +453,13 @@ class SurplifeOptionsFlow(OptionsFlow):
             ):
                 self._draft_rows = self._rows_from_form(user_input)
                 self._panel_rows += 1
-                self._draft_rows.append(None)
+                # Seed the new row from the last colour that has one. A colour
+                # picker with no default renders as **black**, which reads as an
+                # "off" LED rather than "not set yet" -- and submitting it would
+                # add a black stop the user never chose. Starting from a copy of
+                # the previous colour makes the new row visibly a starting point
+                # to adjust.
+                self._draft_rows.append(_last_colour(self._draft_rows))
                 return await self.async_step_recolour()
             if user_input.pop("remove_colour", False) and self._panel_rows > 1:
                 self._draft_rows = self._rows_from_form(user_input)
