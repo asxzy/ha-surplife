@@ -26,6 +26,39 @@ Target in this installation: Home Assistant **2026.10.4** at
 2. `https://github.com/asxzy/surplife`, category **Integration**
 3. Install, then restart Home Assistant.
 
+### Deploying a new release from this checkout
+
+HACS owns the files under `/config/custom_components/surplife`, so writing them
+by hand leaves HACS's record disagreeing with the disk and the next HACS action
+undoes the change. Publish the release, then let HACS install it:
+
+```bash
+set -a && . ./.env && set +a
+python3 tools/ha_deploy.py           # refresh, download, restart, verify
+python3 tools/ha_deploy.py --status  # report only, change nothing
+```
+
+It needs only `HA_URL` and `HA_TOKEN` from `.env` — a long-lived access token,
+no shell access to the box — so it works against a stock Home Assistant OS
+install. The sequence matters:
+
+| Step | Why it is needed |
+|---|---|
+| `hacs/repository/refresh` | HACS caches its idea of the latest release; a release published minutes ago looks absent without this |
+| `hacs/repository/download` | HACS fetches the `surplife.zip` asset and extracts it into the domain directory |
+| restart | the running process still holds the old modules, so even a same-version reinstall needs a restart |
+| wait for a full boot | `/api/config` answers tens of seconds before platforms finish loading, so the entity count is the real signal |
+
+The script exits non-zero when HACS reports a version that does not match
+`manifest.json`, or when any `surplife` entry is not `loaded`. Both cases are
+worth failing loudly: HACS will happily report a release as installed while the
+files on disk are something else, and a half-loaded integration looks like an
+empty integration rather than an error.
+
+> Do not deploy by copying files over SSH or by running code inside Home
+> Assistant. Both work once and then drift, because the next HACS action
+> overwrites the directory from its own record.
+
 ### Manual
 
 ```bash
@@ -33,7 +66,8 @@ rsync -a custom_components/surplife/ \
     root@192.168.1.10:/config/custom_components/surplife/
 ```
 
-Restart Home Assistant.
+Restart Home Assistant. Only for a box without HACS; if HACS manages this
+integration, use the deploy script instead.
 
 ### What HACS needs in a release archive
 
