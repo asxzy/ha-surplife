@@ -38,6 +38,7 @@
         "title": "Surplife controller options",
         "description": "Configure how an effect behaves once, then pick it from the light card and it comes back the way you set it.\n\n{effects_configured} of {effects_total} effects and {looks_configured} of {looks_total} per-LED looks have saved settings.",
         "menu_options": {
+          "recolour": "Change the running effect's colours",
           "effect": "Configure an effect",
           "look": "Configure a per-LED look",
           "interval": "Change the poll interval"
@@ -104,10 +105,39 @@
         "data": {
           "scan_interval": "Poll interval (seconds)"
         }
+      },
+      "recolour": {
+        "title": "Colours for {effect}",
+        "description": "{effect} is running. Pick the colours it should use and they are applied straight away — the effect keeps running.\n\nIt takes up to {max} colour(s) and {rows} can be set right now. Turn on \"Add another colour\" for one more row, or \"Remove the last colour\" to take one away. Leave a colour empty to skip it; set a white level to light the white LED as well as, or instead of, the colour.",
+        "data": {
+          "color_1": "First colour",
+          "color_2": "Second colour",
+          "color_3": "Third colour",
+          "color_4": "Fourth colour",
+          "color_5": "Fifth colour",
+          "color_6": "Sixth colour",
+          "color_7": "Seventh colour",
+          "color_8": "Eighth colour",
+          "white_1": "First colour: white level",
+          "white_2": "Second colour: white level",
+          "white_3": "Third colour: white level",
+          "white_4": "Fourth colour: white level",
+          "white_5": "Fifth colour: white level",
+          "white_6": "Sixth colour: white level",
+          "white_7": "Seventh colour: white level",
+          "white_8": "Eighth colour: white level",
+          "add_colour": "Add another colour",
+          "remove_colour": "Remove the last colour"
+        }
       }
     },
     "error": {
       "cannot_connect": "Could not reach the controller, so the setting was not applied."
+    },
+    "abort": {
+      "no_running_effect": "No effect is running, so there are no colours to change. Pick an effect on the light card first, or use the light card's colour wheel for a plain colour.",
+      "effect_paints_its_own_colours": "The running effect paints its own colours, so it takes no palette. Pick a different effect if you want to choose the colours.",
+      "effect_stopped": "The effect stopped before the colours could be applied. Pick it again on the light card and retry."
     }
   },
   "services": {

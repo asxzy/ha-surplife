@@ -152,8 +152,14 @@ async def _status(url: str, token: str) -> dict:
     }
 
 
-async def _sync(url: str, token: str) -> None:
-    """Ask HACS to re-read the repo, then download its release."""
+async def _sync(url: str, token: str, tag: str | None = None) -> None:
+    """Ask HACS to re-read the repo, then download a release.
+
+    ``tag`` selects which release to install. Without it HACS installs the
+    latest, which is the stable path. With it, a ``-dev`` prerelease can be
+    installed by name -- see :func:`_tag_for_commit` for why a commit is
+    deployed as a tag rather than as a bare SHA.
+    """
     async with (
         aiohttp.ClientSession() as session,
         session.ws_connect(f"{url}/api/websocket", heartbeat=60) as ws,
@@ -165,12 +171,15 @@ async def _sync(url: str, token: str) -> None:
 
         # Without the refresh, HACS serves its cached idea of the latest
         # release, so a release published minutes ago looks absent.
-        for ident, kind in (
-            (1, "hacs/repository/refresh"),
-            (2, "hacs/repository/download"),
-        ):
+        steps: list[tuple[int, str, dict]] = [(1, "hacs/repository/refresh", {})]
+        if tag is None:
+            steps.append((2, "hacs/repository/download", {}))
+        else:
+            steps.append((2, "hacs/repository/download", {"version": tag}))
+
+        for ident, kind, extra in steps:
             ok, _, err = await _hacs_call(
-                ws, ident, kind, repository=HACS_REPOSITORY_ID
+                ws, ident, kind, repository=HACS_REPOSITORY_ID, **extra
             )
             print(f"  {kind}: {'ok' if ok else err}")
 
@@ -219,21 +228,24 @@ async def _wait_until_loaded(url: str, token: str, timeout: float = 300.0) -> bo
 async def run(args: argparse.Namespace) -> int:
     """Sync, restart if needed, then verify."""
     url, token = _settings()
-    expected = _expected_version()
-    print(f"checkout version: {expected}")
+    expected = args.tag or f"v{_expected_version()}"
+    if args.tag:
+        print(f"target tag:       {args.tag}")
+    else:
+        print(f"checkout version: {_expected_version()}")
 
     before = await _status(url, token)
     print(f"HACS installed:   {before['installed']}")
 
     if not args.status:
-        await _sync(url, token)
+        await _sync(url, token, args.tag)
 
     after = await _status(url, token)
-    stale = after["installed"] != f"v{expected}" and after["installed"] != expected
+    stale = after["installed"] != expected and after["installed"] != expected.lstrip("v")
     if stale:
         print(
-            f"error: HACS reports {after['installed']} but the checkout is "
-            f"{expected}; publish a release first (see docs/deployment.md)",
+            f"error: HACS reports {after['installed']} but the deploy targets "
+            f"{expected}; publish the tag first (see docs/deployment.md)",
             file=sys.stderr,
         )
         return 1
@@ -269,6 +281,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--watch", action="store_true", help="wait for a full boot after restarting"
+    )
+    parser.add_argument(
+        "--tag",
+        metavar="TAG",
+        help=(
+            "install this release tag instead of the latest, e.g. a -dev "
+            "prerelease built from one commit"
+        ),
     )
     return asyncio.run(run(parser.parse_args(argv)))
 

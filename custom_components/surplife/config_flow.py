@@ -60,6 +60,7 @@ MANUAL_OPTION = "__manual__"
 STEP_INTERVAL = "interval"
 STEP_EFFECT = "effect"
 STEP_EFFECT_SETTINGS = "effect_settings"
+STEP_RECOLOUR = "recolour"
 STEP_LOOK = "look"
 STEP_LOOK_SETTINGS = "look_settings"
 
@@ -303,7 +304,7 @@ class SurplifeOptionsFlow(OptionsFlow):
         """Offer what to configure."""
         return self.async_show_menu(
             step_id="init",
-            menu_options=[STEP_EFFECT, STEP_LOOK, STEP_INTERVAL],
+            menu_options=[STEP_RECOLOUR, STEP_EFFECT, STEP_LOOK, STEP_INTERVAL],
             description_placeholders=self._overview(),
         )
 
@@ -393,6 +394,149 @@ class SurplifeOptionsFlow(OptionsFlow):
                 }
             ),
         )
+
+    async def async_step_recolour(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Change the colours of the effect that is running, with colour wheels.
+
+        **Why this exists next to the effect panel.** ``Configure an effect``
+        asks which effect to configure and then builds that effect's whole
+        panel -- speed, density, direction and all. That is right for setting an
+        effect up. It is the wrong shape for the question "this is running, I
+        just want it a different colour", which is two menus deep from the
+        device page and offers fields that are already correct.
+
+        So this step skips the effect picker entirely: it targets whatever is
+        showing right now, shows only its colour rows, and applies them the way
+        the light card's wheel does -- the effect keeps running.
+
+        There is no effect running to recolour in a flat-colour state, so the
+        step says so rather than showing empty pickers that would do nothing.
+        """
+        coordinator = self._coordinator()
+        runtime = getattr(coordinator, "runtime", None)
+        name = getattr(runtime, "effect_name", None)
+
+        if name is None:
+            return self.async_abort(reason="no_running_effect")
+
+        profile = profile_for(name)
+        if profile.palette is PaletteMode.GENERATED:
+            return self.async_abort(reason="effect_paints_its_own_colours")
+
+        stored = effect_settings(self._options, name) or EffectSettings()
+        # What the strip is showing right now beats what was last saved: this
+        # panel is about the running effect, and a recolour from the card or the
+        # palette entity may have changed it since.
+        current = list(getattr(runtime, "palette", ()) or stored.colors)
+
+        if user_input is not None:
+            # Add/remove are round trips, not saves, exactly as in the effect
+            # panel: the row count changes and the form comes back with the
+            # colours already picked still in place.
+            if user_input.pop("add_colour", False) and (
+                self._panel_rows < profile.max_colours
+            ):
+                self._draft_rows = self._rows_from_form(user_input)
+                self._panel_rows += 1
+                self._draft_rows.append(None)
+                return await self.async_step_recolour()
+            if user_input.pop("remove_colour", False) and self._panel_rows > 1:
+                self._draft_rows = self._rows_from_form(user_input)
+                self._panel_rows -= 1
+                del self._draft_rows[self._panel_rows :]
+                return await self.async_step_recolour()
+
+            colours = self._colours_from_rows(profile, user_input)
+            # Row one always has a colour: it is pre-filled from what the strip
+            # is showing, and a colour picker cannot submit an empty value. So
+            # ``colours`` is never empty here, and there is no "no colours"
+            # error to report.
+            if not await self._recolour(name, colours):
+                return self.async_abort(reason="effect_stopped")
+            self._panel_rows = 0
+            self._draft_rows = None
+            return self.async_create_entry(title="", data=self._options)
+
+        if not self._panel_rows:
+            self._panel_rows = max(1, min(len(current) or profile.panel_colours,
+                                          profile.max_colours))
+        return self.async_show_form(
+            step_id=STEP_RECOLOUR,
+            data_schema=self._recolour_schema(profile, current),
+            description_placeholders={
+                "effect": name,
+                "max": str(profile.max_colours),
+                "rows": str(self._panel_rows),
+            },
+        )
+
+    def _recolour_schema(self, profile: Any, current: list[Any]) -> vol.Schema:
+        """Colour rows for the running effect, pre-filled from what it shows."""
+        draft = (
+            self._draft_rows
+            if self._draft_rows is not None
+            else [list(colour) for colour in current]
+        )
+        fields: dict[Any, Any] = {}
+        for slot in range(self._panel_rows):
+            default = draft[slot] if slot < len(draft) else None
+            fields[
+                vol.Optional(
+                    f"color_{slot + 1}",
+                    **({"default": list(default[:3])} if default else {}),
+                )
+            ] = ColorRGBSelector()
+            fields[
+                vol.Optional(
+                    f"white_{slot + 1}",
+                    default=(default[3] if default and len(default) > 3 else 0),
+                )
+            ] = _slider()
+
+        if 0 < self._panel_rows < profile.max_colours:
+            fields[vol.Optional("add_colour", default=False)] = BooleanSelector()
+        if self._panel_rows > 1:
+            fields[vol.Optional("remove_colour", default=False)] = BooleanSelector()
+        return vol.Schema(fields)
+
+    def _colours_from_rows(
+        self, profile: Any, user_input: dict[str, Any]
+    ) -> list[tuple[int, int, int, int]]:
+        """Read the submitted colour rows, skipping ones left empty.
+
+        An empty row is "no opinion", not black, so a two-stop gradient with the
+        second stop cleared is a one-stop gradient rather than a fade to black.
+        """
+        colours: list[tuple[int, int, int, int]] = []
+        for slot in range(min(self._panel_rows, profile.max_colours)):
+            colour = _colour_of(
+                user_input.get(f"color_{slot + 1}"),
+                user_input.get(f"white_{slot + 1}"),
+            )
+            if colour is not None:
+                colours.append(colour)
+        return colours
+
+    async def _recolour(
+        self, name: str, colours: list[tuple[int, int, int, int]]
+    ) -> bool:
+        """Apply and persist the new palette without stopping the effect.
+
+        ``async_recolour_active_effect`` already writes the palette back to the
+        entry's options and claims them, so there is nothing to save here and
+        the update listener must not re-send the effect. Returns ``False`` when
+        the effect stopped between showing the form and submitting it.
+        """
+        coordinator = self._coordinator()
+        if coordinator is None:
+            return False
+        try:
+            return await coordinator.async_recolour_active_effect(colours)
+        except HomeAssistantError as err:
+            _LOGGER.debug("could not recolour %s: %s", name, err)
+            return False
 
     async def async_step_effect_settings(
         self, user_input: dict[str, Any] | None = None

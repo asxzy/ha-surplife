@@ -156,7 +156,7 @@ async def test_a_version_mismatch_fails_the_deploy(deploy, monkeypatch) -> None:
             "entries": [("Soffit West", "loaded")],
         }
 
-    async def fake_sync(url, token):
+    async def fake_sync(url, token, tag=None):
         return None
 
     async def fake_restart(url, token):
@@ -166,7 +166,7 @@ async def test_a_version_mismatch_fails_the_deploy(deploy, monkeypatch) -> None:
     monkeypatch.setattr(deploy, "_sync", fake_sync)
     monkeypatch.setattr(deploy, "_restart", fake_restart)
 
-    args = deploy.argparse.Namespace(status=False, watch=False)
+    args = deploy.argparse.Namespace(status=False, watch=False, tag=None)
     code = await deploy.run(args)
     assert code == 1
 
@@ -186,6 +186,82 @@ async def test_an_unloaded_entry_fails_the_deploy(deploy, monkeypatch) -> None:
         }
 
     monkeypatch.setattr(deploy, "_status", fake_status)
-    args = deploy.argparse.Namespace(status=True, watch=False)
+    args = deploy.argparse.Namespace(status=True, watch=False, tag=None)
     code = await deploy.run(args)
     assert code == 1
+
+
+async def test_a_tag_deploy_verifies_the_tag_not_the_checkout(
+    deploy, monkeypatch
+) -> None:
+    """``--tag`` must check the tag, not ``manifest.json``.
+
+    A dev tag is deliberately *not* the manifest version -- it is a commit that
+    has not been blessed. Comparing against the checkout would either fail a
+    correct deploy or, worse, accept a silent fallback to the latest stable.
+    """
+    monkeypatch.setenv("HA_URL", "http://example.invalid:8123")
+    monkeypatch.setenv("HA_TOKEN", "token")
+    calls: list[str | None] = []
+
+    async def fake_status(url, token):
+        return {
+            "installed": "v0.1.7-dev1",
+            "available": "v0.1.7-dev1",
+            "pending": False,
+            "entries": [("Soffit West", "loaded")],
+        }
+
+    async def fake_sync(url, token, tag=None):
+        calls.append(tag)
+
+    async def fake_restart(url, token):
+        return None
+
+    async def fake_loaded(url, token):
+        return True
+
+    monkeypatch.setattr(deploy, "_status", fake_status)
+    monkeypatch.setattr(deploy, "_sync", fake_sync)
+    monkeypatch.setattr(deploy, "_restart", fake_restart)
+    monkeypatch.setattr(deploy, "_wait_until_loaded", fake_loaded)
+
+    args = deploy.argparse.Namespace(status=False, watch=False, tag="v0.1.7-dev1")
+    code = await deploy.run(args)
+
+    assert code == 0
+    assert calls == ["v0.1.7-dev1"], "the tag was not passed through to HACS"
+
+
+async def test_a_tag_deploy_fails_when_hacs_installed_something_else(
+    deploy, monkeypatch
+) -> None:
+    """A silent fallback to the latest stable release is a failure.
+
+    HACS is happy to install the newest stable when a prerelease is not visible
+    to it. Reporting success then would leave the box running code nobody asked
+    for, which is exactly the confusion a tag deploy is meant to avoid.
+    """
+    monkeypatch.setenv("HA_URL", "http://example.invalid:8123")
+    monkeypatch.setenv("HA_TOKEN", "token")
+
+    async def fake_status(url, token):
+        return {
+            "installed": "v0.1.6",
+            "available": "v0.1.6",
+            "pending": False,
+            "entries": [("Soffit West", "loaded")],
+        }
+
+    async def fake_sync(url, token, tag=None):
+        return None
+
+    async def fake_restart(url, token):
+        raise AssertionError("must not restart after installing the wrong version")
+
+    monkeypatch.setattr(deploy, "_status", fake_status)
+    monkeypatch.setattr(deploy, "_sync", fake_sync)
+    monkeypatch.setattr(deploy, "_restart", fake_restart)
+
+    args = deploy.argparse.Namespace(status=False, watch=False, tag="v0.1.7-dev1")
+    assert await deploy.run(args) == 1

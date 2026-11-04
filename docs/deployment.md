@@ -55,6 +55,36 @@ worth failing loudly: HACS will happily report a release as installed while the
 files on disk are something else, and a half-loaded integration looks like an
 empty integration rather than an error.
 
+### Deploying one commit, without cutting a release
+
+A stable release means "this passed the tests". Deploying work in progress should
+not create one, so a commit is published as a **prerelease** and installed by
+tag:
+
+```bash
+python3 tools/publish_dev_tag.py             # tag HEAD v0.1.7-dev1, publish prerelease
+python3 tools/publish_dev_tag.py --dry-run   # show the tag, publish nothing
+python3 tools/ha_deploy.py --tag v0.1.7-dev1 # install that exact commit
+```
+
+The tag is `v<manifest version>-dev<n>`, counting up from the highest existing
+`-dev` tag for that version, so a second commit gets `-dev2` instead of moving a
+tag that is already published. `publish_dev_tag.py` refuses to run with
+uncommitted changes to tracked files, because the tag would then not match the
+code it names.
+
+**Why a tag and not a bare commit hash.** HACS with `zip_release: true` only
+fetches *release assets* — it builds `releases/download/<ref>/surplife.zip`, and
+a SHA is not a release, so there is nothing to download. HACS does understand
+`archive/<sha>.zip`, but only on its repo-archive path, which `zip_release`
+disables. Publishing the commit as a prerelease keeps the predictable archive
+layout and still deploys exactly one commit.
+
+HACS hides prereleases from its update entity unless beta versions are enabled,
+so a dev deploy never advertises itself as an upgrade. `--tag` verifies that the
+installed version equals the tag you asked for, so a silent fallback to the
+latest stable release is a failure rather than a success.
+
 > Do not deploy by copying files over SSH or by running code inside Home
 > Assistant. Both work once and then drift, because the next HACS action
 > overwrites the directory from its own record.

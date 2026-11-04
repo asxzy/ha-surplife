@@ -90,7 +90,8 @@ The field's attributes say what the current effect accepts — `effect`,
 | Set a plain colour, or a real white | The light card's **rainbow icon**, with **Static** selected |
 | Set overall brightness | The light card's bulb icon |
 | Recolour one colour of the running pattern | The light card's colour wheel |
-| Set the whole palette for an effect | **Effect colours** on the device page, or **Configure → Configure an effect** |
+| Set the whole palette with colour pickers | **Configure → Change the running effect's colours** |
+| Set the whole palette by typing it | **Effect colours** on the device page |
 | Change a per-LED pattern's colours | **Configure → Configure a per-LED look** |
 | Change speed or density while it runs | The *Effect speed* / *Effect density* sliders |
 | Reverse an effect | The *Direction* selector |
@@ -98,6 +99,20 @@ The field's attributes say what the current effect accepts — `effect`,
 
 Configure is the **gear icon** on the device page, or *Settings → Devices &
 services → Surplife → Configure*.
+
+## Recolouring with pickers, in two taps
+
+**Configure → Change the running effect's colours** is the short path. It is the
+first item in the menu because it is what you do to an effect *after* it is set
+up.
+
+It skips the effect picker entirely — the target is whatever is showing — and
+shows only that effect's colour wheels, pre-filled with the colours the strip is
+using right now. Submit and the effect takes the new colours and keeps running.
+Add and remove rows the same way the effect panel does, one colour at a time.
+
+If nothing is running it says so instead of showing empty pickers, and an effect
+that paints its own colours (`Rainbow Bridge`) is refused for the same reason.
 
 ## What the panel asks for
 

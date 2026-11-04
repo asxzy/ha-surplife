@@ -44,8 +44,23 @@ def _default(result: dict, name: str) -> object:
 # -- menu ------------------------------------------------------------------
 
 
-async def test_menu_offers_the_three_panels(options_flow) -> None:
-    assert set(options_flow["menu_options"]) == {"effect", "look", "interval"}
+async def test_menu_offers_the_panels(options_flow) -> None:
+    assert set(options_flow["menu_options"]) == {
+        "recolour",
+        "effect",
+        "look",
+        "interval",
+    }
+
+
+async def test_recolour_is_the_first_menu_option(options_flow) -> None:
+    """The everyday question -- "make this a different colour" -- comes first.
+
+    Configure an effect is where an effect is set up once; recolouring is what
+    you do to it afterwards. Putting the setup panel first meant the common
+    action sat below the uncommon one.
+    """
+    assert options_flow["menu_options"][0] == "recolour"
 
 
 async def test_menu_reports_how_much_is_configured(
@@ -812,3 +827,210 @@ async def test_panel_description_has_no_raw_markdown() -> None:
         )
         text = data["options"]["step"]["effect_settings"]["description"]
         assert "**" not in text, f"{name} has raw markdown in a description"
+
+
+# -- recolouring the running effect ----------------------------------------
+
+
+async def _start_effect(hass: HomeAssistant, name: str, colours=None) -> None:
+    """Put an effect on the strip, with a saved palette if one is given."""
+    from custom_components.surplife.settings import EffectSettings, with_effect
+
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    if colours is not None:
+        hass.config_entries.async_update_entry(
+            entry,
+            options=with_effect(
+                dict(entry.options),
+                name,
+                EffectSettings(
+                    colors=tuple(colours), speed=50, density=50, direction=1
+                ),
+            ),
+        )
+        await hass.async_block_till_done()
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {"entity_id": "light.soffit_west", "effect": name},
+        blocking=True,
+    )
+
+
+async def test_recolour_shows_the_running_effects_colours(
+    hass: HomeAssistant, loaded_entry, options_flow
+) -> None:
+    """The wheels start where the strip is, so nothing is retyped from scratch."""
+    await _start_effect(
+        hass, "Chase", [(255, 0, 0, 0), (0, 255, 0, 0), (0, 0, 255, 0)]
+    )
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"], {"next_step_id": "recolour"}
+    )
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "recolour"
+    # Three colours on the strip, three colour wheels.
+    fields = _fields(result)
+    for slot in range(1, 4):
+        assert f"color_{slot}" in fields
+        assert f"white_{slot}" in fields
+    assert "color_4" not in fields
+    assert tuple(_default(result, "color_1")) == (255, 0, 0)
+    assert tuple(_default(result, "color_2")) == (0, 255, 0)
+    assert tuple(_default(result, "color_3")) == (0, 0, 255)
+
+
+async def test_recolour_applies_the_new_colours_and_keeps_running(
+    hass: HomeAssistant, loaded_entry, options_flow, patched_client
+) -> None:
+    """Submitting recolours in place -- the effect is not cancelled."""
+    await _start_effect(hass, "Chase", [(255, 0, 0, 0), (0, 255, 0, 0)])
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"], {"next_step_id": "recolour"}
+    )
+    patched_client.set_levels.reset_mock()
+    patched_client.set_effect.reset_mock()
+
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"],
+        {
+            "color_1": [10, 20, 30],
+            "white_1": 0,
+            "color_2": [40, 50, 60],
+            "white_2": 0,
+        },
+    )
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    patched_client.set_levels.assert_not_called()
+    palette = hass.states.get("light.soffit_west").attributes["palette"]
+    assert len(palette) == 2
+    assert palette[0].startswith("#0a141e")
+    assert hass.states.get("light.soffit_west").attributes["effect"] == "Chase"
+
+
+async def test_recolour_offers_no_effect_picker(
+    hass: HomeAssistant, loaded_entry, options_flow
+) -> None:
+    """The running effect is the target, so there is nothing to choose."""
+    await _start_effect(hass, "Chase", [(255, 0, 0, 0)])
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"], {"next_step_id": "recolour"}
+    )
+    assert "effect" not in _fields(result)
+
+
+async def test_recolour_says_so_when_nothing_is_running(
+    hass: HomeAssistant, loaded_entry, options_flow
+) -> None:
+    """Empty pickers that would do nothing are worse than a clear message."""
+    # ``Static`` is how the integration leaves pattern mode: it sets
+    # ``commanded_non_effect``, so the runtime knows the strip is a flat colour
+    # even though the controller keeps reporting the last effect id.
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {"entity_id": "light.soffit_west", "effect": "Static"},
+        blocking=True,
+    )
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"], {"next_step_id": "recolour"}
+    )
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "no_running_effect"
+
+
+async def test_recolour_aborts_on_an_effect_that_paints_its_own_colours(
+    hass: HomeAssistant, loaded_entry, options_flow
+) -> None:
+    """``Rainbow Bridge`` ignores a palette, so offering wheels would lie."""
+    await _start_effect(hass, "Rainbow Bridge")
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"], {"next_step_id": "recolour"}
+    )
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "effect_paints_its_own_colours"
+
+
+async def test_recolour_adds_a_row_without_saving(
+    hass: HomeAssistant, loaded_entry, options_flow, patched_client
+) -> None:
+    """Add is a round trip: the strip is untouched until Submit."""
+    await _start_effect(hass, "Chase", [(255, 0, 0, 0), (0, 255, 0, 0)])
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"], {"next_step_id": "recolour"}
+    )
+    patched_client.set_effect.reset_mock()
+
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"],
+        {
+            "color_1": [255, 0, 0],
+            "white_1": 0,
+            "color_2": [0, 255, 0],
+            "white_2": 0,
+            "add_colour": True,
+        },
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    patched_client.set_effect.assert_not_called()
+    fields = _fields(result)
+    assert "color_3" in fields
+    # The colours already picked survive the round trip.
+    assert tuple(_default(result, "color_1")) == (255, 0, 0)
+    assert tuple(_default(result, "color_2")) == (0, 255, 0)
+
+
+async def test_an_untouched_row_is_skipped_not_treated_as_black(
+    hass: HomeAssistant, loaded_entry, options_flow
+) -> None:
+    """Clearing a row must shorten the palette, not fade it to black.
+
+    A row with no default is the only way to submit no colour at all, so this
+    adds a row (which has none) and submits without filling it in.
+    """
+    await _start_effect(hass, "Chase", [(255, 0, 0, 0)])
+    await hass.config_entries.options.async_configure(
+        options_flow["flow_id"], {"next_step_id": "recolour"}
+    )
+    # Add a second row, which starts empty.
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"],
+        {"color_1": [255, 0, 0], "white_1": 0, "add_colour": True},
+    )
+    assert result["type"] is FlowResultType.FORM
+    assert "color_2" in _fields(result)
+
+    # Submit leaving the second row empty.
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"], {"color_1": [255, 0, 0], "white_1": 0}
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    saved = entry.options[EFFECTS_KEY]["Chase"]["colors"]
+    assert len(saved) == 1, f"the empty row became a colour: {saved}"
+    assert tuple(saved[0]) == (255, 0, 0, 0)
+
+
+async def test_recolour_keeps_the_white_channel(
+    hass: HomeAssistant, loaded_entry, options_flow
+) -> None:
+    """The W level drives the real white LED, not a simulated grey."""
+    await _start_effect(hass, "Chase", [(255, 0, 0, 0), (0, 255, 0, 0)])
+    await hass.config_entries.options.async_configure(
+        options_flow["flow_id"], {"next_step_id": "recolour"}
+    )
+    await hass.config_entries.options.async_configure(
+        options_flow["flow_id"],
+        {
+            "color_1": [0, 0, 0],
+            "white_1": 100,
+            "color_2": [0, 0, 255],
+            "white_2": 0,
+        },
+    )
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    saved = entry.options[EFFECTS_KEY]["Chase"]["colors"]
+    assert tuple(saved[0]) == (0, 0, 0, 100)
