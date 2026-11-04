@@ -67,10 +67,21 @@ def _version() -> str:
 
 
 def _next_tag(version: str) -> str:
-    """The next free ``-dev`` tag for ``version``."""
-    existing = _git("tag", "--list", f"v{version}-dev*").splitlines()
+    """The next free ``-dev`` tag for ``version``.
+
+    Local *and* remote tags are counted. ``gh release create`` makes the tag on
+    the remote only, so a local-only list would hand out ``-dev1`` again after
+    every publish and fail on the second commit.
+    """
+    tags = _git("tag", "--list", f"v{version}-dev*").splitlines()
+    remote = _git("ls-remote", "--tags", "origin", f"v{version}-dev*")
+    for line in remote.splitlines():
+        # ``<sha>\trefs/tags/<name>``
+        if "\t" in line:
+            tags.append(line.split("\t", 1)[1].rsplit("/", 1)[-1])
+
     highest = 0
-    for tag in existing:
+    for tag in tags:
         match = _DEV_TAG.match(tag.strip())
         if match and match.group("version") == version:
             highest = max(highest, int(match.group("number")))

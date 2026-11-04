@@ -16,13 +16,16 @@ from tools import publish_dev_tag
 def tagger(monkeypatch):
     """Drive tag naming without touching the real repository."""
 
-    def _set(existing: list[str], version: str = "0.1.6") -> None:
+    def _set(existing: list[str], version: str = "0.1.6", remote=()) -> None:
+        """Stub git: ``tag --list`` returns ``existing``, ls-remote ``remote``."""
+
+        def _fake_git(*args, **kw):
+            if args and args[0] == "ls-remote":
+                return "\n".join(f"deadbeef\trefs/tags/{name}" for name in remote)
+            return "\n".join(existing)
+
         monkeypatch.setattr(publish_dev_tag, "_version", lambda: version)
-        monkeypatch.setattr(
-            publish_dev_tag,
-            "_git",
-            lambda *args, **kw: "\n".join(existing),
-        )
+        monkeypatch.setattr(publish_dev_tag, "_git", _fake_git)
 
     return _set
 
@@ -74,3 +77,18 @@ def test_it_refuses_to_tag_a_dirty_tree(monkeypatch) -> None:
     )
 
     assert publish_dev_tag.main([]) == 1
+
+
+def test_it_counts_remote_dev_tags_too(tagger) -> None:
+    """``gh release create`` makes the tag on the remote only.
+
+    Counting local tags alone would hand out ``-dev1`` again after every
+    publish, and the second commit's publish would fail on an existing tag.
+    """
+    tagger([], remote=["v0.1.6-dev1"])
+    assert publish_dev_tag._next_tag("0.1.6") == "v0.1.6-dev2"
+
+
+def test_it_takes_the_highest_of_local_and_remote(tagger) -> None:
+    tagger(["v0.1.6-dev3"], remote=["v0.1.6-dev1", "v0.1.6-dev2"])
+    assert publish_dev_tag._next_tag("0.1.6") == "v0.1.6-dev4"
