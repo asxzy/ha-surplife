@@ -82,12 +82,15 @@ def _head() -> str:
 
 
 def _is_dirty() -> bool:
-    """Whether tracked files differ from HEAD.
+    """Whether files that *ship* differ from HEAD.
 
-    Untracked files are ignored: a local ``.env`` or a build artefact does not
-    change what the tag contains.
+    Only the integration package is checked. The tag points at HEAD regardless,
+    so a modified README or a local note cannot change what the tag contains --
+    but a modified module can, and tagging one would publish code that the tag's
+    own name does not describe.
     """
-    return bool(_git("status", "--porcelain", "--untracked-files=no"))
+    changed = _git("status", "--porcelain", "--untracked-files=no", "--", "custom_components/surplife")
+    return bool(changed)
 
 
 def main(argv: list[str] | None = None) -> int:
