@@ -38,11 +38,49 @@ The effect keeps its speed, density and direction and simply takes the new
 colour. The choice is saved, so picking that pattern again later brings the
 colour back.
 
+**On a multi-colour pattern the wheel replaces the first colour and leaves the
+rest alone.** The card can only ever express one colour, so treating a wheel
+touch as the whole palette used to collapse a three-colour `Chase` to a single
+colour the moment you nudged the wheel. It now substitutes into slot one, which
+is the colour the wheel is showing, so the other slots survive.
+
 Pick **Static** from the Effect dropdown to leave pattern mode. From then on the
 colour wheel sets a flat colour again.
 
-A single colour is all the card can express. For a pattern that blends several
-colours — a gradient, or a three-colour burst — use the Configure panel below.
+## Setting the whole palette from the device page
+
+The light card's wheel can only carry one colour, so a second surface exists for
+the list: **Effect colours**, a text field in the device page's *Controls* card.
+It is enabled by default — no gear icon, no second menu.
+
+It always shows the palette the running effect is using, in order:
+
+```
+Effect colours
+#ff0000, #00ff00, #0000ff
+```
+
+Type a new list and press Enter. The running effect is recoloured in place and
+the new palette is saved against it, exactly as if you had used the Configure
+panel. The grammar is the same one the services and the CLI use:
+
+| Spelling | Example |
+|---|---|
+| Colour name | `red, green, blue` |
+| Hex | `#ff0000, #00ff00` |
+| RGB triple | `255,0,0, 0,0,255` |
+| Real white channel | `#000000, w100` — drives the W LED, not a simulated grey |
+
+Anything it cannot use is refused with the reason in a notification, and nothing
+is sent to the strip:
+
+* more colours than the effect takes — `4 colours given but this effect takes at
+  most 3`;
+* a palette on `Rainbow Bridge`, which paints its own;
+* an unparseable token, or an empty field.
+
+The field's attributes say what the current effect accepts — `effect`,
+`max_colours`, and a `hint` — so you do not have to remember the cap table.
 
 ## Where the controls live
 
@@ -51,9 +89,8 @@ colours — a gradient, or a three-colour burst — use the Configure panel belo
 | Turn the strip on or off | The light card |
 | Set a plain colour, or a real white | The light card's **rainbow icon**, with **Static** selected |
 | Set overall brightness | The light card's bulb icon |
-| Recolour the pattern that is running | The light card's colour wheel |
-| Leave pattern mode | **Effect → Static** on the light card |
-| Set several colours for an effect | **Configure → Configure an effect** |
+| Recolour one colour of the running pattern | The light card's colour wheel |
+| Set the whole palette for an effect | **Effect colours** on the device page, or **Configure → Configure an effect** |
 | Change a per-LED pattern's colours | **Configure → Configure a per-LED look** |
 | Change speed or density while it runs | The *Effect speed* / *Effect density* sliders |
 | Reverse an effect | The *Direction* selector |
@@ -174,3 +211,25 @@ brings that gradient back, and `light.turn_on` with
 
 To make it a warm white instead, set the first colour to `#000000` with a white
 level of 80. That lights the white LED, not three colour LEDs imitating white.
+
+## A worked example: a three-colour chase, from the device page
+
+1. On the light card, pick **Effect → Chase**.
+2. On the device page, find **Effect colours** in *Controls* and type
+   `#ff0000, #00ff00, #0000ff`.
+3. Press Enter. The strip starts chasing red → green → blue and the field now
+   reads `#ff0000, #00ff00, #0000ff`.
+4. Nudge the colour wheel on the light card. Slot one changes; green and blue
+   stay. The field updates to match.
+
+From an automation, the same result without the UI:
+
+```yaml
+action:
+  - service: text.set_value
+    target:
+      entity_id: text.soffit_west_effect_colours
+    data:
+      value: "#ff0000, #00ff00, #0000ff"
+```
+

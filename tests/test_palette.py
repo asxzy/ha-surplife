@@ -160,3 +160,37 @@ async def test_the_entity_says_what_the_effect_accepts(
     assert attributes["max_colours"] == 3
     assert "3" in attributes["hint"]
     assert "w" in attributes["grammar"]
+
+
+async def test_a_single_colour_sets_a_flat_colour_when_no_effect_runs(
+    hass, loaded_entry, patched_client
+) -> None:
+    """With no effect showing, the field is a plain colour control.
+
+    ``Static`` is in the effect list but is not an effect: it shows one flat
+    colour. Refusing it here would leave the field useless for exactly the
+    case its state already describes, so one colour is applied as a colour.
+    """
+    await hass.services.async_call(
+        "light", "turn_on", {"entity_id": LIGHT, "effect": "Static"}, blocking=True
+    )
+    patched_client.set_levels.reset_mock()
+
+    await _set(hass, "#ff8000")
+
+    assert patched_client.set_levels.called
+    state = hass.states.get(LIGHT)
+    assert tuple(state.attributes["rgb_color"]) == (255, 128, 0)
+    assert hass.states.get(PALETTE).state == "#ff8000"
+
+
+async def test_a_list_is_refused_when_no_effect_runs(
+    hass, loaded_entry, patched_client
+) -> None:
+    """A list with no effect would silently use only its first colour."""
+    await hass.services.async_call(
+        "light", "turn_on", {"entity_id": LIGHT, "effect": "Static"}, blocking=True
+    )
+    with pytest.raises(Exception) as err:
+        await _set(hass, "red, blue")
+    assert "single colour" in str(err.value)

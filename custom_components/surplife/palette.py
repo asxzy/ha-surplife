@@ -23,7 +23,6 @@ available as scenes; this is the direct editor next to them.
 
 from __future__ import annotations
 
-import logging
 from typing import Any, Final
 
 from homeassistant.components.text import TextEntity, TextMode
@@ -32,15 +31,12 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, STATIC_EFFECT
 from .coordinator import SurplifeCoordinator
-from .effect_profile import max_colours, profile_for
+from .effect_profile import PaletteMode, max_colours, profile_for
 from .protocol.spec import format_palette, parse_palette
-
-_LOGGER = logging.getLogger(__name__)
 
 #: Longest palette string accepted. Eight colours of ``#rrggbb w100`` is about
 #: 120 characters, so this is generous while still bounded.
@@ -57,9 +53,7 @@ async def async_setup_entry(
     async_add_entities([SurplifeEffectPaletteText(coordinator)])
 
 
-class SurplifeEffectPaletteText(
-    CoordinatorEntity[SurplifeCoordinator], TextEntity, RestoreEntity
-):
+class SurplifeEffectPaletteText(CoordinatorEntity[SurplifeCoordinator], TextEntity):
     """The ordered colour list an effect is using, editable in place.
 
     Setting it recolours the running effect instead of cancelling it, which is
@@ -84,9 +78,6 @@ class SurplifeEffectPaletteText(
         """Initialise the palette entity."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.entry.entry_id}_effect_palette"
-        # Start from whatever the strip is showing so the field is never blank
-        # for a device that already has a colour.
-        self._attr_native_value = ""
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -112,16 +103,6 @@ class SurplifeEffectPaletteText(
         text = format_palette(colours)
         return text or None
 
-    async def async_added_to_hass(self) -> None:
-        """Nothing to restore: the palette is read from the coordinator.
-
-        ``RestoreEntity`` is inherited only so the entity keeps its place in the
-        registry across restarts; the value itself always comes from the
-        runtime, because a stale restored string would show colours the strip
-        is not using.
-        """
-        await super().async_added_to_hass()
-
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Say what the current effect accepts, so the field is self-explaining."""
@@ -131,25 +112,30 @@ class SurplifeEffectPaletteText(
         if name == STATIC_EFFECT:
             cap = 1
             hint = "one colour; pick a pattern to use a palette"
-        elif profile.palette.value == "generated":
+        elif profile.palette is PaletteMode.GENERATED:
             cap = 0
             hint = "this effect paints its own colours; a palette is ignored"
         else:
             cap = max_colours(name)
-            hint = f"up to {cap} colour(s) for this effect"
+            hint = f"up to {cap} colour{'s' if cap > 1 else ''} for this effect"
         return {
             "effect": name,
             "max_colours": cap,
             "hint": hint,
             "grammar": (
                 "comma-separated; colour names, #rrggbb, or r,g,b; "
-                "append w<n> for the white level"
+                "a w<n> token after a colour sets its white level"
             ),
-            "example": "#ff0000, #00ff00 w30, #0000ff",
+            "example": "#ff0000, #00ff00, w30, #0000ff",
         }
 
     async def async_set_value(self, value: str) -> None:
         """Apply a new palette to the running effect.
+
+        ``Static`` is the one case that is not a palette at all: it shows a flat
+        colour, so a single colour here is applied as a flat colour rather than
+        refused. Anything longer is still an error, because the strip would only
+        ever show one of them.
 
         Raises:
             HomeAssistantError: if the text does not parse, the effect takes no
@@ -161,14 +147,27 @@ class SurplifeEffectPaletteText(
 
         runtime = self.coordinator.runtime
         name = runtime.effect_name
+
+        # No effect running: the strip is on a flat colour. One colour is a
+        # sensible thing to type here; a list is not, and would silently use
+        # only its first entry.
         if not name:
-            raise HomeAssistantError(
-                "no effect is running; pick one from the effect selector first, "
-                "or use the light card for a single colour"
+            try:
+                colours = parse_palette(text, max_colours=1)
+            except ValueError as err:
+                raise HomeAssistantError(
+                    f"invalid colour: {err}. With no effect running this field "
+                    "takes a single colour; pick an effect to use a palette"
+                ) from err
+            red, green, blue, white = colours[0]
+            await self.coordinator.async_set_rgbw(
+                (red, green, blue), round(white * 255 / 100), runtime.brightness
             )
+            self.async_write_ha_state()
+            return
 
         profile = profile_for(name)
-        if profile.palette.value == "generated":
+        if profile.palette is PaletteMode.GENERATED:
             raise HomeAssistantError(
                 f"{name} paints its own colours, so a palette would be ignored"
             )
