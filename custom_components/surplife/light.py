@@ -36,7 +36,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DOMAIN, STATIC_EFFECT
 from .coordinator import SurplifeCoordinator, SurplifeRuntime
 from .effect_profile import profile_for
 from .protocol.constants import EFFECT_NAMES
@@ -92,7 +92,12 @@ class SurplifeLight(CoordinatorEntity[SurplifeCoordinator], LightEntity):
     _attr_supported_features = LightEntityFeature.EFFECT
     #: Immutable, because Home Assistant compares effect lists by identity in
     #: some paths and commandeers the list if it is a mutable class default.
-    _attr_effect_list: tuple[str, ...] = tuple(EFFECT_NAMES.values())
+    #:
+    #: ``Static`` comes first so the card can always leave pattern mode. Without
+    #: it, a colour request while a pattern runs recolours the pattern (see
+    #: :meth:`SurplifeCoordinator.async_recolour_active_effect`) and there would
+    #: be no way back to a plain colour from the card.
+    _attr_effect_list: tuple[str, ...] = (STATIC_EFFECT, *EFFECT_NAMES.values())
 
     def __init__(self, coordinator: SurplifeCoordinator) -> None:
         """Initialise the light."""
@@ -159,8 +164,14 @@ class SurplifeLight(CoordinatorEntity[SurplifeCoordinator], LightEntity):
 
     @property
     def effect(self) -> str | None:
-        """The active native effect name, if any."""
-        return self._runtime.effect_name
+        """The active effect, or ``Static`` when the strip is a flat colour.
+
+        Reporting ``Static`` rather than ``None`` keeps the dropdown showing
+        which mode the strip is in, so leaving pattern mode is a visible choice
+        instead of a blank.
+        """
+        effect = self._runtime.effect_name
+        return effect if effect else STATIC_EFFECT
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
@@ -203,6 +214,16 @@ class SurplifeLight(CoordinatorEntity[SurplifeCoordinator], LightEntity):
         runtime = self._runtime
 
         if (effect := kwargs.get(ATTR_EFFECT)) is not None:
+            if effect == STATIC_EFFECT:
+                # Leave pattern mode: drive the remembered colour as a flat,
+                # static colour. Clearing the effect is what the next colour
+                # request needs in order to stop recolouring a pattern.
+                await self.coordinator.async_set_rgb(
+                    self._runtime.rgbw_mix[:3], self._runtime.brightness
+                )
+                if not runtime.is_on:
+                    await self.coordinator.async_set_power(True)
+                return
             # No palette is passed: the coordinator restores the colours saved
             # for this effect in the Configure panel, falling back to whatever
             # is showing. Passing one colour here is what made multi-colour
@@ -225,20 +246,30 @@ class SurplifeLight(CoordinatorEntity[SurplifeCoordinator], LightEntity):
             await self.coordinator.async_set_white(white)
         elif rgbw is not None:
             red, green, blue, white_level = rgbw
-            await self.coordinator.async_set_rgbw(
-                (red, green, blue), white_level, brightness
-            )
+            # While a pattern is showing, a colour on the card means "recolour
+            # this pattern", not "stop the pattern and show one flat colour".
+            if not await self.coordinator.async_recolour_active_effect(
+                [(red, green, blue, round(white_level * 100 / 255))]
+            ):
+                await self.coordinator.async_set_rgbw(
+                    (red, green, blue), white_level, brightness
+                )
         elif rgb is not None:
-            await self.coordinator.async_set_rgb(tuple(rgb), brightness)
+            if not await self.coordinator.async_recolour_active_effect(
+                [(rgb[0], rgb[1], rgb[2], 0)]
+            ):
+                await self.coordinator.async_set_rgb(tuple(rgb), brightness)
         elif brightness != runtime.brightness and was_on:
             await self.coordinator.async_set_brightness(brightness)
         elif not was_on:
-            # Re-apply the last known colour so turning on is deterministic
-            # rather than restoring whatever the strip last showed. The mode
-            # decides which channel to drive: a strip last used for white comes
-            # back white, a strip last used for colour comes back in colour,
-            # and a strip that has never been driven comes back neutral white.
-            if runtime.color_mode == "white":
+            # Re-apply what was showing so turning on is deterministic rather
+            # than restoring whatever the strip last showed. A strip that was
+            # mid-pattern comes back in that pattern; otherwise the mode decides
+            # the channel: last used for white comes back white, last used for
+            # colour comes back in colour, never driven comes back neutral white.
+            if runtime.effect_name:
+                await self.coordinator.async_set_effect(runtime.effect_name)
+            elif runtime.color_mode == "white":
                 await self.coordinator.async_set_white(runtime.white_level)
             elif (mix := runtime.rgbw_mix) is not None:
                 red, green, blue, white_level = mix

@@ -50,7 +50,14 @@ from .protocol import (
     Timer,
 )
 from .protocol.constants import WRITE_ALL
-from .settings import effect_settings, look_settings, merge_colours
+from .settings import (
+    EffectSettings,
+    effect_settings,
+    look_settings,
+    merge_colours,
+    replace_settings,
+    with_effect,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -111,6 +118,16 @@ class SurplifeRuntime:
     timers: list[Timer] = field(default_factory=list)
     scene: str | None = None
     look: str | None = None
+
+    #: Set when the integration last drove a non-effect mode (plain colour,
+    #: white, segments, scribble). The state frame's pattern byte is sticky in
+    #: those modes, so it must not be read back as "a pattern is running".
+    commanded_non_effect: bool = False
+
+    #: The pattern byte the device was reporting when a non-effect mode was
+    #: commanded. The device keeps repeating this value, so only a *different*
+    #: value is evidence that something else really changed the mode.
+    stale_pattern: int | None = None
 
     @property
     def is_on(self) -> bool:
@@ -298,10 +315,29 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         self.runtime.state = state
         # The device always populates the pattern byte, and reuses it for
         # non-effect modes, so only trust it when it is a known effect.
+        #
+        # Critically, the byte is *sticky*: after a plain ``E0 01`` colour
+        # command the controller keeps reporting whatever effect id was there
+        # before (verified on hardware -- a red fill still reported 101,
+        # "Static Gradient"). Believing it would resurrect a pattern the user
+        # just left and recolour the strip behind their back. So a mode we
+        # commanded ourselves wins over the stale byte until the device
+        # reports a *different* effect id, which is the only evidence that
+        # something else really did change the mode.
         previous = self.runtime.effect_name
-        self.runtime.effect_name = state.effect_name
-        if state.effect_name is not None and state.effect_name != previous:
-            self._restore_saved_palette(state.effect_name)
+        reported = state.effect_name
+        # A *different* pattern byte is the only evidence that something other
+        # than us moved the device into a pattern, so stop distrusting it.
+        if (
+            self.runtime.stale_pattern is not None
+            and state.pattern != self.runtime.stale_pattern
+        ):
+            self.runtime.commanded_non_effect = False
+            self.runtime.stale_pattern = None
+        if not self.runtime.commanded_non_effect:
+            self.runtime.effect_name = reported
+            if reported is not None and reported != previous:
+                self._restore_saved_palette(reported)
         return self.runtime
 
     def _restore_saved_palette(self, name: str) -> None:
@@ -381,6 +417,10 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         self.runtime.brightness = brightness
         self.runtime.white_level = 0
         self.runtime.effect_name = None
+        self.runtime.commanded_non_effect = True
+        self.runtime.stale_pattern = (
+            self.runtime.state.pattern if self.runtime.state is not None else None
+        )
         self._clear_recipe()
         self.async_update_listeners()
 
@@ -401,6 +441,10 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         self.runtime.white_level = level
         self.runtime.brightness = level
         self.runtime.effect_name = None
+        self.runtime.commanded_non_effect = True
+        self.runtime.stale_pattern = (
+            self.runtime.state.pattern if self.runtime.state is not None else None
+        )
         self._clear_recipe()
         self.async_update_listeners()
 
@@ -434,6 +478,10 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         self.runtime.brightness = max(brightness, white)
         self.runtime.rgbw = (scaled[0], scaled[1], scaled[2], white)
         self.runtime.effect_name = None
+        self.runtime.commanded_non_effect = True
+        self.runtime.stale_pattern = (
+            self.runtime.state.pattern if self.runtime.state is not None else None
+        )
         self._clear_recipe()
         self.async_update_listeners()
 
@@ -452,6 +500,58 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         await self.async_set_rgbw((red, green, blue), white, brightness)
 
     # -- effects -----------------------------------------------------------
+
+    async def async_recolour_active_effect(
+        self, colours: list[tuple[int, ...]]
+    ) -> bool:
+        """Recolour the effect currently showing, if there is one.
+
+        The light card's colour wheel is the colour control a user actually
+        reaches for. On its own it sets a *static* colour, which stops the
+        effect -- so "change the colours of this pattern" was impossible from
+        the card: picking a colour silently cancelled the pattern the user was
+        trying to recolour.
+
+        So while an effect is showing, a colour request is re-sent down the
+        effect path with the new palette. Only the colours change; speed,
+        density and direction keep the values the effect was last driven with.
+        The new palette is also written back to the effect's saved settings, so
+        the colour sticks the next time the effect is picked.
+
+        Args:
+            colours: New palette, RGBW tuples with the W level in 0-100.
+
+        Returns:
+            True when an effect was showing and has been recoloured, False when
+            there is nothing to recolour and the caller should set a plain
+            colour instead.
+        """
+        name = self.runtime.effect_name
+        if not name or self.runtime.commanded_non_effect:
+            return False
+
+        await self.async_set_effect(name, colors=colours)
+
+        # Persist, so the recolour survives re-selecting the effect rather than
+        # being overwritten by the palette it was configured with. An effect
+        # that was never opened in the Configure panel has no saved settings
+        # yet, so the entry is created from what is running right now rather
+        # than skipped -- otherwise the colour would only stick for effects
+        # the user had already visited.
+        saved = effect_settings(self.config_entry.options, name) or EffectSettings(
+            colors=tuple(self.runtime.palette),
+            speed=self.runtime.effect_speed,
+            density=self.runtime.effect_density,
+            direction=self.runtime.effect_direction,
+        )
+        updated = with_effect(
+            dict(self.config_entry.options),
+            name,
+            replace_settings(saved, colors=tuple(colours)),
+        )
+        self.expect_no_reapply(updated)
+        self.hass.config_entries.async_update_entry(self.config_entry, options=updated)
+        return True
 
     async def async_set_effect(
         self,
@@ -531,6 +631,10 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
             else resolved_direction
         )
         self.runtime.look = None
+        # A pattern is now what the device is showing, so the poll may trust the
+        # pattern byte again.
+        self.runtime.commanded_non_effect = False
+        self.runtime.stale_pattern = None
         if self.runtime.state is not None:
             self.runtime.state = _replace_effect_state(
                 self.runtime.state, effect_id, speed=effective_speed
@@ -543,6 +647,10 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         """Apply static segment colours."""
         await self._run(self._client.set_segments, colors)
         self.runtime.effect_name = None
+        self.runtime.commanded_non_effect = True
+        self.runtime.stale_pattern = (
+            self.runtime.state.pattern if self.runtime.state is not None else None
+        )
         self._clear_recipe()
         self.async_update_listeners()
 
@@ -574,6 +682,10 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
             speed=speed,
         )
         self.runtime.effect_name = None
+        self.runtime.commanded_non_effect = True
+        self.runtime.stale_pattern = (
+            self.runtime.state.pattern if self.runtime.state is not None else None
+        )
         self.runtime.scene = None
         self.runtime.look = look
         self.async_update_listeners()

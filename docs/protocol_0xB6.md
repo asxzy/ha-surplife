@@ -121,6 +121,19 @@ The byte at offset 8 is **always populated**, including in modes that are not
 | After `E1 21` effect id *N* | *N* |
 | After `E1 23`/`E1 26` scribble | retains the previous value |
 
+Note the two shapes of the same problem. `0x65` is a *documented* effect id that
+the device reports before it has ever been told to play that effect, so a fresh
+device looks like it is running "Static Gradient" when it is showing nothing of
+the sort. And after an effect has played, a later plain colour command leaves the
+previous id in this byte rather than resetting it, so the byte reports a pattern
+that is no longer playing.
+
+The implementation therefore does not treat the byte as a mode signal on its
+own. It remembers which non-effect mode *it* last commanded and distrusts the
+byte until it changes, because a change is the only evidence that something
+outside Home Assistant altered the mode. **verified** on hardware: commanding a
+red fill after "Wave" left the byte at `1` while the strip showed a static red.
+
 **verified** across the whole command matrix.
 
 So a byte of `101` does **not** prove the user selected "Static Gradient", and

@@ -18,6 +18,11 @@ CONF_LED_COUNT: Final = "led_count"
 DEFAULT_NAME: Final = "Surplife Light"
 DEFAULT_PORT: Final = 5577
 
+#: Pseudo-effect offered alongside the 24 real effects so the light card can
+#: leave pattern mode. Selecting it sets a plain static colour. It is not a
+#: firmware effect and never reaches the wire as an effect id.
+STATIC_EFFECT: Final = "Static"
+
 #: How often to poll the state frame. The device reports only power, mode,
 #: effect and speed, so this is mostly for picking up changes made by the app
 #: or the hardware timers.

@@ -14,6 +14,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
+from .const import STATIC_EFFECT as STATIC
 from .coordinator import SurplifeCoordinator
 from .effect_profile import profile_for
 from .protocol.constants import EFFECT_NAMES
@@ -27,10 +28,6 @@ from .settings import (
     with_effect,
 )
 
-STATIC = "Static"
-
-#: Shown by the look select when the strip is showing something typed into the
-#: pattern text entity rather than one of the curated looks.
 CUSTOM = "custom"
 
 #: Shown by the scene select when no stored scene is active.

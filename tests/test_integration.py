@@ -47,7 +47,18 @@ HOST = "192.168.1.50"
 LIGHT = "light.soffit_west"
 
 
-def _state(power: bool = True, pattern: int = 0x65, speed: int = 80) -> SurplifeState:
+def _state(
+    power: bool = True, pattern: int = 0x6E, speed: int = 80
+) -> SurplifeState:
+    """A state frame in plain-colour mode.
+
+    The default pattern byte is ``0x6E``, which is what the device reports after
+    a plain ``E0 01`` colour command and is *not* a documented effect id. The
+    factory value ``0x65`` would parse as "Static Gradient" even though the
+    device was never asked for it, so tests that want a colour start from a
+    frame that does not claim a pattern; a test that wants a real pattern sets
+    ``pattern`` to an effect id and drives it through the effect path.
+    """
     from custom_components.surplife.protocol.state import parse_state
 
     frame = bytearray(golden.STATE_PRISTINE_INNER)
@@ -129,9 +140,14 @@ async def test_light_reports_supported_features(hass: HomeAssistant, entry) -> N
 
 
 async def test_effect_list_is_the_native_set(hass: HomeAssistant, entry) -> None:
-    """The effect list is the 24 native effects, not flux_led's generic ones."""
+    """The effect list is the 24 native effects plus a way out of pattern mode.
+
+    ``Static`` is first so the card can always return to a plain colour; the
+    rest are the native effect names and nothing else.
+    """
     effects = hass.states.get(LIGHT).attributes["effect_list"]
-    assert len(effects) == 24
+    assert effects[0] == "Static"
+    assert len(effects) == 25
     assert "Wave" in effects
     assert "Rainbow Bridge" in effects
     assert "Static Gradient" in effects
@@ -596,3 +612,152 @@ async def test_timer_read_failure_does_not_block_setup(
     # The last known timers are kept rather than wiped, so the sensor still
     # describes the controller instead of claiming it has none.
     assert hass.states.get("sensor.soffit_west_timers").state == "1"
+
+
+# -- recolouring a running pattern -----------------------------------------
+
+
+async def test_colour_recolours_the_running_pattern(
+    hass: HomeAssistant, entry, fake_client
+) -> None:
+    """The colour wheel recolours the pattern instead of cancelling it.
+
+    This is the whole point of putting colour on the light card: with a pattern
+    showing, moving the wheel changes that pattern's palette. It must not fall
+    through to a flat ``set_levels`` colour, which would silently stop the
+    animation the user was trying to recolour.
+    """
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: LIGHT, ATTR_EFFECT: "Wave"},
+        blocking=True,
+    )
+    fake_client.set_effect.reset_mock()
+    fake_client.set_levels.reset_mock()
+
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: LIGHT, ATTR_RGB_COLOR: (0, 128, 255)},
+        blocking=True,
+    )
+
+    # Re-sent as an effect with the new palette, not as a flat colour.
+    assert fake_client.set_effect.called
+    fake_client.set_levels.assert_not_called()
+    assert hass.states.get(LIGHT).attributes["effect"] == "Wave"
+    assert "#0080ff" in hass.states.get(LIGHT).attributes["palette"]
+
+
+async def test_recolour_keeps_the_effect_running(
+    hass: HomeAssistant, entry, fake_client
+) -> None:
+    """The reported effect survives a recolour, so the card stays in step."""
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: LIGHT, ATTR_EFFECT: "Breathe"},
+        blocking=True,
+    )
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: LIGHT, ATTR_RGB_COLOR: (255, 0, 128)},
+        blocking=True,
+    )
+
+    state = hass.states.get(LIGHT)
+    assert state.attributes["effect"] == "Breathe"
+    # Still a live colour for the wheel, so the controls do not disappear.
+    assert state.attributes["rgbw_color"] is not None
+
+
+async def test_recolour_is_remembered_for_next_time(
+    hass: HomeAssistant, entry
+) -> None:
+    """A recolour is saved, so re-picking the effect keeps the new colour."""
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: LIGHT, ATTR_EFFECT: "Chase"},
+        blocking=True,
+    )
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: LIGHT, ATTR_RGB_COLOR: (10, 20, 30)},
+        blocking=True,
+    )
+
+    saved = entry.options.get("effects", {}).get("Chase")
+    assert saved is not None, "the recoloured palette was not persisted"
+    assert saved["colors"], "the saved palette is empty"
+
+    # The real invariant: what was saved is exactly what the card reports, so
+    # re-selecting the effect restores the colour the user just chose rather
+    # than the palette it had before.
+    reported = hass.states.get(LIGHT).attributes["palette"]
+    assert reported, "the card shows no palette for the recoloured effect"
+    from custom_components.surplife.light import _hexw
+
+    assert reported[0] == _hexw(tuple(saved["colors"][0])), (
+        f"{reported[0]} != {_hexw(tuple(saved['colors'][0]))}"
+    )
+
+
+async def test_static_effect_leaves_pattern_mode(
+    hass: HomeAssistant, entry, fake_client
+) -> None:
+    """Choosing ``Static`` returns to a flat colour, so the wheel works again.
+
+    Without this escape hatch, recolouring a pattern would trap the user in
+    pattern mode with no way back to a plain colour from the card.
+    """
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: LIGHT, ATTR_EFFECT: "Wave"},
+        blocking=True,
+    )
+    fake_client.set_levels.reset_mock()
+
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: LIGHT, ATTR_EFFECT: "Static"},
+        blocking=True,
+    )
+
+    assert hass.states.get(LIGHT).attributes["effect"] == "Static"
+    assert fake_client.set_levels.called
+
+
+async def test_stale_pattern_byte_does_not_resurrect_an_effect(
+    hass: HomeAssistant, entry, fake_client
+) -> None:
+    """A plain colour must not be undone by the poll reading a stale byte.
+
+    Verified on hardware: after an ``E0 01`` colour command the controller keeps
+    reporting the *previous* effect id in the pattern byte. Believing it would
+    bring back a pattern the user just left.
+    """
+    # Drive a real pattern, then leave it with a flat colour.
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: LIGHT, ATTR_EFFECT: "Wave"},
+        blocking=True,
+    )
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: LIGHT, ATTR_EFFECT: "Static"},
+        blocking=True,
+    )
+    # The device now keeps reporting "Wave" in the sticky pattern byte.
+    fake_client.get_state = Mock(side_effect=lambda: _state(pattern=1))
+
+    await hass.data[DOMAIN][entry.entry_id].async_refresh()
+
+    assert hass.states.get(LIGHT).attributes["effect"] == "Static"

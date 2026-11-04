@@ -1,8 +1,8 @@
 # Controlling effects without raw commands
 
-The light card gives you three controls: a colour wheel, a brightness slider and
-an effect dropdown. That is the right shape for a plain colour, and the wrong
-shape for this firmware's 24 effects. `Static Gradient` blends several colours.
+The light card gives you a colour wheel, a brightness slider and an effect
+dropdown. That is the right shape for a plain colour, and the wrong shape for
+this firmware's 24 effects. `Static Gradient` blends several colours.
 `Rainbow Bridge` takes no colour at all. `Static Fill` has nothing to reverse and
 nothing to repeat. No single RGB picker expresses any of that, so the only way
 to find out what an effect does would be to send a command and look at the
@@ -11,14 +11,30 @@ strip.
 This integration therefore puts the per-effect controls in the device's
 **Configure** dialog, and makes the light card the everyday control.
 
+## Colouring a pattern from the light card
+
+Pick a pattern from the card's **Effect** dropdown, then move the **colour
+wheel**. The colour goes to the pattern that is running — it does not stop it.
+The effect keeps its speed, density and direction and simply takes the new
+colour. The choice is saved, so picking that pattern again later brings the
+colour back.
+
+Pick **Static** from the Effect dropdown to leave pattern mode. From then on the
+colour wheel sets a flat colour again.
+
+A single colour is all the card can express. For a pattern that blends several
+colours — a gradient, or a three-colour burst — use the Configure panel below.
+
 ## Where the controls live
 
 | You want to… | Use |
 |---|---|
 | Turn the strip on or off | The light card |
-| Set a plain colour, or a real white | The light card's colour picker |
+| Set a plain colour, or a real white | The light card, with **Static** selected |
 | Set overall brightness | The light card's brightness slider |
-| Change an effect's colours | **Configure → Configure an effect** |
+| Recolour the pattern that is running | The light card's colour wheel |
+| Leave pattern mode | **Effect → Static** on the light card |
+| Set several colours for an effect | **Configure → Configure an effect** |
 | Change a per-LED pattern's colours | **Configure → Configure a per-LED look** |
 | Change speed or density while it runs | The *Effect speed* / *Effect density* sliders |
 | Reverse an effect | The *Direction* selector |
@@ -62,6 +78,11 @@ Saving the panel **applies it immediately** and stores it. Selecting that effect
 later — from the light card, the effect selector, or an automation — restores
 the colours and parameters you saved. So the panel is how you configure an
 effect once, and the dropdown is how you use it every day.
+
+Recolouring from the card writes back to the same place, so a colour you picked
+on the card and a colour you picked in the panel are one stored setting, not two
+competing ones. The panel is still where you go for a *multi-colour* palette,
+since the card's wheel carries only one colour.
 
 If the controller is offline when you save, the settings are still stored; you
 can apply them when it comes back.
