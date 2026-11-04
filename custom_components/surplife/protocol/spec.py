@@ -13,6 +13,7 @@ error type their own layer uses.
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from typing import Any
 
 from .constants import (
@@ -124,6 +125,112 @@ def _as_white_level(value: int) -> int:
     if not 0 <= value <= 100:
         raise ValueError(f"white level {value} is outside 0-100")
     return value
+
+
+def parse_palette(text: str, *, max_colours: int = 8) -> list[tuple[int, int, int, int]]:
+    """Parse a list of colours into RGBW tuples, in the order given.
+
+    Accepts everything :func:`parse_color` accepts, separated by commas. A bare
+    ``w<n>`` clause attaches to the colour before it, so both spellings work::
+
+        red, blue
+        #ff0000, #0000ff
+        255,0,0, 0,0,255
+        255,0,0,w30, 0,0,255
+
+    This exists because the light entity can only ever carry a single colour,
+    while the wire protocol takes up to eight. A typed list is the one surface
+    that expresses the whole palette without a custom frontend card.
+
+    Args:
+        text: Comma-separated colour tokens.
+        max_colours: The protocol's ceiling for this effect.
+
+    Returns:
+        RGBW tuples with the white level in 0-100.
+
+    Raises:
+        ValueError: if the list is empty, too long, or a token does not parse.
+    """
+    tokens = [part.strip() for part in text.split(",")]
+    colours: list[list[int]] = []
+
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+        if not token:
+            index += 1
+            continue
+
+        # A bare ``w<n>`` modifies the colour before it rather than adding one.
+        white = _WHITE_LEVEL.match(token)
+        if white:
+            if not colours:
+                raise ValueError(f"{token!r} has no colour to apply to")
+            colours[-1][3] = _as_white_level(int(white.group(1)))
+            index += 1
+            continue
+
+        # ``r,g,b`` spans three tokens; three consecutive bare integers are the
+        # only case where that is unambiguous, so look ahead for them.
+        triple = tokens[index : index + 3]
+        if len(triple) == 3 and all(_is_int(part) for part in triple):
+            colours.append([int(part) for part in triple] + [0])
+            index += 3
+            continue
+
+        rgb, level = parse_color(token)
+        if rgb is None:
+            raise ValueError(f"{token!r} is not a lit colour")
+        colours.append([rgb[0], rgb[1], rgb[2], level or 0])
+        index += 1
+
+    if not colours:
+        raise ValueError("no colours given")
+    if len(colours) > max_colours:
+        raise ValueError(
+            f"{len(colours)} colours given but this effect takes at most "
+            f"{max_colours}"
+        )
+    return [(r, g, b, w) for r, g, b, w in colours]
+
+
+def _is_int(token: str) -> bool:
+    """Whether a token is a bare integer, which makes an ``r,g,b`` triple."""
+    try:
+        int(token)
+    except ValueError:
+        return False
+    return True
+
+
+def format_palette(
+    colours: Sequence[tuple[int, ...]] | Sequence[Sequence[int]],
+) -> str:
+    """Render a palette as the text :func:`parse_palette` accepts.
+
+    Uses ``#rrggbb`` for each colour and adds a separate ``w<n>`` token when the
+    white level is non-zero, so a pure-colour palette stays short and the white
+    channel is only mentioned when it is actually doing something. The ``w<n>``
+    is its own token because that is the form :func:`parse_palette` reads back
+    as "modify the previous colour", which keeps the two a true round trip.
+
+    Args:
+        colours: RGB or RGBW tuples, white level in 0-100.
+
+    Returns:
+        A comma-separated string, or ``""`` for an empty palette.
+    """
+    parts: list[str] = []
+    for colour in colours:
+        if len(colour) < 3:
+            continue
+        red, green, blue = (max(0, min(255, int(v))) for v in colour[:3])
+        parts.append(f"#{red:02x}{green:02x}{blue:02x}")
+        white = int(colour[3]) if len(colour) > 3 else 0
+        if white:
+            parts.append(f"w{max(0, min(100, white))}")
+    return ", ".join(parts)
 
 
 def parse_led_spec(spec: str, led_count: int) -> list[ScribbleLED]:

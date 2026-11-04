@@ -159,8 +159,18 @@ class SurplifeLight(CoordinatorEntity[SurplifeCoordinator], LightEntity):
         frontend reads the colour wheel position and the white slider value
         from this attribute, so ``None`` here removes the colour controls from
         the card entirely.
+
+        While an effect is running the wheel shows the effect's **first**
+        colour. It used to show the last colour commanded anywhere, which meant
+        the wheel's position disagreed with what the strip was doing and the
+        first touch of it replaced a multi-colour palette with a single colour.
         """
-        return self._runtime.rgbw_mix
+        runtime = self._runtime
+        if runtime.effect_name and runtime.palette:
+            first = runtime.palette[0]
+            white = first[3] if len(first) > 3 else 0
+            return (first[0], first[1], first[2], round(white * 255 / 100))
+        return runtime.rgbw_mix
 
     @property
     def effect(self) -> str | None:
@@ -249,14 +259,14 @@ class SurplifeLight(CoordinatorEntity[SurplifeCoordinator], LightEntity):
             # While a pattern is showing, a colour on the card means "recolour
             # this pattern", not "stop the pattern and show one flat colour".
             if not await self.coordinator.async_recolour_active_effect(
-                [(red, green, blue, round(white_level * 100 / 255))]
+                [(red, green, blue, round(white_level * 100 / 255))], index=0
             ):
                 await self.coordinator.async_set_rgbw(
                     (red, green, blue), white_level, brightness
                 )
         elif rgb is not None:
             if not await self.coordinator.async_recolour_active_effect(
-                [(rgb[0], rgb[1], rgb[2], 0)]
+                [(rgb[0], rgb[1], rgb[2], 0)], index=0
             ):
                 await self.coordinator.async_set_rgb(tuple(rgb), brightness)
         elif brightness != runtime.brightness and was_on:

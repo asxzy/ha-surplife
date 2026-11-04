@@ -28,6 +28,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import SurplifeCoordinator
+from .palette import SurplifeEffectPaletteText
 from .protocol.spec import parse_led_spec
 
 _LOGGER = logging.getLogger(__name__)
@@ -42,9 +43,21 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the scribble pattern entity."""
+    """Set up the text entities for one controller.
+
+    Two very different things live here because Home Assistant maps one module
+    per platform:
+
+    * the **effect palette**, which is an everyday control and is on by default;
+    * the **per-LED pattern**, which is an escape hatch and is off by default.
+    """
     coordinator: SurplifeCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([SurplifeScribblePatternText(coordinator)])
+    async_add_entities(
+        [
+            SurplifeEffectPaletteText(coordinator),
+            SurplifeScribblePatternText(coordinator),
+        ]
+    )
 
 
 class SurplifeScribblePatternText(

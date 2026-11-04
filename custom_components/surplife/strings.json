@@ -382,6 +382,9 @@
     "text": {
       "scribble_pattern": {
         "name": "Per-LED pattern"
+      },
+      "effect_palette": {
+        "name": "Effect colours"
       }
     }
   }

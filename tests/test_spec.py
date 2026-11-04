@@ -179,3 +179,67 @@ def test_parse_repeat_rejects(text: str) -> None:
 )
 def test_format_repeat_round_trips(mask: int) -> None:
     assert parse_repeat(format_repeat(mask)) == mask
+
+
+# -- palettes ---------------------------------------------------------------
+
+
+def test_palette_accepts_names_hex_and_triples() -> None:
+    """All three spellings the docs mention must work, in the same list."""
+    from custom_components.surplife.protocol.spec import parse_palette
+
+    assert parse_palette("red, #00ff00, 0,0,255") == [
+        (255, 0, 0, 0),
+        (0, 255, 0, 0),
+        (0, 0, 255, 0),
+    ]
+
+
+def test_palette_keeps_the_order_it_was_given() -> None:
+    """Order is the whole point: a gradient runs through the list."""
+    from custom_components.surplife.protocol.spec import parse_palette
+
+    colours = parse_palette("blue, red, green")
+    assert [c[:3] for c in colours] == [(0, 0, 255), (255, 0, 0), (0, 255, 0)]
+
+
+def test_palette_attaches_a_white_level_to_the_previous_colour() -> None:
+    """``w<n>`` modifies the colour before it rather than adding one."""
+    from custom_components.surplife.protocol.spec import parse_palette
+
+    colours = parse_palette("#000000, w100, #0000ff")
+    assert len(colours) == 2
+    assert colours[0] == (0, 0, 0, 100)
+    assert colours[1] == (0, 0, 255, 0)
+
+
+def test_palette_refuses_more_than_the_cap() -> None:
+    """A cap that silently truncates would lie about what was set."""
+    from custom_components.surplife.protocol.spec import parse_palette
+
+    with pytest.raises(ValueError, match=r"at most 2"):
+        parse_palette("red, green, blue", max_colours=2)
+
+
+def test_palette_refuses_an_empty_list() -> None:
+    """An empty field is a mistake, not "clear the palette"."""
+    from custom_components.surplife.protocol.spec import parse_palette
+
+    with pytest.raises(ValueError, match="no colours"):
+        parse_palette("   ")
+
+
+def test_palette_round_trips_through_the_text_form() -> None:
+    """Format then parse must return the same colours, or the entity lies."""
+    from custom_components.surplife.protocol.spec import format_palette, parse_palette
+
+    original = [(255, 0, 0, 0), (0, 255, 0, 30), (0, 0, 255, 0)]
+    assert parse_palette(format_palette(original)) == original
+
+
+def test_format_palette_omits_a_zero_white_level() -> None:
+    """The white channel is only mentioned when it is doing something."""
+    from custom_components.surplife.protocol.spec import format_palette
+
+    assert format_palette([(255, 0, 0, 0)]) == "#ff0000"
+    assert format_palette([(255, 0, 0, 100)]) == "#ff0000, w100"

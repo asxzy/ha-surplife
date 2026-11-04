@@ -761,3 +761,85 @@ async def test_stale_pattern_byte_does_not_resurrect_an_effect(
     await hass.data[DOMAIN][entry.entry_id].async_refresh()
 
     assert hass.states.get(LIGHT).attributes["effect"] == "Static"
+
+
+async def test_wheel_touch_keeps_the_rest_of_the_palette(
+    hass: HomeAssistant, entry, fake_client
+) -> None:
+    """One colour from the wheel replaces slot one, not the whole palette.
+
+    The card can only express a single colour, so treating its request as the
+    palette meant that touching the wheel once collapsed a three-colour
+    ``Chase`` to one colour and destroyed the palette the user had just built
+    in Configure. That is a data-loss bug, not a preference.
+    """
+    from custom_components.surplife.settings import EFFECTS_KEY
+
+    # A three-colour palette, as the Configure panel would save it.
+    options = dict(entry.options)
+    options[EFFECTS_KEY] = {
+        "Chase": {
+            "colors": [[255, 0, 0, 0], [0, 255, 0, 0], [0, 0, 255, 0]],
+            "speed": 50,
+            "density": 50,
+            "direction": 1,
+        }
+    }
+    hass.config_entries.async_update_entry(entry, options=options)
+    await hass.async_block_till_done()
+
+    await hass.services.async_call(
+        "light", "turn_on", {ATTR_ENTITY_ID: LIGHT, ATTR_EFFECT: "Chase"}, blocking=True
+    )
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: LIGHT, ATTR_RGB_COLOR: (255, 0, 255)},
+        blocking=True,
+    )
+
+    palette = hass.states.get(LIGHT).attributes["palette"]
+    assert len(palette) == 3, f"the palette was collapsed to {palette}"
+    # Slot one took the new colour; the other two are untouched.
+    assert palette[0].startswith("#ff00ff")
+    assert palette[1].startswith("#00ff00")
+    assert palette[2].startswith("#0000ff")
+
+    # And the same is true of what was persisted.
+    saved = entry.options[EFFECTS_KEY]["Chase"]["colors"]
+    assert [tuple(c) for c in saved] == [
+        (255, 0, 255, 0),
+        (0, 255, 0, 0),
+        (0, 0, 255, 0),
+    ]
+
+
+async def test_the_wheel_shows_the_effects_first_colour(
+    hass: HomeAssistant, entry
+) -> None:
+    """The wheel sits on the colour the effect starts with, not a stale one.
+
+    If the wheel disagreed with the strip, the first touch would jump the
+    colour somewhere unrelated -- and before the palette fix, it also replaced
+    every other colour.
+    """
+    from custom_components.surplife.settings import EFFECTS_KEY
+
+    options = dict(entry.options)
+    options[EFFECTS_KEY] = {
+        "Chase": {
+            "colors": [[10, 20, 30, 0], [0, 255, 0, 0]],
+            "speed": 50,
+            "density": 50,
+            "direction": 1,
+        }
+    }
+    hass.config_entries.async_update_entry(entry, options=options)
+    await hass.async_block_till_done()
+
+    await hass.services.async_call(
+        "light", "turn_on", {ATTR_ENTITY_ID: LIGHT, ATTR_EFFECT: "Chase"}, blocking=True
+    )
+
+    rgbw = hass.states.get(LIGHT).attributes["rgbw_color"]
+    assert tuple(rgbw[:3]) == (10, 20, 30)
