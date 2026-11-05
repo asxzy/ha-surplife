@@ -1291,3 +1291,26 @@ async def test_a_dark_group_beside_a_lit_one_is_allowed(
     leds = patched_client.set_scribble.call_args.args[0]
     assert leds[0].rgb == (255, 0, 0)
     assert leds[10].is_off, "a row set to Nothing must leave its LEDs dark"
+
+
+async def test_an_unpainted_strip_starts_from_what_it_is_showing(
+    hass: HomeAssistant, loaded_entry, options_flow
+) -> None:
+    """Opening the editor must not read as "this strip is switched off".
+
+    A dark first row would suggest the editor is about to black out the roof,
+    and submitting it does nothing useful. The starting point is the colour the
+    strip is already showing, so the first submit is a no-op.
+    """
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {
+            "entity_id": "light.soffit_west",
+            "rgbw_color": [255, 0, 0, 0],
+        },
+        blocking=True,
+    )
+    result = await _open_scribble(hass, options_flow)
+    assert _default(result, "mode_1") == "steady"
+    assert tuple(_default(result, "color_1")) == (255, 0, 0)

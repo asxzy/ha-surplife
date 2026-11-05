@@ -840,6 +840,35 @@ class SurplifeOptionsFlow(OptionsFlow):
         stored = scribble_runs(self._options)
         return len(stored) or 1
 
+    def _current_colour(self) -> tuple[int, int, int, int]:
+        """The colour the strip is showing now, for seeding an empty editor.
+
+        Opening a painting editor should start from what the user can see, not
+        from black and not from dark. Falls back to white when the runtime has
+        no opinion, which is what a freshly powered strip looks like.
+
+        **An effect's palette wins over the plain mix**, because while a pattern
+        is running the palette is what is actually painted -- ``rgbw_mix`` only
+        describes a flat colour, and reports a neutral fallback when none was
+        ever commanded. Reading the palette also means the seeded row is the
+        pattern's own first colour, which is what the light card's wheel shows.
+        """
+        coordinator = self._coordinator()
+        runtime = getattr(coordinator, "runtime", None)
+        if runtime is not None:
+            for colour in getattr(runtime, "palette", ()) or ():
+                if len(colour) >= 3 and any(colour[:4]):
+                    return (
+                        int(colour[0]),
+                        int(colour[1]),
+                        int(colour[2]),
+                        int(colour[3]) if len(colour) > 3 else 0,
+                    )
+            mix = getattr(runtime, "rgbw_mix", None)
+            if mix and len(mix) >= 4 and any(mix[:4]):
+                return (mix[0], mix[1], mix[2], int(mix[3]))
+        return (255, 255, 255, 0)
+
     def _scribble_placeholders(self, led_count: int) -> dict[str, str]:
         """Tell the user how many LEDs are covered, so the layout is visible."""
         draft = self._scribble_draft
@@ -859,10 +888,14 @@ class SurplifeOptionsFlow(OptionsFlow):
         draft = self._scribble_draft
         runs = draft if draft is not None else list(stored)
         if not runs:
-            # An unpainted strip starts as one row covering everything, in the
-            # colour it is already showing, so the first submit is a no-op
-            # rather than a surprise.
-            runs = [ScribbleRun(length=led_count)]
+            # An unpainted strip starts as one row covering everything in the
+            # colour it is already showing. Starting dark would read as "this
+            # strip has been switched off", which is not what opening an editor
+            # should do -- and starting from the current colour makes the first
+            # submit a no-op rather than a surprise.
+            runs = [
+                ScribbleRun(length=led_count, colour=self._current_colour())
+            ]
 
         fields: dict[Any, Any] = {}
         for index, run in enumerate(runs):

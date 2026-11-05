@@ -133,7 +133,7 @@
       },
       "scribble": {
         "title": "Paint the strip",
-        "description": "Each row is a stretch of the strip, laid end to end. This is the per-LED \"doodle\" the phone app paints, done with pickers instead of a brush.\n\nThe strip has {leds} LEDs. {rows} group(s) cover {covered} of them; {left} are left dark. Set how many LEDs a group covers, pick its colour, and say whether it blinks. Leave a row's colour empty to leave those LEDs off.",
+        "description": "Each row is a stretch of the strip, laid end to end. This is the per-LED \"doodle\" the phone app paints, done with pickers instead of a brush.\n\nThe strip has {leds} LEDs. {rows} group(s) cover {covered} of them; {left} are left dark. Set how many LEDs a group covers, pick its colour, then choose whether it lights steadily, blinks, or is left dark.",
         "data": {
           "length_1": "First: how many LEDs",
           "color_1": "First: colour",
