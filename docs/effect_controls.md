@@ -92,6 +92,7 @@ The field's attributes say what the current effect accepts — `effect`,
 | Recolour one colour of the running pattern | The light card's colour wheel |
 | Set the whole palette with colour pickers | **Configure → Change the running effect's colours** |
 | Set the whole palette by typing it | **Effect colours** on the device page |
+| Paint the strip LED group by LED group | **Configure → Paint the strip LED by LED** |
 | Change a per-LED pattern's colours | **Configure → Configure a per-LED look** |
 | Change speed or density while it runs | The *Effect speed* / *Effect density* sliders |
 | Reverse an effect | The *Direction* selector |

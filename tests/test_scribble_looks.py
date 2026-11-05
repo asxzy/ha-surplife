@@ -19,6 +19,12 @@ from custom_components.surplife.scribble_looks import (
     WHITE,
     Look,
     build_look,
+    build_runs,
+)
+from custom_components.surplife.settings import (
+    ScribbleRun,
+    scribble_runs,
+    with_scribble_runs,
 )
 
 LED_COUNT = 35
@@ -164,3 +170,88 @@ def test_look_names_are_slug_shaped() -> None:
     for name in LOOKS:
         assert name == name.lower()
         assert " " not in name
+
+
+# -- hand-painted runs -----------------------------------------------------
+
+
+def test_runs_are_laid_end_to_end() -> None:
+    """A run says "the next n LEDs"; the runs concatenate in order."""
+    leds = build_runs(
+        (
+            ScribbleRun(length=3, colour=(255, 0, 0, 0)),
+            ScribbleRun(length=2, colour=(0, 0, 255, 0)),
+        ),
+        5,
+    )
+    assert [led.rgb for led in leds] == [
+        (255, 0, 0),
+        (255, 0, 0),
+        (255, 0, 0),
+        (0, 0, 255),
+        (0, 0, 255),
+    ]
+
+
+def test_a_short_pattern_is_padded_with_dark_leds() -> None:
+    """The device keeps a framebuffer, so unmentioned LEDs must be cleared."""
+    leds = build_runs((ScribbleRun(length=2, colour=(255, 0, 0, 0)),), 6)
+    assert len(leds) == 6
+    assert all(led.is_off for led in leds[2:])
+
+
+def test_a_run_longer_than_the_strip_is_trimmed() -> None:
+    """Shrinking the strip must not produce more LEDs than it has."""
+    leds = build_runs((ScribbleRun(length=99, colour=(255, 0, 0, 0)),), 4)
+    assert len(leds) == 4
+    assert all(led.rgb == (255, 0, 0) for led in leds)
+
+
+def test_a_run_with_no_colour_is_dark_not_white() -> None:
+    """An empty run means "off", not "white" and not "black"."""
+    leds = build_runs((ScribbleRun(length=2),), 2)
+    assert all(led.is_off for led in leds)
+
+
+def test_a_white_only_run_uses_the_white_channel() -> None:
+    """A real white is a W-channel request, never three RGB channels."""
+    leds = build_runs((ScribbleRun(length=1, colour=(0, 0, 0, 80)),), 1)
+    assert leds[0].rgb is None
+    assert leds[0].white == 80
+
+
+def test_a_mixed_run_keeps_both_channels() -> None:
+    leds = build_runs((ScribbleRun(length=1, colour=(255, 0, 0, 40)),), 1)
+    assert leds[0].rgb == (255, 0, 0)
+    assert leds[0].white == 40
+
+
+def test_blink_reaches_every_led_in_the_run() -> None:
+    leds = build_runs(
+        (ScribbleRun(length=3, colour=(255, 0, 0, 0), blink="slow"),), 3
+    )
+    assert all(led.blink_mode == BLINK_SLOW for led in leds)
+
+
+def test_runs_round_trip_through_the_options() -> None:
+    """The editor re-renders from stored options, so this must be lossless."""
+    runs = (
+        ScribbleRun(length=10, colour=(255, 0, 0, 0)),
+        ScribbleRun(length=5, colour=(0, 0, 0, 80), blink="fast"),
+        ScribbleRun(length=20),
+    )
+    assert scribble_runs(with_scribble_runs({}, runs)) == runs
+
+
+def test_stored_runs_survive_a_corrupt_length() -> None:
+    """Options are hand-editable, so one bad row must not break the others."""
+    options = with_scribble_runs(
+        {}, (ScribbleRun(length=4, colour=(1, 2, 3, 0)),)
+    )
+    options["scribble"]["runs"].append({"length": "nonsense"})
+    assert len(scribble_runs(options)) == 1
+
+
+def test_no_stored_runs_means_never_painted() -> None:
+    assert scribble_runs({}) == ()
+    assert scribble_runs(None) == ()

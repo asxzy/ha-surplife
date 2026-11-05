@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any
+from typing import Any, Final
 
 import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
@@ -41,14 +41,17 @@ from .const import (
 from .effect_profile import PaletteMode, profile_for
 from .protocol import SurplifeClient, SurplifeError, async_discover, is_supported
 from .protocol.constants import EFFECT_NAMES, SCRIBBLE_EFFECT_NAMES
-from .scribble_looks import LOOK_LIST, LOOKS
+from .scribble_looks import LOOK_LIST, LOOKS, build_runs
 from .settings import (
     EffectSettings,
     LookSettings,
+    ScribbleRun,
     effect_settings,
     look_settings,
+    scribble_runs,
     with_effect,
     with_look,
+    with_scribble_runs,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -63,6 +66,11 @@ STEP_EFFECT_SETTINGS = "effect_settings"
 STEP_RECOLOUR = "recolour"
 STEP_LOOK = "look"
 STEP_LOOK_SETTINGS = "look_settings"
+STEP_SCRIBBLE = "scribble"
+
+#: Most group rows the per-LED editor will show. Twenty is comfortably more
+#: than a 35-LED strip needs for a legible pattern, and bounds the form.
+MAX_SCRIBBLE_RUNS: Final = 20
 
 
 def _default_name(host: str) -> str:
@@ -260,6 +268,25 @@ def _last_colour(rows: list[list[int] | None]) -> list[int] | None:
     return None
 
 
+def _last_run_colour(runs: list[ScribbleRun]) -> tuple[int, int, int, int] | None:
+    """The last run's colour, for seeding a newly added run row.
+
+    Same reasoning as :func:`_last_colour`: a picker with no default renders
+    black, which reads as "these LEDs are off" rather than "this row is new".
+    """
+    for run in reversed(runs):
+        if run.colour is not None:
+            return run.colour
+    return None
+
+
+def _mode_of(run: ScribbleRun) -> str:
+    """How a stored run should read in the row's mode dropdown."""
+    if run.colour is None:
+        return "off"
+    return run.blink if run.blink in ("slow", "fast") else "steady"
+
+
 def _colour_of(rgb: Any, white: Any) -> tuple[int, int, int, int] | None:
     """Combine one colour picker and its W level into an RGBW tuple.
 
@@ -303,6 +330,9 @@ class SurplifeOptionsFlow(OptionsFlow):
         #: colour already picked is not lost when the form is re-rendered.
         #: Positional, and ``None`` for an empty row.
         self._draft_rows: list[list[int] | None] | None = None
+        #: The hand-painted per-LED runs, positionally, while the scribble editor
+        #: is adding and removing rows. ``None`` means "not mid-round-trip".
+        self._scribble_draft: list[ScribbleRun] | None = None
 
     @property
     def _options(self) -> dict[str, Any]:
@@ -317,7 +347,7 @@ class SurplifeOptionsFlow(OptionsFlow):
         """Offer what to configure."""
         return self.async_show_menu(
             step_id="init",
-            menu_options=[STEP_RECOLOUR, STEP_EFFECT, STEP_LOOK, STEP_INTERVAL],
+            menu_options=[STEP_RECOLOUR, STEP_SCRIBBLE, STEP_EFFECT, STEP_LOOK, STEP_INTERVAL],
             description_placeholders=self._overview(),
         )
 
@@ -738,6 +768,189 @@ class SurplifeOptionsFlow(OptionsFlow):
                 else stored.direction
             ),
         )
+
+    # -- scribble (hand-painted per-LED) -----------------------------------
+
+    async def async_step_scribble(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Paint the strip LED group by LED group, with no syntax.
+
+        **Why a runs editor and not a canvas.** The app calls this doodle, and
+        its editor is a literal drawing surface: you smear colour along a strip
+        35 pixels wide. Home Assistant has no drawing widget a config flow can
+        embed, so a pixel canvas is not available -- but the *output* of that
+        canvas is just "these LEDs are this colour, those blink". So the editor
+        asks for runs: "the first 10 LEDs red, the next 5 white, the remaining
+        20 dark". That is the same payload, expressed as something a form can
+        render, and it needs no grammar to use.
+
+        The alternative already in the integration is the pattern text entity,
+        which takes ``12xred 23xblue/fast``. That is fine as an escape hatch for
+        a script but it is not an interface: it asks the user to learn a language
+        to paint a roof.
+
+        Rows are added and removed by round trip, exactly like the effect panel,
+        because Home Assistant fixes a form's schema when it is shown.
+        """
+        led_count = int(self.config_entry.data.get(CONF_LED_COUNT, 35))
+        stored = scribble_runs(self._options)
+
+        if user_input is not None:
+            # Add/remove are round trips, not saves: the row count changes and
+            # the form comes back with what was already picked still in place.
+            if user_input.pop("add_run", False) and self._scribble_row_count() < 20:
+                self._scribble_draft = self._runs_from_form(user_input)
+                self._scribble_draft.append(
+                    ScribbleRun(length=1, colour=_last_run_colour(self._scribble_draft))
+                )
+                return await self.async_step_scribble()
+            if user_input.pop("remove_run", False) and self._scribble_row_count() > 1:
+                self._scribble_draft = self._runs_from_form(user_input)
+                del self._scribble_draft[-1]
+                return await self.async_step_scribble()
+
+            runs = self._runs_from_form(user_input)
+            if all(run.is_dark for run in runs):
+                # Every group dark is just "turn the strip off", which the light
+                # entity already does better and reversibly. Refusing keeps the
+                # per-LED editor from being a confusing way to switch it off.
+                return self.async_show_form(
+                    step_id=STEP_SCRIBBLE,
+                    data_schema=self._scribble_schema(led_count, stored),
+                    errors={"base": "no_leds"},
+                    description_placeholders=self._scribble_placeholders(led_count),
+                )
+            await self._apply_scribble(runs, led_count)
+            self._scribble_draft = None
+            return self.async_create_entry(
+                title="", data=with_scribble_runs(self._options, runs)
+            )
+
+        return self.async_show_form(
+            step_id=STEP_SCRIBBLE,
+            data_schema=self._scribble_schema(led_count, stored),
+            description_placeholders=self._scribble_placeholders(led_count),
+        )
+
+    def _scribble_row_count(self) -> int:
+        """How many run rows the editor is showing."""
+        if self._scribble_draft is not None:
+            return len(self._scribble_draft)
+        stored = scribble_runs(self._options)
+        return len(stored) or 1
+
+    def _scribble_placeholders(self, led_count: int) -> dict[str, str]:
+        """Tell the user how many LEDs are covered, so the layout is visible."""
+        draft = self._scribble_draft
+        runs = draft if draft is not None else list(scribble_runs(self._options))
+        covered = sum(run.length for run in runs)
+        if not runs:
+            covered = led_count
+        return {
+            "leds": str(led_count),
+            "rows": str(self._scribble_row_count()),
+            "covered": str(min(covered, led_count)),
+            "left": str(max(0, led_count - covered)),
+        }
+
+    def _scribble_schema(self, led_count: int, stored: tuple[ScribbleRun, ...]) -> vol.Schema:
+        """One row per run: how many LEDs, what colour, and what it does."""
+        draft = self._scribble_draft
+        runs = draft if draft is not None else list(stored)
+        if not runs:
+            # An unpainted strip starts as one row covering everything, in the
+            # colour it is already showing, so the first submit is a no-op
+            # rather than a surprise.
+            runs = [ScribbleRun(length=led_count)]
+
+        fields: dict[Any, Any] = {}
+        for index, run in enumerate(runs):
+            slot = index + 1
+            fields[
+                vol.Optional(f"length_{slot}", default=run.length)
+            ] = NumberSelector(
+                NumberSelectorConfig(min=1, max=led_count, step=1, mode="box")
+            )
+            fields[
+                vol.Optional(
+                    f"color_{slot}",
+                    **({"default": list(run.colour[:3])} if run.colour else {}),
+                )
+            ] = ColorRGBSelector()
+            fields[
+                vol.Optional(
+                    f"white_{slot}",
+                    default=run.colour[3] if run.colour else 0,
+                )
+            ] = _slider()
+            fields[vol.Optional(f"mode_{slot}", default=_mode_of(run))] = SelectSelector(
+                SelectSelectorConfig(
+                    options=[
+                        SelectOptionDict(value="steady", label="Steady"),
+                        SelectOptionDict(value="slow", label="Blink slowly"),
+                        SelectOptionDict(value="fast", label="Blink fast"),
+                        SelectOptionDict(value="off", label="Nothing (dark)"),
+                    ],
+                    mode=SelectSelectorMode.DROPDOWN,
+                )
+            )
+
+        if self._scribble_row_count() < MAX_SCRIBBLE_RUNS:
+            fields[vol.Optional("add_run", default=False)] = BooleanSelector()
+        if self._scribble_row_count() > 1:
+            fields[vol.Optional("remove_run", default=False)] = BooleanSelector()
+        return vol.Schema(fields)
+
+    def _runs_from_form(self, user_input: dict[str, Any]) -> list[ScribbleRun]:
+        """Read the run rows position by position.
+
+        **A row says whether it lights up** rather than expressing darkness by
+        leaving its colour empty. A colour picker cannot submit "no colour", and
+        one *with* a default always submits that default -- so an empty picker
+        could never mean "off" once a row had a colour. An explicit **Nothing
+        (dark)** choice makes the intent visible and reversible, and is how a
+        pattern can have a gap in the middle of the strip.
+        """
+        draft = self._scribble_draft
+        count = len(draft) if draft is not None else self._scribble_row_count()
+        runs: list[ScribbleRun] = []
+        for index in range(count):
+            slot = index + 1
+            length = _bounded(user_input.get(f"length_{slot}") or 1, 1, 300)
+            mode = str(user_input.get(f"mode_{slot}") or "steady").lower()
+            colour = _colour_of(
+                user_input.get(f"color_{slot}"),
+                user_input.get(f"white_{slot}"),
+            )
+            if mode == "off":
+                colour = None
+            runs.append(
+                ScribbleRun(
+                    length=length,
+                    colour=colour,
+                    blink=mode if mode in ("slow", "fast") else "none",
+                )
+            )
+        return runs
+
+    async def _apply_scribble(
+        self, runs: list[ScribbleRun], led_count: int
+    ) -> None:
+        """Paint the strip, and remember it as a hand-painted pattern.
+
+        ``look="custom"`` matters: it tells the look select that what is showing
+        did not come from a built-in look, so its dropdown reads ``custom``
+        rather than claiming one of the nine that would not reproduce this.
+        """
+        coordinator = self._coordinator()
+        if coordinator is None:
+            return
+        leds = build_runs(runs, led_count)
+        try:
+            await coordinator.async_set_scribble(leds, look="custom")
+        except HomeAssistantError as err:
+            _LOGGER.debug("could not paint the per-LED pattern: %s", err)
 
     # -- looks -------------------------------------------------------------
 

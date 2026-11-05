@@ -47,6 +47,7 @@ def _default(result: dict, name: str) -> object:
 async def test_menu_offers_the_panels(options_flow) -> None:
     assert set(options_flow["menu_options"]) == {
         "recolour",
+        "scribble",
         "effect",
         "look",
         "interval",
@@ -1031,3 +1032,262 @@ async def test_recolour_keeps_the_white_channel(
     entry = hass.config_entries.async_entries(DOMAIN)[0]
     saved = entry.options[EFFECTS_KEY]["Chase"]["colors"]
     assert tuple(saved[0]) == (0, 0, 0, 100)
+
+
+# -- painting the strip LED by LED -----------------------------------------
+
+
+async def _open_scribble(hass: HomeAssistant, options_flow) -> dict:
+    """Open the hand-painted per-LED editor."""
+    return await hass.config_entries.options.async_configure(
+        options_flow["flow_id"], {"next_step_id": "scribble"}
+    )
+
+
+async def test_scribble_editor_offers_one_row_per_group(
+    hass: HomeAssistant, loaded_entry, options_flow
+) -> None:
+    """The editor is pickers and counts -- there is no pattern grammar to learn."""
+    result = await _open_scribble(hass, options_flow)
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "scribble"
+    fields = _fields(result)
+    # An unpainted strip starts as one group covering everything.
+    assert {"length_1", "color_1", "white_1", "mode_1"} <= set(fields)
+    assert "length_2" not in fields
+
+
+async def test_scribble_editor_says_nothing_is_running_needs_no_pattern(
+    hass: HomeAssistant, loaded_entry, options_flow
+) -> None:
+    """The description must carry the LED count, so the layout is visible."""
+    result = await _open_scribble(hass, options_flow)
+    placeholders = result["description_placeholders"]
+    assert placeholders["leds"] == "35"
+    assert placeholders["rows"] == "1"
+    assert placeholders["covered"] == "35"
+
+
+async def test_scribble_editor_paints_runs(
+    hass: HomeAssistant, loaded_entry, options_flow, patched_client
+) -> None:
+    """Two groups, laid end to end: red then blue, with one real white group."""
+    await _open_scribble(hass, options_flow)
+    patched_client.set_scribble.reset_mock()
+
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"],
+        {
+            "length_1": 10,
+            "color_1": [255, 0, 0],
+            "white_1": 0,
+            "mode_1": "steady",
+        },
+    )
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    leds = patched_client.set_scribble.call_args.args[0]
+    assert len(leds) == 35, "the pattern must cover every LED"
+    assert leds[0].rgb == (255, 0, 0)
+
+
+async def test_scribble_editor_leaves_uncovered_leds_dark(
+    hass: HomeAssistant, loaded_entry, options_flow, patched_client
+) -> None:
+    """Short patterns are padded, not left showing whatever was there before."""
+    await _open_scribble(hass, options_flow)
+    patched_client.set_scribble.reset_mock()
+
+    await hass.config_entries.options.async_configure(
+        options_flow["flow_id"],
+        {"length_1": 5, "color_1": [255, 0, 0], "white_1": 0, "mode_1": "steady"},
+    )
+
+    leds = patched_client.set_scribble.call_args.args[0]
+    assert leds[4].rgb == (255, 0, 0)
+    assert leds[5].is_off, "LEDs past the painted run must be dark, not black"
+
+
+async def test_scribble_editor_uses_the_white_channel(
+    hass: HomeAssistant, loaded_entry, options_flow, patched_client
+) -> None:
+    """A white level drives the W LED, not three RGB channels imitating white."""
+    await _open_scribble(hass, options_flow)
+    patched_client.set_scribble.reset_mock()
+
+    await hass.config_entries.options.async_configure(
+        options_flow["flow_id"],
+        {"length_1": 35, "color_1": [0, 0, 0], "white_1": 80, "mode_1": "steady"},
+    )
+
+    leds = patched_client.set_scribble.call_args.args[0]
+    assert leds[0].rgb is None, "white must not be simulated from RGB"
+    assert leds[0].white == 80
+
+
+async def test_scribble_editor_records_a_custom_pattern(
+    hass: HomeAssistant, loaded_entry, options_flow, patched_client
+) -> None:
+    """A hand-painted pattern must not claim to be one of the built-in looks."""
+    await _open_scribble(hass, options_flow)
+    await hass.config_entries.options.async_configure(
+        options_flow["flow_id"],
+        {"length_1": 35, "color_1": [255, 0, 0], "white_1": 0, "mode_1": "steady"},
+    )
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    assert entry.options["scribble"]["runs"][0]["length"] == 35
+    assert entry.options["scribble"]["runs"][0]["colour"] == [255, 0, 0, 0]
+
+
+async def test_scribble_editor_adds_a_group_without_painting(
+    hass: HomeAssistant, loaded_entry, options_flow, patched_client
+) -> None:
+    """Add is a round trip: the strip is untouched until Submit."""
+    await _open_scribble(hass, options_flow)
+    patched_client.set_scribble.reset_mock()
+
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"],
+        {
+            "length_1": 10,
+            "color_1": [255, 0, 0],
+            "white_1": 0,
+            "mode_1": "steady",
+            "add_run": True,
+        },
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    patched_client.set_scribble.assert_not_called()
+    fields = _fields(result)
+    assert "length_2" in fields
+    # The group already filled in survives the round trip.
+    assert _default(result, "length_1") == 10
+    assert tuple(_default(result, "color_1")) == (255, 0, 0)
+
+
+async def test_a_new_group_copies_the_previous_colour(
+    hass: HomeAssistant, loaded_entry, options_flow
+) -> None:
+    """A new row must not render black, which reads as an off LED."""
+    await _open_scribble(hass, options_flow)
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"],
+        {
+            "length_1": 10,
+            "color_1": [0, 0, 255],
+            "white_1": 0,
+            "mode_1": "steady",
+            "add_run": True,
+        },
+    )
+    assert tuple(_default(result, "color_2")) == (0, 0, 255)
+
+
+async def test_scribble_editor_removes_a_group(
+    hass: HomeAssistant, loaded_entry, options_flow
+) -> None:
+    """Remove is a round trip too, and cannot remove the last row."""
+    await _open_scribble(hass, options_flow)
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"],
+        {
+            "length_1": 10,
+            "color_1": [255, 0, 0],
+            "white_1": 0,
+            "mode_1": "steady",
+            "add_run": True,
+        },
+    )
+    assert "length_2" in _fields(result)
+
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"],
+        {
+            "length_1": 10,
+            "color_1": [255, 0, 0],
+            "white_1": 0,
+            "mode_1": "steady",
+            "length_2": 5,
+            "color_2": [0, 255, 0],
+            "white_2": 0,
+            "mode_2": "steady",
+            "remove_run": True,
+        },
+    )
+    assert result["type"] is FlowResultType.FORM
+    assert "length_2" not in _fields(result)
+
+
+async def test_scribble_editor_carries_blink(
+    hass: HomeAssistant, loaded_entry, options_flow, patched_client
+) -> None:
+    """Blink is per group, which is what the wire format's paint grouping allows."""
+    await _open_scribble(hass, options_flow)
+    patched_client.set_scribble.reset_mock()
+
+    await hass.config_entries.options.async_configure(
+        options_flow["flow_id"],
+        {"length_1": 35, "color_1": [255, 0, 0], "white_1": 0, "mode_1": "fast"},
+    )
+
+    leds = patched_client.set_scribble.call_args.args[0]
+    assert leds[0].blink_mode != 0, "fast blink must reach the wire"
+
+
+async def test_scribble_editor_refuses_to_switch_the_strip_off(
+    hass: HomeAssistant, loaded_entry, options_flow, patched_client
+) -> None:
+    """All groups dark is "turn it off", which the light entity does better.
+
+    Refusing keeps the per-LED editor from being a confusing second power
+    switch, and means an accidental submit cannot black out the roof.
+    """
+    await _open_scribble(hass, options_flow)
+    patched_client.set_scribble.reset_mock()
+
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"],
+        {"length_1": 35, "white_1": 0, "mode_1": "off"},
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "no_leds"}
+    patched_client.set_scribble.assert_not_called()
+
+
+async def test_a_dark_group_beside_a_lit_one_is_allowed(
+    hass: HomeAssistant, loaded_entry, options_flow, patched_client
+) -> None:
+    """A dark group is a legitimate part of a pattern, not an error."""
+    await _open_scribble(hass, options_flow)
+    await hass.config_entries.options.async_configure(
+        options_flow["flow_id"],
+        {
+            "length_1": 10,
+            "color_1": [255, 0, 0],
+            "white_1": 0,
+            "mode_1": "steady",
+            "add_run": True,
+        },
+    )
+    patched_client.set_scribble.reset_mock()
+
+    result = await hass.config_entries.options.async_configure(
+        options_flow["flow_id"],
+        {
+            "length_1": 10,
+            "color_1": [255, 0, 0],
+            "white_1": 0,
+            "mode_1": "steady",
+            "length_2": 25,
+            "color_2": [0, 0, 255],
+            "white_2": 0,
+            "mode_2": "off",
+        },
+    )
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    leds = patched_client.set_scribble.call_args.args[0]
+    assert leds[0].rgb == (255, 0, 0)
+    assert leds[10].is_off, "a row set to Nothing must leave its LEDs dark"

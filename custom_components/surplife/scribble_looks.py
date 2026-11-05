@@ -19,8 +19,9 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from typing import Final
 
-from .protocol.constants import BLINK_FAST, BLINK_SLOW
+from .protocol.constants import BLINK_FAST, BLINK_MODES, BLINK_NONE, BLINK_SLOW
 from .protocol.scribble import ScribbleLED
+from .settings import ScribbleRun
 
 Color = tuple[int, int, int]
 
@@ -316,3 +317,46 @@ def build_look(
             f"unknown look {name!r}; available: {', '.join(sorted(LOOKS))}"
         ) from err
     return look.build(led_count, palette)
+
+
+def build_runs(runs: Sequence[ScribbleRun], led_count: int) -> list[ScribbleLED]:
+    """Expand hand-painted runs into exactly ``led_count`` LEDs.
+
+    This is the painting canvas in data form: a run says "the next *n* LEDs are
+    this colour, blinking this way", and the runs are laid end to end. It is the
+    same output the app's doodle view produces, expressed as something a Home
+    Assistant form can render and a user can edit without learning a grammar.
+
+    Two rules keep it predictable:
+
+    * **Short patterns are padded with dark LEDs.** The device keeps a stateful
+      per-LED framebuffer, so an LED left unmentioned would keep whatever it was
+      showing and the result would depend on history.
+    * **A run longer than the strip is trimmed; a run with no colour is dark.**
+      Trimming is not an error because shrinking the run count is a normal edit,
+      and dark is not black because both are the same wire payload but the
+      editor means "off" by an empty row.
+
+    Raises:
+        ValueError: if the LED count is not positive.
+    """
+    if led_count < 1:
+        raise ValueError(f"LED count must be positive, got {led_count}")
+
+    leds: list[ScribbleLED] = []
+    for run in runs:
+        if len(leds) >= led_count:
+            break
+        blink_mode = BLINK_MODES.get(run.blink, BLINK_NONE)
+        if run.colour is None:
+            setting = ScribbleLED(blink_mode=blink_mode, blink_speed=run.blink_speed)
+        else:
+            setting = _paint(
+                tuple(run.colour),
+                blink_mode=blink_mode,
+                blink_speed=run.blink_speed,
+            )
+        leds.extend(setting for _ in range(min(max(1, run.length), led_count - len(leds))))
+
+    leds.extend(ScribbleLED() for _ in range(led_count - len(leds)))
+    return leds

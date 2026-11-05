@@ -39,6 +39,7 @@
         "description": "Configure how an effect behaves once, then pick it from the light card and it comes back the way you set it.\n\n{effects_configured} of {effects_total} effects and {looks_configured} of {looks_total} per-LED looks have saved settings.",
         "menu_options": {
           "recolour": "Change the running effect's colours",
+          "scribble": "Paint the strip LED by LED",
           "effect": "Configure an effect",
           "look": "Configure a per-LED look",
           "interval": "Change the poll interval"
@@ -129,10 +130,59 @@
           "add_colour": "Add another colour",
           "remove_colour": "Remove the last colour"
         }
+      },
+      "scribble": {
+        "title": "Paint the strip",
+        "description": "Each row is a stretch of the strip, laid end to end. This is the per-LED \"doodle\" the phone app paints, done with pickers instead of a brush.\n\nThe strip has {leds} LEDs. {rows} group(s) cover {covered} of them; {left} are left dark. Set how many LEDs a group covers, pick its colour, and say whether it blinks. Leave a row's colour empty to leave those LEDs off.",
+        "data": {
+          "length_1": "First: how many LEDs",
+          "color_1": "First: colour",
+          "white_1": "First: white level",
+          "mode_1": "First: what it does",
+          "length_2": "Second: how many LEDs",
+          "color_2": "Second: colour",
+          "white_2": "Second: white level",
+          "mode_2": "Second: what it does",
+          "length_3": "Third: how many LEDs",
+          "color_3": "Third: colour",
+          "white_3": "Third: white level",
+          "mode_3": "Third: what it does",
+          "length_4": "Fourth: how many LEDs",
+          "color_4": "Fourth: colour",
+          "white_4": "Fourth: white level",
+          "mode_4": "Fourth: what it does",
+          "length_5": "Fifth: how many LEDs",
+          "color_5": "Fifth: colour",
+          "white_5": "Fifth: white level",
+          "mode_5": "Fifth: what it does",
+          "length_6": "Sixth: how many LEDs",
+          "color_6": "Sixth: colour",
+          "white_6": "Sixth: white level",
+          "mode_6": "Sixth: what it does",
+          "length_7": "Seventh: how many LEDs",
+          "color_7": "Seventh: colour",
+          "white_7": "Seventh: white level",
+          "mode_7": "Seventh: what it does",
+          "length_8": "Eighth: how many LEDs",
+          "color_8": "Eighth: colour",
+          "white_8": "Eighth: white level",
+          "mode_8": "Eighth: what it does",
+          "length_9": "Ninth: how many LEDs",
+          "color_9": "Ninth: colour",
+          "white_9": "Ninth: white level",
+          "mode_9": "Ninth: what it does",
+          "length_10": "Tenth: how many LEDs",
+          "color_10": "Tenth: colour",
+          "white_10": "Tenth: white level",
+          "mode_10": "Tenth: what it does",
+          "add_run": "Add another group",
+          "remove_run": "Remove the last group"
+        }
       }
     },
     "error": {
-      "cannot_connect": "Could not reach the controller, so the setting was not applied."
+      "cannot_connect": "Could not reach the controller, so the setting was not applied.",
+      "no_leds": "Every group was left without a colour, which would turn the whole strip off. Give at least one group a colour."
     },
     "abort": {
       "no_running_effect": "No effect is running, so there are no colours to change. Pick an effect on the light card first, or use the light card's colour wheel for a plain colour.",

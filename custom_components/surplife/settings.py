@@ -39,6 +39,7 @@ Colour = tuple[int, int, int, int]
 #: representation and in the export produced by ``ha config entry``.
 EFFECTS_KEY: Final = "effects"
 LOOKS_KEY: Final = "looks"
+SCRIBBLE_KEY: Final = "scribble"
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,6 +83,39 @@ class LookSettings:
     density: int = 80
     direction: int = 1
     effect: int = 0
+
+
+@dataclass(frozen=True, slots=True)
+class ScribbleRun:
+    """One contiguous stretch of LEDs painted the same way.
+
+    A run is the editable unit of a hand-painted pattern, and it exists so the
+    pattern survives a round trip through a form. A form has to re-render after
+    "add a colour", which means the runs have to be expressible as data rather
+    than as LEDs -- the number of LEDs is fixed by the controller, but the
+    number of runs is whatever the user built.
+
+    Attributes:
+        length: How many LEDs this run covers, at least 1.
+        colour: ``(r, g, b, w)`` with white 0-100. Empty means "dark": a run
+            with no colour turns those LEDs off rather than painting black,
+            because black and off are the same wire payload but different
+            intents in the editor.
+        blink: ``none``, ``slow`` or ``fast``.
+        blink_speed: Blink speed 0-100, only meaningful with a blink mode.
+    """
+
+    length: int
+    colour: Colour | None = None
+    blink: str = "none"
+    blink_speed: int = 100
+
+    @property
+    def is_dark(self) -> bool:
+        """Whether this run leaves its LEDs unlit."""
+        return self.colour is None or (
+            not any(self.colour[:3]) and not self.colour[3]
+        )
 
 
 # -- validation -------------------------------------------------------------
@@ -160,6 +194,43 @@ def look_settings(options: dict[str, Any] | None, name: str) -> LookSettings | N
     )
 
 
+def _blink_name(raw: Any) -> str:
+    """Validate a stored blink mode, falling back to ``none``."""
+    name = str(raw or "none").lower()
+    return name if name in ("none", "slow", "fast") else "none"
+
+
+def scribble_runs(options: dict[str, Any] | None) -> tuple[ScribbleRun, ...]:
+    """The hand-painted per-LED pattern, or an empty tuple if never painted.
+
+    Stored per entry rather than per look because it is not a look: it is the
+    one pattern the user painted by hand, and picking a built-in look replaces
+    it in the same way picking an effect replaces a colour.
+    """
+    stored = (options or {}).get(SCRIBBLE_KEY)
+    if not isinstance(stored, dict):
+        return ()
+    raw_runs = stored.get("runs")
+    if not isinstance(raw_runs, list):
+        return ()
+    runs: list[ScribbleRun] = []
+    for raw in raw_runs:
+        if not isinstance(raw, dict):
+            continue
+        length = _bounded(raw.get("length"), 1, 300)
+        if length is None:
+            continue
+        runs.append(
+            ScribbleRun(
+                length=length,
+                colour=_colour(raw.get("colour")),
+                blink=_blink_name(raw.get("blink")),
+                blink_speed=_bounded(raw.get("blink_speed"), 0, 100) or 100,
+            )
+        )
+    return tuple(runs)
+
+
 # -- writing ----------------------------------------------------------------
 
 
@@ -208,6 +279,25 @@ def with_look(
     looks = dict(updated.get(LOOKS_KEY) or {})
     looks[name] = _to_raw(settings)
     updated[LOOKS_KEY] = looks
+    return updated
+
+
+def with_scribble_runs(
+    options: dict[str, Any] | None, runs: tuple[ScribbleRun, ...]
+) -> dict[str, Any]:
+    """Return a copy of ``options`` with the hand-painted pattern replaced."""
+    updated = dict(options or {})
+    updated[SCRIBBLE_KEY] = {
+        "runs": [
+            {
+                "length": run.length,
+                **({"colour": list(run.colour)} if run.colour else {}),
+                "blink": run.blink,
+                **({"blink_speed": run.blink_speed} if run.blink != "none" else {}),
+            }
+            for run in runs
+        ]
+    }
     return updated
 
 

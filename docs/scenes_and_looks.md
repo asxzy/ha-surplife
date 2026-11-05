@@ -88,12 +88,46 @@ Pick a look and the strip is painted. The look takes a palette of ordinary
 colour pickers in **Configure → Configure a per-LED look**, so the everyday case
 needs no syntax at all.
 
-The text entity is the escape hatch for anything the nine looks do not cover. It
-is **disabled by default**, because a pattern string is a command and learning
-one should be a choice: enable it in the entity's settings if you want it. Its
-state *is* the current pattern, so it survives a restart via `RestoreEntity`,
-and it validates the whole string before sending, so a typo cannot half-paint
-the strip.
+### 2.2 Painting the strip by hand
+
+**Configure → Paint the strip LED by LED** is the per-LED editor, and it needs no
+syntax either. Each row is a stretch of the strip, laid end to end:
+
+| Field | Meaning |
+|---|---|
+| how many LEDs | the length of this stretch, 1 to the strip's LED count |
+| colour | the colour for those LEDs, with a separate white level |
+| what it does | steady, blink slowly, blink fast, or **Nothing (dark)** |
+
+The description counts the LEDs as you go — "3 group(s) cover 28 of them; 7 are
+left dark" — so the layout is visible without sending anything. Rows are added
+and removed one at a time, exactly like the effect panels, and nothing is sent
+until Submit.
+
+This is the same output as the phone app's doodle view, which paints a 35-pixel
+strip by smearing colour along it. Home Assistant has no drawing widget, so the
+editor asks for the *runs* that drawing would produce: "the first 10 LEDs red,
+the next 5 white, the rest dark". Same payload, no brush.
+
+Two deliberate rules:
+
+- **Uncovered LEDs are dark.** A pattern covering 10 of 35 LEDs turns the other
+  25 off rather than leaving them as they were, because the device keeps a
+  stateful per-LED framebuffer and anything else would depend on history.
+- **Every group dark is refused.** That is just "turn the strip off", which the
+  light entity already does better and reversibly.
+
+What you paint is remembered in the config entry, so reopening the editor shows
+the pattern rather than starting over, and the look selector reads `custom`
+because a hand-painted pattern is not one of the nine looks and cannot be
+reproduced by one.
+
+The text entity is the escape hatch for anything the editor and the nine looks do
+not cover. It is **disabled by default**, because a pattern string is a command
+and learning one should be a choice: enable it in the entity's settings if you
+want it. Its state *is* the current pattern, so it survives a restart via
+`RestoreEntity`, and it validates the whole string before sending, so a typo
+cannot half-paint the strip.
 
 Grammar, unchanged from `surplife.set_scribble` and the CLI. This is what the
 opt-in text entity accepts; you do not need it to use the nine looks:
