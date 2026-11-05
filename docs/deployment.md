@@ -114,6 +114,7 @@ coordinator.py
 light.py
 protocol/
 translations/
+brand/
 ```
 
 Do **not** wrap them in `custom_components/surplife/`. That produces
@@ -139,6 +140,22 @@ python3 tools/build_release.py --check    # verify an existing archive
 Attach `dist/surplife.zip` to the GitHub release named after the version in
 `manifest.json`. `tests/test_release_layout.py` fails if the archive regresses to
 the nested shape.
+
+### The integration's icon
+
+`brand/icon.png` and `brand/icon@2x.png` are served straight from disk for
+custom integrations, so they travel in the archive and appear the moment the
+integration is installed — no brands-repository pull request, no CDN cache to
+wait out. Sizes follow the brands specification (`256x256` and `512x512`,
+square, PNG); `tests/test_brand_assets.py` enforces that.
+
+The artwork is the vendor's own app icon, taken from the Surplife iOS app
+(bundle `com.zennge.magichome2`, 1.7.2) — the same icon a user sees on their
+phone when they set the roof up. It is a square brand mark, so only icons ship;
+the brands specification says `icon.png` doubles as the logo fallback.
+
+Bump `manifest.json` when the icon changes. The archive is downloaded by tag, so
+a new image inside an already-published tag never reaches anyone.
 
 **Keep backups and old copies outside `custom_components/`.** Home Assistant
 scans every subdirectory there as a potential integration, so a copy left at
