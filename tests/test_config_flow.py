@@ -120,7 +120,9 @@ async def test_discovery_offers_devices(hass: HomeAssistant) -> None:
             DOMAIN, context={"source": config_entries.SOURCE_USER}
         )
     assert result["type"] is FlowResultType.FORM
-    assert result["step_id"] == "user"
+    # With no controller set up yet there is nothing to group, so the flow goes
+    # straight to discovery instead of showing a one-option menu.
+    assert result["step_id"] == "controller"
 
 
 async def test_discovery_ignores_unsupported_hardware(hass: HomeAssistant) -> None:
@@ -190,10 +192,17 @@ async def test_duplicate_device_aborts(hass: HomeAssistant) -> None:
         factory.return_value.get_state = Mock(return_value=_state())
         factory.return_value.close = Mock()
 
-        for _ in range(2):
+        for attempt in range(2):
             result = await hass.config_entries.flow.async_init(
                 DOMAIN, context={"source": config_entries.SOURCE_USER}
             )
+            if attempt:
+                # Once a controller exists, the flow first asks whether to add
+                # another controller or to group the ones already set up.
+                assert result["type"] is FlowResultType.MENU
+                result = await hass.config_entries.flow.async_configure(
+                    result["flow_id"], {"next_step_id": "controller"}
+                )
             result = await hass.config_entries.flow.async_configure(
                 result["flow_id"],
                 {CONF_HOST: HOST, CONF_NAME: "Soffit West"},

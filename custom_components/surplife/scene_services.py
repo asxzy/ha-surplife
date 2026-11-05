@@ -46,6 +46,7 @@ from .const import (
     SERVICE_IMPORT_SCENES,
     SERVICE_SAVE_SCENE,
 )
+from .groups import coordinators_for_entities
 from .scenes import (
     MAX_SCENES,
     SCENE_MODES,
@@ -339,22 +340,12 @@ def async_unload_scene_services(hass: HomeAssistant) -> None:
 
 
 def _coordinators(hass: HomeAssistant, entity_ids: list[str]):
-    """Resolve light entity IDs to their coordinators."""
-    from .coordinator import SurplifeCoordinator
+    """Resolve light entity IDs to their coordinators.
 
-    result: list[SurplifeCoordinator] = []
-    for entity_id in entity_ids:
-        state = hass.states.get(entity_id)
-        if state is None:
-            raise HomeAssistantError(f"unknown entity {entity_id}")
-        entry_id = state.attributes.get("surplife_entry_id")
-        if entry_id is None:
-            raise HomeAssistantError(f"{entity_id} is not a Surplife light")
-        coordinator = hass.data[DOMAIN].get(entry_id)
-        if coordinator is None:
-            raise HomeAssistantError(f"{entity_id} is not loaded")
-        result.append(coordinator)
-    return result
+    Shared with the protocol services so a group light means the same thing
+    everywhere: one entity in, every member controller out.
+    """
+    return coordinators_for_entities(hass, entity_ids)
 
 
 def _reload_selects(hass: HomeAssistant) -> None:

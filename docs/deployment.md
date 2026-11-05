@@ -224,28 +224,37 @@ Recommended order:
 
 ## Grouping the three controllers
 
-The app's grouping is cloud-side and does not exist on the local protocol, so
-recreate it in Home Assistant. Two options:
+The app's grouping is cloud-side and does not exist on the local protocol, so it
+is recreated as a Home Assistant device:
 
-**Light group** (Settings → Devices & Services → Helpers → Group → Light), which
-gives one entity for on/off, brightness and colour.
+1. **Settings → Devices & Services → Add Integration → Surplife Permanent
+   Lighting**.
+2. Choose **Group controllers into one device** (shown once at least one
+   controller exists).
+3. Select the controllers and save.
 
-**Preset broadcast**, which is better for holiday scenes because every strip
-receives an identical, deterministic command:
+The result is one device and one light. Commands are forwarded to every member;
+state is derived from them (on if any member is on, brightness is the mean of the
+lit strips, colour from the first lit strip, effect the most common one). The
+`surplife.*` services accept the group entity and expand it, so holiday scenes
+become one call:
 
 ```yaml
 service: surplife.apply_preset
 target:
-  entity_id:
-    - light.soffit_east
-    - light.soffit_west
-    - light.soffit_south
+  entity_id: light.soffit    # the group
 data:
   preset: christmas
 ```
 
 Available presets: `halloween`, `christmas`, `thanksgiving`, `canada_day`,
 `valentines`, `new_years`, `warm_white`.
+
+Each controller keeps its own device and its own controls (effect, per-LED look,
+palette, timers, clock). Use **Reconfigure** on the group to change membership,
+or on a controller to correct its IP or name without losing entity ids. A stock
+`light.group` helper also still works if you only want on/off and colour, but it
+has no device page and the `surplife.*` services will not accept it.
 
 ## Clock and timers
 

@@ -37,6 +37,7 @@ from .const import (
     SERVICE_SYNC_CLOCK,
 )
 from .coordinator import SurplifeCoordinator
+from .groups import coordinators_for_entities
 from .presets import PRESETS
 from .protocol.constants import (
     DIRECTIONS,
@@ -100,20 +101,13 @@ APPLY_PRESET_SCHEMA = vol.Schema(
 
 
 def _coordinators(hass: HomeAssistant, entity_ids: list[str]) -> list[SurplifeCoordinator]:
-    """Resolve light entity IDs to their coordinators."""
-    result: list[SurplifeCoordinator] = []
-    for entity_id in entity_ids:
-        state = hass.states.get(entity_id)
-        if state is None:
-            raise HomeAssistantError(f"unknown entity {entity_id}")
-        entry_id = state.attributes.get("surplife_entry_id")
-        if entry_id is None:
-            raise HomeAssistantError(f"{entity_id} is not a Surplife light")
-        coordinator = hass.data[DOMAIN].get(entry_id)
-        if coordinator is None:
-            raise HomeAssistantError(f"{entity_id} is not loaded")
-        result.append(coordinator)
-    return result
+    """Resolve light entity IDs to their coordinators.
+
+    A group light expands to every controller it contains, so one service call
+    aimed at the group reaches the whole roof. De-duplicated, because naming a
+    group and one of its members must not send the command twice.
+    """
+    return coordinators_for_entities(hass, entity_ids)
 
 
 def _user_errors(handler):

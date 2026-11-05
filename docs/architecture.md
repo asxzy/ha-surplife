@@ -137,19 +137,95 @@ colour, because the W channel is then the light source.
 
 The app's device grouping is **cloud-side only**: a `GroupControl` record pushed
 over MQTT, with no local-LAN group command. (`buildMeshGroupCommand` in the app
-is BLE-mesh, which these Wi-Fi controllers do not speak.)
+is BLE-mesh, which these Wi-Fi controllers do not speak.) So a group has to be
+built here rather than on the wire.
 
-Local replacements, in increasing order of capability:
+### A group is a config entry, not an entity helper
 
-1. **HA light group** — one entity controlling all three, using HA's own
-   `light.group`. Good for on/off and colour.
-2. **`surplife.apply_preset` broadcast** — one service call, several targets,
-   one deterministic command per controller. Better for holiday scenes, because
-   the preset is identical on every strip by construction.
+`groups.py` defines a second kind of config entry: one whose `data` carries
+`members` (a list of controller **entry ids**) and no host. `is_group_entry()`
+keys off that single field, and a controller entry never has it, so the two can
+never be confused after an upgrade.
 
-Presets are deterministic by design: applying `christmas` to three controllers
-in any order produces the same result, which is what makes them a real
-replacement for the cloud group.
+Why an entry rather than Home Assistant's stock `light.group` helper: the helper
+produces an entity with **no device** behind it, and it can only forward the
+generic light attributes. A real device gives the whole roof one page in the UI
+— area, rename, one entity id — and lets the `surplife.*` services accept the
+group and expand it, which is what makes "apply the Christmas preset to the
+roof" one call instead of three. The helper stays valid for people who only
+want on/off and colour; see `README.md`.
+
+### The group owns no socket and polls nothing
+
+`__init__.py` branches on `is_group_entry()`:
+
+| | controller | group |
+|---|---|---|
+| coordinator | one per entry, one socket | none |
+| platforms | button, light, number, select, sensor, switch, text | light |
+| state | polled `EA 81` frame + optimistic colour | derived from member entities |
+| update listener | reloads the poll interval / re-pushes the active effect | none |
+
+Only a light is set up on a group because every other entity is a property of a
+*strip*: an effect select or a clock button on a group would have to arbitrate
+between members that may already disagree.
+
+### Commands go out through the member entities
+
+`SurplifeGroupLight.async_turn_on()` does not touch coordinators. It calls the
+`light.turn_on` service with the member entity ids, so there is exactly **one**
+implementation of "a colour while an effect is running recolours the effect"
+and of the optimistic colour/brightness bookkeeping — the one already in
+`light.py`. The group never keeps a second copy of a colour that could drift.
+
+Membership is stored as **entry ids**, resolved to entity ids through the entity
+registry every time. Renaming a controller, or its entity, therefore cannot
+break the group; a member that is not loaded yet simply has no light entity and
+is picked up when it appears.
+
+### Derived state
+
+| attribute | rule | why |
+|---|---|---|
+| on/off | **any** member is on | a strip left running means the roof is not dark |
+| available | any member is available | every member unavailable is the only honest "unavailable" |
+| brightness | mean of the **lit** members | one dim strip pulls the group down instead of being ignored |
+| colour | first **lit** member's `rgbw_color` | an average of two colours is a colour neither strip shows, so the wheel would lie |
+| effect | most common among lit members | three strips in step report that effect; one straggler cannot rename the group |
+| `surplife_group_members` | member entry ids | this attribute *is* the contract the services read |
+| `entity_id` | member light entity ids | mirrors Home Assistant's own light group, for debugging |
+
+### Services expand groups
+
+`coordinators_for_entities()` in `groups.py` is the single resolver used by both
+`services.py` and `scene_services.py`. It reads `surplife_entry_id` (a
+controller) or `surplife_group_members` (a group), expands to coordinators,
+and **de-duplicates** — naming both a group and one of its members sends each
+command once.
+
+### Flow shape
+
+Add Integration shows a menu — *Add a controller* / *Group controllers* — but
+only once at least one controller exists; with nothing to group it goes straight
+to discovery, because a one-option menu is just an extra tap.
+
+Membership is edited from **Reconfigure**, not the options panel, since it lives
+in the entry's `data` and changing it has to reload the entry to rebuild the
+light. Home Assistant shows Reconfigure on every entry whose handler defines
+`async_step_reconfigure`, so the step handles **both** kinds: a group's
+membership and name, and a controller's address and name (re-probing the new
+host before saving). A controller that moves DHCP lease can then be fixed
+without deleting the device and losing its area and entity ids.
+
+`_group_unique_id()` is `"group:" + ",".join(sorted(members))`, so the same set
+of controllers cannot be grouped twice in a different order.
+
+### Presets for holiday scenes
+
+`surplife.apply_preset` remains the tool for calendar work: one service call,
+several targets, one deterministic command per controller. Presets are
+deterministic by design, so applying `christmas` to three controllers in any
+order produces the same result — naming the group as the target is enough.
 
 ## Discovery
 

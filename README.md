@@ -156,11 +156,53 @@ Full details in [`docs/scenes_and_looks.md`](docs/scenes_and_looks.md).
 ## Grouping
 
 The Surplife app's device grouping is **cloud-side only** — it is a
-`GroupControl` record pushed over MQTT, with no local-LAN group command. To get
-the same effect locally, create a Home Assistant
-[light group](https://www.home-assistant.io/integrations/light.group/) over the
-three controllers, or use the `surplife.apply_preset` service with
-`target: all` to broadcast one command to every controller at once.
+`GroupControl` record pushed over MQTT, with no local-LAN group command. This
+integration provides the equivalent as a **real device** instead:
+
+1. **Settings → Devices & Services → Add Integration → Surplife Permanent
+   Lighting**.
+2. On an instance that already has controllers you get a menu — choose
+   **Group controllers into one device**.
+3. Pick two or more controllers, give the group a name (it suggests the words
+   they have in common, so `Soffit East`/`Soffit West` becomes **Soffit**), and
+   save.
+
+You now have one device with one light entity. On/off, brightness, colour, white
+and effects all go to every member, and the group's state follows them:
+
+- **on** when any member is on;
+- **brightness** is the mean of the strips actually lit;
+- **colour** comes from the first lit strip (never an average, which would show
+  a colour no strip is displaying);
+- **effect** is the most common one among the lit strips.
+
+The `surplife.*` services accept the group too, so one call reaches the whole
+roof:
+
+```yaml
+service: surplife.apply_preset
+target:
+  entity_id: light.soffit      # the group, not three entity ids
+data:
+  preset: christmas
+```
+
+Each controller remains its own device with its full set of controls — effect
+select, per-LED look, palette, timers, clock sync. Those stay per-controller
+because they are properties of a strip, and grouping them would mean
+arbitrating between members that may disagree.
+
+To change which controllers are in the group, use **Reconfigure** on the group
+entry: membership lives in the entry's data, not its options. Reconfigure also
+works on a controller, where it updates the address (after a DHCP change) or
+the name without losing entity ids.
+
+If you only want on/off, brightness and colour and do not need a device page, a
+Home Assistant
+[light group](https://www.home-assistant.io/integrations/light.group/) helper
+still works over the controllers. The built-in group has no device and cannot be
+used with the `surplife.*` services, which is what the integration's own group
+adds.
 
 ## Protocol documentation
 

@@ -1,5 +1,10 @@
 """Config flow: discover controllers over UDP, or accept a manual IP.
 
+There are two kinds of entry: a **controller**, discovered or typed in, and a
+**group**, which bundles existing controllers into one device. The first menu
+asks which, because "Add integration → Surplife" is where a user looks for both
+and a group is only meaningful once at least two controllers exist.
+
 The options half of this module is the integration's control panel. See
 :class:`SurplifeOptionsFlow` for why the panel is generated per effect rather
 than showing every parameter at once.
@@ -19,6 +24,8 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.selector import (
     BooleanSelector,
     ColorRGBSelector,
+    EntitySelector,
+    EntitySelectorConfig,
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
@@ -39,6 +46,13 @@ from .const import (
     DOMAIN,
 )
 from .effect_profile import PaletteMode, profile_for
+from .groups import (
+    GROUP_MEMBERS_KEY,
+    controller_entries,
+    default_group_name,
+    is_group_entry,
+    live_members,
+)
 from .protocol import SurplifeClient, SurplifeError, async_discover, is_supported
 from .protocol.constants import EFFECT_NAMES, SCRIBBLE_EFFECT_NAMES
 from .scribble_looks import LOOK_LIST, LOOKS, build_runs
@@ -57,6 +71,16 @@ from .settings import (
 _LOGGER = logging.getLogger(__name__)
 
 MANUAL_OPTION = "__manual__"
+
+#: The two things "Add integration → Surplife" can create. Kept as step ids so
+#: the menu labels live in ``strings.json`` like every other step.
+STEP_CONTROLLER = "controller"
+STEP_GROUP = "group"
+
+#: The group form's member field. A name rather than ``CONF_ENTITIES`` because a
+#: group stores entry ids, not entity ids: the entity id follows the device name
+#: and would break the group when a controller is renamed.
+GROUP_ENTITIES = "entities"
 
 #: Options-flow step ids. Each one is also a ``strings.json`` key under
 #: ``options.step``, so renaming one without the strings blanks its label.
@@ -91,6 +115,73 @@ MANUAL_SCHEMA = vol.Schema(
 )
 
 
+def _controller_light_entities(
+    hass: Any, entry_ids: list[str] | None = None
+) -> list[Any]:
+    """The light entity of each controller, optionally only some of them.
+
+    The entity registry is the map from a config entry to its entities. Asking
+    it, rather than guessing ``light.<slug of the title>``, is what keeps a group
+    pointing at the right lights after a controller is renamed.
+    """
+    from homeassistant.helpers import entity_registry as er
+
+    wanted = (
+        set(entry_ids)
+        if entry_ids is not None
+        else {entry.entry_id for entry in controller_entries(hass)}
+    )
+    registry = er.async_get(hass)
+    found: list[Any] = []
+    for entry_id in wanted:
+        found.extend(
+            entity
+            for entity in er.async_entries_for_config_entry(registry, entry_id)
+            if entity.domain == "light"
+        )
+    return found
+
+
+def _entries_for_entities(hass: Any, entity_ids: list[str]) -> list[str]:
+    """The controller entry ids behind a list of light entity ids.
+
+    A group stores entry ids so that renaming a controller, or its entity, does
+    not silently drop it from the group.
+    """
+    from homeassistant.helpers import entity_registry as er
+
+    registry = er.async_get(hass)
+    controllers = {entry.entry_id for entry in controller_entries(hass)}
+    members: list[str] = []
+    for entity_id in entity_ids:
+        entity = registry.async_get(entity_id)
+        if entity is None or entity.config_entry_id not in controllers:
+            continue
+        if entity.config_entry_id not in members:
+            members.append(entity.config_entry_id)
+    return members
+
+
+def _group_unique_id(members: list[str]) -> str:
+    """A stable identity for a group.
+
+    Sorted, because order is presentation and re-adding the same controllers in
+    another order is still the same group. Two groups with identical membership
+    would then be refused instead of quietly shadowing each other.
+    """
+    return "group:" + ",".join(sorted(members))
+
+
+def _controller_reconfigure_schema(host: str, name: str) -> vol.Schema:
+    """The controller reconfigure form: address and name, both prefilled."""
+    return vol.Schema(
+        {
+            vol.Required(CONF_HOST, default=host): str,
+            vol.Optional(CONF_NAME, default=name): str,
+        }
+    )
+
+
 class SurplifeConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle the config flow."""
 
@@ -104,7 +195,20 @@ class SurplifeConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Offer discovered controllers, or fall through to manual entry."""
+        """Ask what to add: a controller, or a group of controllers."""
+        if not controller_entries(self.hass):
+            # With nothing to group, a menu would offer one option and hide the
+            # discovery list behind it. Go straight to adding a controller.
+            return await self.async_step_controller()
+        return self.async_show_menu(
+            step_id="user",
+            menu_options=[STEP_CONTROLLER, STEP_GROUP],
+        )
+
+    async def async_step_controller(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Discover controllers, with a manual-entry fallback."""
         if user_input is not None:
             host = user_input[CONF_HOST]
             if host == MANUAL_OPTION:
@@ -144,7 +248,7 @@ class SurplifeConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
         return self.async_show_form(
-            step_id="user",
+            step_id=STEP_CONTROLLER,
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_HOST, default=supported[0].host): SelectSelector(
@@ -171,6 +275,191 @@ class SurplifeConfigFlow(ConfigFlow, domain=DOMAIN):
                 name=user_input.get(CONF_NAME) or DEFAULT_NAME,
             )
         return self.async_show_form(step_id="manual", data_schema=MANUAL_SCHEMA)
+
+    # -- groups ------------------------------------------------------------
+
+    async def async_step_group(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Name a group and choose which controllers belong to it.
+
+        The member picker is a plain entity multi-select over the controllers
+        that already exist, rather than a list of IP addresses: a controller's
+        entity id is what the group forwards to, and it is the one identifier a
+        user already recognises from their dashboard.
+        """
+        candidates = controller_entries(self.hass)
+        entity_ids = {
+            entity.entity_id
+            for entity in _controller_light_entities(self.hass)
+        }
+        if len(entity_ids) < 2:
+            return self.async_abort(reason="not_enough_controllers")
+
+        if user_input is not None:
+            chosen = list(user_input[GROUP_ENTITIES])
+            members = _entries_for_entities(self.hass, chosen)
+            if len(members) < 2:
+                return self.async_show_form(
+                    step_id=STEP_GROUP,
+                    data_schema=self._group_schema(user_input),
+                    errors={"base": "not_enough_controllers"},
+                )
+            await self.async_set_unique_id(_group_unique_id(members))
+            self._abort_if_unique_id_configured()
+            return self.async_create_entry(
+                title=user_input.get(CONF_NAME)
+                or default_group_name(
+                    [entry.title for entry in candidates if entry.entry_id in members]
+                ),
+                data={GROUP_MEMBERS_KEY: members},
+            )
+
+        return self.async_show_form(
+            step_id=STEP_GROUP,
+            data_schema=self._group_schema(),
+            description_placeholders={
+                "names": ", ".join(entry.title for entry in candidates)
+            },
+        )
+
+    def _group_schema(self, current: dict[str, Any] | None = None) -> vol.Schema:
+        """The group form: a name and at least two controllers."""
+        current = current or {}
+        available = [
+            entity.entity_id for entity in _controller_light_entities(self.hass)
+        ]
+        chosen = current.get(GROUP_ENTITIES) or available
+        names = [entry.title for entry in controller_entries(self.hass)]
+        return vol.Schema(
+            {
+                vol.Required(
+                    GROUP_ENTITIES, default=chosen
+                ): EntitySelector(
+                    EntitySelectorConfig(
+                        domain="light",
+                        multiple=True,
+                        reorder=True,
+                        # Only this integration's controller lights: the rest
+                        # of the house is not a Surplife strip and would break
+                        # the group if picked.
+                        include_entities=available,
+                    )
+                ),
+                vol.Optional(
+                    CONF_NAME, default=default_group_name(names)
+                ): str,
+            }
+        )
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Change a group's membership, or a controller's name and address.
+
+        Home Assistant shows "Reconfigure" on every entry whose handler has this
+        step, so it cannot exist for groups only — a controller would get a
+        button that refuses to do anything. Both branches are therefore
+        implemented, and the group branch is the reason it exists: membership
+        lives in the entry's ``data``, so it cannot be edited from the options
+        panel and has to reload the entry to rebuild the light.
+        """
+        entry = self._get_reconfigure_entry()
+        if not is_group_entry(entry):
+            return await self._async_reconfigure_controller(entry, user_input)
+
+        entity_ids = [
+            entity.entity_id
+            for entity in _controller_light_entities(
+                self.hass,
+                entry_ids=live_members(self.hass, entry),
+            )
+        ]
+        if user_input is not None:
+            members = _entries_for_entities(
+                self.hass, list(user_input[GROUP_ENTITIES])
+            )
+            if len(members) < 2:
+                return self.async_show_form(
+                    step_id="reconfigure",
+                    data_schema=self._reconfigure_schema(user_input, entity_ids),
+                    errors={"base": "not_enough_controllers"},
+                )
+            await self.async_set_unique_id(_group_unique_id(members))
+            return self.async_update_reload_and_abort(
+                entry,
+                title=user_input.get(CONF_NAME) or entry.title,
+                data={GROUP_MEMBERS_KEY: members},
+            )
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=self._reconfigure_schema(None, entry.title, entity_ids),
+        )
+
+    async def _async_reconfigure_controller(
+        self, entry: Any, user_input: dict[str, Any] | None
+    ) -> ConfigFlowResult:
+        """Rename a controller or move it to a new address.
+
+        A DHCP lease that moves is the common failure here, and the alternative
+        to this is deleting the device and adding it again — which loses its
+        area, its entity ids and every dashboard reference to them.
+        """
+        current_host = entry.data.get(CONF_HOST, "")
+        if user_input is not None:
+            host = user_input[CONF_HOST].strip()
+            name = user_input.get(CONF_NAME) or entry.title
+            if host != current_host:
+                client = SurplifeClient(host)
+                try:
+                    await asyncio.to_thread(client.get_state)
+                except (SurplifeError, OSError) as err:
+                    _LOGGER.debug("reprobe of %s failed: %s", host, err)
+                    return self.async_show_form(
+                        step_id="reconfigure",
+                        data_schema=_controller_reconfigure_schema(host, name),
+                        errors={"base": "cannot_connect"},
+                    )
+                finally:
+                    await asyncio.to_thread(client.close)
+            return self.async_update_reload_and_abort(
+                entry,
+                title=name,
+                data_updates={CONF_HOST: host, CONF_NAME: name},
+            )
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=_controller_reconfigure_schema(current_host, entry.title),
+        )
+
+    def _reconfigure_schema(
+        self, current: dict[str, Any] | None, title: str, entity_ids: list[str]
+    ) -> vol.Schema:
+        """The group's reconfigure form, seeded with the current membership."""
+        current = current or {}
+        available = [
+            entity.entity_id for entity in _controller_light_entities(self.hass)
+        ]
+        return vol.Schema(
+            {
+                vol.Required(
+                    GROUP_ENTITIES,
+                    default=current.get(GROUP_ENTITIES) or entity_ids,
+                ): EntitySelector(
+                    EntitySelectorConfig(
+                        domain="light",
+                        multiple=True,
+                        reorder=True,
+                        include_entities=available,
+                    )
+                ),
+                vol.Optional(
+                    CONF_NAME, default=current.get(CONF_NAME) or title
+                ): str,
+            }
+        )
 
     async def _async_validate(
         self,

@@ -2,6 +2,14 @@
   "config": {
     "step": {
       "user": {
+        "title": "Add Surplife lighting",
+        "description": "Add another controller, or group the ones you already have into a single device.",
+        "menu_options": {
+          "controller": "Add a controller",
+          "group": "Group controllers into one device"
+        }
+      },
+      "controller": {
         "title": "Add Surplife controller",
         "description": "Discovered controllers are listed below. To add one manually, choose \"Enter an IP address\" and type the address of the controller.",
         "data": {
@@ -20,16 +28,38 @@
       "confirm": {
         "title": "Confirm controller",
         "description": "Found {model} at {host} with firmware {firmware}. Add it?"
+      },
+      "group": {
+        "title": "Group controllers",
+        "description": "Pick the controllers that should move together. The group gets one light: on/off, brightness, colour and effect are sent to every member, and its state follows them.\n\nAvailable controllers: {names}",
+        "data": {
+          "entities": "Controllers",
+          "name": "Group name"
+        },
+        "data_description": {
+          "entities": "At least two controllers. Keep each one set up as its own entry; the group only forwards to them.",
+          "name": "The name of the device and its light, for example \"Soffit\"."
+        }
+      },
+      "reconfigure": {
+        "title": "Change this controller",
+        "description": "For a controller: update its address after a DHCP change, or rename it. Entity ids stay the same, so dashboards keep working.\n\nFor a group: change which controllers belong to it, or rename it.",
+        "data": {
+          "host": "IP address",
+          "name": "Name"
+        }
       }
     },
     "error": {
       "cannot_connect": "Could not reach the controller at that address.",
       "not_supported": "That address answered, but it is not a Surplife 0xB6 controller.",
-      "unknown": "Unexpected error talking to the controller."
+      "unknown": "Unexpected error talking to the controller.",
+      "not_enough_controllers": "A group needs at least two controllers. Add another controller first."
     },
     "abort": {
       "already_configured": "This controller is already set up.",
-      "no_devices_found": "No controllers answered the discovery broadcast. Enter an IP address manually."
+      "no_devices_found": "No controllers answered the discovery broadcast. Enter an IP address manually.",
+      "not_enough_controllers": "There are not two controllers to group yet. Add a controller first, then group them."
     }
   },
   "options": {

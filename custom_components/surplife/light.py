@@ -39,6 +39,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, STATIC_EFFECT
 from .coordinator import SurplifeCoordinator, SurplifeRuntime
 from .effect_profile import profile_for
+from .groups import SurplifeGroupLight, is_group_entry
 from .protocol.constants import EFFECT_NAMES
 
 _LOGGER = logging.getLogger(__name__)
@@ -78,7 +79,10 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the light entity for a controller."""
+    """Set up the light entity for a controller, or for a group."""
+    if is_group_entry(entry):
+        async_add_entities([SurplifeGroupLight(hass, entry)])
+        return
     coordinator: SurplifeCoordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_entities([SurplifeLight(coordinator)])
 

@@ -4,6 +4,12 @@ Exposes the full feature surface of Zengge 0xB6 controllers — native effects,
 segments, per-LED "scribble", hardware timers, and user-defined scenes that can
 follow the calendar — which the stock ``flux_led`` integration deliberately
 leaves out.
+
+Two kinds of config entry share this module. A **controller** entry owns one
+socket to one strip, through :class:`~.coordinator.SurplifeCoordinator`. A
+**group** entry owns no socket at all: it is a device with one light that
+forwards to the controllers it names, because the app's own grouping is
+cloud-side and there is no local group command on the wire.
 """
 
 from __future__ import annotations
@@ -18,13 +24,15 @@ from homeassistant.exceptions import HomeAssistantError
 
 from .const import DOMAIN
 from .coordinator import SurplifeCoordinator
+from .groups import is_group_entry
 from .scene_services import async_setup_scene_services, async_unload_scene_services
 from .scenes import SceneStore
 from .services import async_setup_services, async_unload_services
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [
+#: Platforms a controller entry sets up.
+CONTROLLER_PLATFORMS: list[Platform] = [
     Platform.BUTTON,
     Platform.LIGHT,
     Platform.NUMBER,
@@ -34,6 +42,14 @@ PLATFORMS: list[Platform] = [
     Platform.TEXT,
 ]
 
+#: Platforms a group entry sets up. Only a light, because every other control is
+#: a property of a strip — an effect select or a clock button on a group would
+#: have to arbitrate between members that may already disagree.
+GROUP_PLATFORMS: list[Platform] = [Platform.LIGHT]
+
+#: Kept for compatibility with anything importing the old single list.
+PLATFORMS = CONTROLLER_PLATFORMS
+
 #: Key in ``hass.data[DOMAIN]`` holding the integration-wide scene store. It is
 #: a plain string rather than an entry id on purpose: scenes are shared
 #: vocabulary across every controller, so there is exactly one store.
@@ -41,7 +57,7 @@ SCENE_STORE_KEY = "__scenes__"
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up a controller from a config entry."""
+    """Set up a controller, or a group of controllers."""
     hass.data.setdefault(DOMAIN, {})
 
     # The scene store is integration-wide, so it is created by the first entry
@@ -55,22 +71,37 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await async_setup_services(hass)
         await async_setup_scene_services(hass)
 
+    if is_group_entry(entry):
+        # A group holds no connection and polls nothing, so there is no
+        # coordinator to create and nothing to read. Its light derives its state
+        # from the member entities through the state machine.
+        #
+        # No update listener either: membership lives in the entry's ``data``,
+        # and the only thing that changes it is Reconfigure, which reloads the
+        # entry itself. Adding a listener here would reload a second time.
+        await hass.config_entries.async_forward_entry_setups(entry, GROUP_PLATFORMS)
+        return True
+
     coordinator = SurplifeCoordinator(hass, entry)
     await coordinator.async_config_entry_first_refresh()
     await coordinator.async_load_timers()
 
     hass.data[DOMAIN][entry.entry_id] = coordinator
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    await hass.config_entries.async_forward_entry_setups(entry, CONTROLLER_PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_update_options))
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload a config entry."""
-    unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    """Unload a controller or a group config entry."""
+    platforms = GROUP_PLATFORMS if is_group_entry(entry) else CONTROLLER_PLATFORMS
+    unloaded = await hass.config_entries.async_unload_platforms(entry, platforms)
     if unloaded:
-        coordinator: SurplifeCoordinator = hass.data[DOMAIN].pop(entry.entry_id)
-        await coordinator.async_shutdown()
+        coordinator: SurplifeCoordinator | None = hass.data[DOMAIN].pop(
+            entry.entry_id, None
+        )
+        if coordinator is not None:
+            await coordinator.async_shutdown()
         if not any(key for key in hass.data[DOMAIN] if key not in _NON_ENTRY_KEYS):
             async_unload_services(hass)
             async_unload_scene_services(hass)
