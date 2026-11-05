@@ -1,9 +1,9 @@
 # Surplife Permanent Lighting for Home Assistant
 
-A HACS custom component that unlocks the **full** capability of Surplife /
-Zengge **0xB6** outdoor permanent lighting controllers (`AK001-ZJ21413`) on the
-local network — the feature set the stock `flux_led` integration deliberately
-does not expose.
+A Home Assistant custom component that unlocks the **full** capability of
+Surplife / Zengge **0xB6** outdoor permanent lighting controllers
+(`AK001-ZJ21413`) on the local network — the feature set the stock `flux_led`
+integration deliberately does not expose.
 
 The stock integration drives these controllers fine for on/off, RGB, warm
 white and brightness, but it only offers the *generic* LEDENET effect list
@@ -33,7 +33,15 @@ verify behaviour before disabling the old ones.
 
 ## Install
 
-### HACS (recommended)
+### Marketplace (Home Assistant 2026.11 and later, recommended)
+
+1. Settings → Devices & Services → **Add Integration** → *Marketplace*
+2. Add `https://github.com/asxzy/surplife` as an **Integration**
+3. Install **Surplife Permanent Lighting**, restart Home Assistant
+4. Settings → Devices & Services → **Add Integration** → *Surplife Permanent
+   Lighting*
+
+### HACS (older Home Assistant)
 
 1. HACS → Integrations → ⋮ → **Custom repositories**
 2. Add `https://github.com/asxzy/surplife` as an **Integration**
