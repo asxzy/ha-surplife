@@ -15,12 +15,18 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import SurplifeCoordinator
+from .groups import SurplifeGroupCoordinator
 from .settings import (
     EffectSettings,
     effect_settings,
     replace_settings,
     with_effect,
 )
+
+#: A controller and a group both present a ``runtime`` and the ``async_set_*``
+#: commands, so these entities are written once and work on either.
+ControlCoordinator = SurplifeCoordinator | SurplifeGroupCoordinator
+
 
 
 async def async_setup_entry(
@@ -29,7 +35,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up speed and density numbers."""
-    coordinator: SurplifeCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: ControlCoordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_entities(
         [
             SurplifeEffectNumber(
@@ -46,7 +52,7 @@ async def async_setup_entry(
 
 
 class SurplifeEffectNumber(
-    CoordinatorEntity[SurplifeCoordinator], NumberEntity, RestoreEntity
+    CoordinatorEntity[ControlCoordinator], NumberEntity, RestoreEntity
 ):
     """One 0-100 effect parameter.
 
@@ -66,7 +72,7 @@ class SurplifeEffectNumber(
 
     def __init__(
         self,
-        coordinator: SurplifeCoordinator,
+        coordinator: ControlCoordinator,
         *,
         key: str,
         name: str,

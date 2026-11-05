@@ -17,6 +17,7 @@ from .const import DOMAIN
 from .const import STATIC_EFFECT as STATIC
 from .coordinator import SurplifeCoordinator
 from .effect_profile import profile_for
+from .groups import SurplifeGroupCoordinator
 from .protocol.constants import EFFECT_NAMES
 from .scenes import Scene, SceneStore, select_for_date
 from .scribble_looks import LOOKS
@@ -29,6 +30,12 @@ from .settings import (
 )
 
 CUSTOM = "custom"
+
+#: Both a controller and a group present this surface: a ``runtime``, an
+#: ``entry`` and the ``async_set_*`` commands. The entities below are written
+#: once against it, so a group's effect dropdown is the same code as a
+#: controller's and cannot drift from it.
+ControlCoordinator = SurplifeCoordinator | SurplifeGroupCoordinator
 
 #: Shown by the scene select when no stored scene is active.
 NO_SCENE = "none"
@@ -56,7 +63,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up effect, direction, look and scene selects."""
-    coordinator: SurplifeCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: ControlCoordinator = hass.data[DOMAIN][entry.entry_id]
     store: SceneStore = hass.data[DOMAIN]["__scenes__"]
     async_add_entities(
         [
@@ -68,7 +75,7 @@ async def async_setup_entry(
     )
 
 
-class SurplifeEffectSelect(CoordinatorEntity[SurplifeCoordinator], SelectEntity):
+class SurplifeEffectSelect(CoordinatorEntity[ControlCoordinator], SelectEntity):
     """Pick a native effect by name.
 
     The light entity also exposes effects; this select exists so effects can be
@@ -80,7 +87,7 @@ class SurplifeEffectSelect(CoordinatorEntity[SurplifeCoordinator], SelectEntity)
     _attr_translation_key = "effect"
     _attr_icon = "mdi:creation"
 
-    def __init__(self, coordinator: SurplifeCoordinator) -> None:
+    def __init__(self, coordinator: ControlCoordinator) -> None:
         """Initialise the select."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.entry.entry_id}_effect_select"
@@ -130,7 +137,7 @@ class SurplifeEffectSelect(CoordinatorEntity[SurplifeCoordinator], SelectEntity)
         await self.coordinator.async_set_effect(option)
 
 
-class SurplifeDirectionSelect(CoordinatorEntity[SurplifeCoordinator], SelectEntity):
+class SurplifeDirectionSelect(CoordinatorEntity[ControlCoordinator], SelectEntity):
     """Animation direction for effects."""
 
     _attr_has_entity_name = True
@@ -138,7 +145,7 @@ class SurplifeDirectionSelect(CoordinatorEntity[SurplifeCoordinator], SelectEnti
     _attr_icon = "mdi:arrow-left-right"
     _attr_options: ClassVar[list[str]] = ["left_to_right", "right_to_left"]
 
-    def __init__(self, coordinator: SurplifeCoordinator) -> None:
+    def __init__(self, coordinator: ControlCoordinator) -> None:
         """Initialise the select."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.entry.entry_id}_direction"
@@ -185,7 +192,7 @@ class SurplifeDirectionSelect(CoordinatorEntity[SurplifeCoordinator], SelectEnti
         return self.coordinator.runtime.effect_direction
 
 
-class SurplifeScribbleLookSelect(CoordinatorEntity[SurplifeCoordinator], SelectEntity):
+class SurplifeScribbleLookSelect(CoordinatorEntity[ControlCoordinator], SelectEntity):
     """Pick a curated per-LED look.
 
     The look list is short and fixed, which is the point: it is the subset of
@@ -198,7 +205,7 @@ class SurplifeScribbleLookSelect(CoordinatorEntity[SurplifeCoordinator], SelectE
     _attr_translation_key = "scribble_look"
     _attr_icon = "mdi:palette-swatch"
 
-    def __init__(self, coordinator: SurplifeCoordinator) -> None:
+    def __init__(self, coordinator: ControlCoordinator) -> None:
         """Initialise the select."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.entry.entry_id}_scribble_look"
@@ -245,7 +252,7 @@ class SurplifeScribbleLookSelect(CoordinatorEntity[SurplifeCoordinator], SelectE
         await self.coordinator.async_set_look(option)
 
 
-class SurplifeSceneSelect(CoordinatorEntity[SurplifeCoordinator], SelectEntity):
+class SurplifeSceneSelect(CoordinatorEntity[ControlCoordinator], SelectEntity):
     """Apply a stored scene, or the one the calendar chooses for today.
 
     The option list is rebuilt on every read rather than cached at setup,
@@ -258,7 +265,7 @@ class SurplifeSceneSelect(CoordinatorEntity[SurplifeCoordinator], SelectEntity):
     _attr_translation_key = "scene"
     _attr_icon = "mdi:calendar-star"
 
-    def __init__(self, coordinator: SurplifeCoordinator, store: SceneStore) -> None:
+    def __init__(self, coordinator: ControlCoordinator, store: SceneStore) -> None:
         """Initialise the select."""
         super().__init__(coordinator)
         self._store = store

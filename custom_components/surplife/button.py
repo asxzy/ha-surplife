@@ -11,6 +11,11 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import SurplifeCoordinator
+from .groups import SurplifeGroupCoordinator
+
+#: A controller and a group both present the command surface these buttons call.
+ControlCoordinator = SurplifeCoordinator | SurplifeGroupCoordinator
+
 
 
 async def async_setup_entry(
@@ -19,7 +24,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up buttons."""
-    coordinator: SurplifeCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: ControlCoordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_entities(
         [
             SurplifeSyncClockButton(coordinator),
@@ -28,12 +33,12 @@ async def async_setup_entry(
     )
 
 
-class _SurplifeButton(CoordinatorEntity[SurplifeCoordinator], ButtonEntity):
+class _SurplifeButton(CoordinatorEntity[ControlCoordinator], ButtonEntity):
     """Shared device wiring for this integration's buttons."""
 
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator: SurplifeCoordinator, key: str) -> None:
+    def __init__(self, coordinator: ControlCoordinator, key: str) -> None:
         """Initialise the button."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.entry.entry_id}_{key}"
@@ -54,7 +59,7 @@ class SurplifeSyncClockButton(_SurplifeButton):
     _attr_translation_key = "sync_clock"
     _attr_icon = "mdi:clock-check"
 
-    def __init__(self, coordinator: SurplifeCoordinator) -> None:
+    def __init__(self, coordinator: ControlCoordinator) -> None:
         super().__init__(coordinator, "sync_clock")
 
     async def async_press(self) -> None:
@@ -72,7 +77,7 @@ class SurplifeRefreshButton(_SurplifeButton):
     _attr_translation_key = "refresh"
     _attr_icon = "mdi:refresh"
 
-    def __init__(self, coordinator: SurplifeCoordinator) -> None:
+    def __init__(self, coordinator: ControlCoordinator) -> None:
         super().__init__(coordinator, "refresh")
 
     async def async_press(self) -> None:

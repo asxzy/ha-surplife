@@ -24,7 +24,7 @@ from homeassistant.exceptions import HomeAssistantError
 
 from .const import DOMAIN
 from .coordinator import SurplifeCoordinator
-from .groups import is_group_entry
+from .groups import SurplifeGroupCoordinator, is_group_entry
 from .scene_services import async_setup_scene_services, async_unload_scene_services
 from .scenes import SceneStore
 from .services import async_setup_services, async_unload_services
@@ -42,10 +42,19 @@ CONTROLLER_PLATFORMS: list[Platform] = [
     Platform.TEXT,
 ]
 
-#: Platforms a group entry sets up. Only a light, because every other control is
-#: a property of a strip — an effect select or a clock button on a group would
-#: have to arbitrate between members that may already disagree.
-GROUP_PLATFORMS: list[Platform] = [Platform.LIGHT]
+#: Platforms a group entry sets up.
+#:
+#: The same controls as a controller, minus the two diagnostics that describe
+#: *one* strip and cannot be merged honestly: LED count and hardware timers.
+#: Everything else is a command that applies to every member, so a group gets it.
+GROUP_PLATFORMS: list[Platform] = [
+    Platform.BUTTON,
+    Platform.LIGHT,
+    Platform.NUMBER,
+    Platform.SELECT,
+    Platform.SENSOR,
+    Platform.TEXT,
+]
 
 #: Kept for compatibility with anything importing the old single list.
 PLATFORMS = CONTROLLER_PLATFORMS
@@ -72,13 +81,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await async_setup_scene_services(hass)
 
     if is_group_entry(entry):
-        # A group holds no connection and polls nothing, so there is no
-        # coordinator to create and nothing to read. Its light derives its state
-        # from the member entities through the state machine.
+        # A group holds no connection and polls nothing, but it does own a
+        # coordinator: a facade that derives its runtime from the members and
+        # forwards every command to them. That is what lets every entity
+        # platform treat a group exactly like a controller.
         #
-        # No update listener either: membership lives in the entry's ``data``,
-        # and the only thing that changes it is Reconfigure, which reloads the
-        # entry itself. Adding a listener here would reload a second time.
+        # No update listener for options: the Configure panel applies each
+        # change itself through the facade, and membership lives in the entry's
+        # ``data``, changed only by Reconfigure, which reloads the entry.
+        group = SurplifeGroupCoordinator(hass, entry)
+        await group.async_setup()
+        hass.data[DOMAIN][entry.entry_id] = group
         await hass.config_entries.async_forward_entry_setups(entry, GROUP_PLATFORMS)
         return True
 
@@ -97,8 +110,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     platforms = GROUP_PLATFORMS if is_group_entry(entry) else CONTROLLER_PLATFORMS
     unloaded = await hass.config_entries.async_unload_platforms(entry, platforms)
     if unloaded:
-        coordinator: SurplifeCoordinator | None = hass.data[DOMAIN].pop(
-            entry.entry_id, None
+        coordinator: SurplifeCoordinator | SurplifeGroupCoordinator | None = (
+            hass.data[DOMAIN].pop(entry.entry_id, None)
         )
         if coordinator is not None:
             await coordinator.async_shutdown()

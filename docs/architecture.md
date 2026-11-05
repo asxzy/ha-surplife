@@ -155,43 +155,84 @@ group and expand it, which is what makes "apply the Christmas preset to the
 roof" one call instead of three. The helper stays valid for people who only
 want on/off and colour; see `README.md`.
 
-### The group owns no socket and polls nothing
+### The group owns no socket, but it does own a coordinator
 
 `__init__.py` branches on `is_group_entry()`:
 
 | | controller | group |
 |---|---|---|
-| coordinator | one per entry, one socket | none |
-| platforms | button, light, number, select, sensor, switch, text | light |
-| state | polled `EA 81` frame + optimistic colour | derived from member entities |
-| update listener | reloads the poll interval / re-pushes the active effect | none |
+| coordinator | `SurplifeCoordinator`: one socket, polls `EA 81` | `SurplifeGroupCoordinator`: no socket, derives from members |
+| platforms | button, light, number, select, sensor, switch, text | button, light, number, select, sensor, text |
+| state | polled frame + optimistic colour | derived from the member **coordinators** |
+| commands | written to its own socket | fanned out to every member coordinator |
+| update listener | reloads the poll interval / re-pushes the active effect | none (each panel applies itself) |
 
-Only a light is set up on a group because every other entity is a property of a
-*strip*: an effect select or a clock button on a group would have to arbitrate
-between members that may already disagree.
+**Why a coordinator and not just a light.** An earlier version derived the group
+light from the members' *entity states* and forwarded commands through the
+`light.turn_on` service. That covers the toggle and the colour wheel, but every
+other control on a controller reads a coordinator-shaped object: the effect
+select and the palette text read `coordinator.runtime`, the speed slider writes
+to `coordinator.entry.options` and calls `async_set_effect`, the scene select
+calls `async_set_scene`. Rather than duplicate all of that for a group, the
+group owns a `DataUpdateCoordinator` with the *same surface* as a controller's,
+so every entity platform is written once and works on either.
 
-### Commands go out through the member entities
+It is a real coordinator, not a mock: `runtime` is a `SurplifeRuntime` rebuilt
+from the members on every member update, `last_update_success` is the OR of the
+members' so an all-dead group goes unavailable, and every `async_set_*` fans out
+and then re-derives.
 
-`SurplifeGroupLight.async_turn_on()` does not touch coordinators. It calls the
-`light.turn_on` service with the member entity ids, so there is exactly **one**
-implementation of "a colour while an effect is running recolours the effect"
-and of the optimistic colour/brightness bookkeeping — the one already in
-`light.py`. The group never keeps a second copy of a colour that could drift.
+### What a group merges, and what it does not
 
-Membership is stored as **entry ids**, resolved to entity ids through the entity
-registry every time. Renaming a controller, or its entity, therefore cannot
-break the group; a member that is not loaded yet simply has no light entity and
-is picked up when it appears.
+| control | on a group | rule |
+|---|---|---|
+| light (power, colour, W, effects) | yes | any member on; mean brightness; most-common effect; first lit member's colour |
+| effect select | yes | one effect applied to every member, with the group's palette |
+| direction select | yes | group runtime, applied to every member |
+| speed / density sliders | yes | saved to the **group's** options, then applied to every member |
+| effect colours text | yes | palette resolved once for the group, saved on the group |
+| per-LED look / pattern | yes | each member builds the look at its own LED count |
+| scene select, sync clock, refresh | yes | every member |
+| LED count sensor | **no** | three strips can report three counts; there is no honest single value |
+| timers sensor | **no** | hardware timers are per strip; merging slots would invent data |
+| mode sensor | yes | most common preset among the lit members |
+
+**One command, one resolution.** A group resolves the palette, speed, density and
+direction *itself* and passes them explicitly to every member. Letting each
+member resolve its own saved settings would give three differently-coloured
+"Chase" patterns from one tap — the opposite of what a group control means.
+
+**A dead strip does not block the roof.** A fan-out command is sent to every
+member that answers; failures are logged, and the error is raised only when
+*every* member failed. That is the same trade a single controller already makes
+for transient failures.
+
+### Commands fan out through the member coordinators
+
+`SurplifeGroupLight` is `SurplifeLight` with a group device and the membership
+attributes. There is no second implementation of "a colour while an effect runs
+recolours it", of the `Static` pseudo-effect, or of the optimistic colour
+bookkeeping — the same methods run, against a coordinator that forwards.
+
+Membership is stored as **entry ids**, resolved to coordinators and entity ids
+through the registries every time. Renaming a controller, or its entity,
+therefore cannot break the group; a member that is not loaded yet simply has no
+coordinator, and `SIGNAL_CONFIG_ENTRY_CHANGED` re-resolves the set when it
+appears.
 
 ### Derived state
 
 | attribute | rule | why |
 |---|---|---|
 | on/off | **any** member is on | a strip left running means the roof is not dark |
-| available | any member is available | every member unavailable is the only honest "unavailable" |
+| available | any member coordinator succeeded | every member unreachable is the only honest "unavailable" |
 | brightness | mean of the **lit** members | one dim strip pulls the group down instead of being ignored |
-| colour | first **lit** member's `rgbw_color` | an average of two colours is a colour neither strip shows, so the wheel would lie |
+| colour | first **lit** member's mix | an average of two colours is a colour neither strip shows, so the wheel would lie |
+| palette | the effect-matching members' palette | so Chase reports Chase's colours, not a straggler's |
 | effect | most common among lit members | three strips in step report that effect; one straggler cannot rename the group |
+| speed / density / direction / look / scene | most common among lit members | a group control sets one value, so reporting the majority is stable |
+| mode sensor | most common `preset` byte | the roof is mostly doing one thing |
+| LED count | smallest member count | the length every strip can paint |
 | `surplife_group_members` | member entry ids | this attribute *is* the contract the services read |
 | `entity_id` | member light entity ids | mirrors Home Assistant's own light group, for debugging |
 
@@ -199,9 +240,10 @@ is picked up when it appears.
 
 `coordinators_for_entities()` in `groups.py` is the single resolver used by both
 `services.py` and `scene_services.py`. It reads `surplife_entry_id` (a
-controller) or `surplife_group_members` (a group), expands to coordinators,
-and **de-duplicates** — naming both a group and one of its members sends each
-command once.
+controller) or `surplife_group_members` (a group), expands to controllers, and
+**de-duplicates** — naming both a group and one of its members sends each
+command once. A group entry id is expanded to its members, never to the group
+facade, so no request reaches a strip twice.
 
 ### Flow shape
 

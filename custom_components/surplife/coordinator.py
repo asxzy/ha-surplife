@@ -543,17 +543,7 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         if index is None:
             resolved = [tuple(colour) for colour in colours]
         else:
-            # Start from the live palette so slots the card cannot express are
-            # preserved, then substitute the one colour it does. The card sends
-            # exactly one colour; more than that means the caller really did
-            # mean the whole palette, so honour it.
-            current = [tuple(colour) for colour in self.runtime.palette]
-            if len(colours) > 1 or not current:
-                resolved = [tuple(colour) for colour in colours]
-            else:
-                slot = max(0, min(index, len(current) - 1))
-                resolved = list(current)
-                resolved[slot] = tuple(colours[0])
+            resolved = resolve_palette_edit(self.runtime, colours, index)
 
         await self.async_set_effect(name, colors=resolved)
 
@@ -803,6 +793,43 @@ class SurplifeCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+
+def resolve_palette_edit(
+    runtime: SurplifeRuntime,
+    colours: list[tuple[int, ...]],
+    index: int | None,
+) -> list[tuple[int, ...]]:
+    """Work out which colours a colour request means for a running effect.
+
+    The light card can only express **one** colour, so treating its request as
+    the whole palette meant one touch of the wheel silently collapsed a
+    three-colour ``Chase`` to a single colour. Substituting into the slot the
+    wheel is showing keeps the other colours, which is what "recolour this
+    pattern" has to mean for a multi-colour effect.
+
+    Shared by :meth:`SurplifeCoordinator.async_recolour_active_effect` and the
+    group facade so a group and a controller answer the same question the same
+    way.
+
+    Args:
+        runtime: The runtime whose palette is the starting point.
+        colours: The requested colours.
+        index: Which slot to overwrite. ``None`` means the whole palette.
+
+    Returns:
+        The palette to send.
+    """
+    if index is None:
+        return [tuple(colour) for colour in colours]
+
+    current = [tuple(colour) for colour in runtime.palette]
+    if len(colours) > 1 or not current:
+        return [tuple(colour) for colour in colours]
+    slot = max(0, min(index, len(current) - 1))
+    resolved = list(current)
+    resolved[slot] = tuple(colours[0])
+    return resolved
 
 
 def _scale(rgb: tuple[int, int, int], brightness: int) -> tuple[int, int, int]:

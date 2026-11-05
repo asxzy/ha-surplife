@@ -175,14 +175,27 @@ integration provides the equivalent as a **real device** instead:
    they have in common, so `Soffit East`/`Soffit West` becomes **Soffit**), and
    save.
 
-You now have one device with one light entity. On/off, brightness, colour, white
-and effects all go to every member, and the group's state follows them:
+You now have one device with the same controls as a single controller. On/off,
+brightness, colour, white, effects, palettes, per-LED looks, direction, speed,
+density, scenes, clock sync and the refresh button all go to every member, and
+the group's state follows them:
 
-- **on** when any member is on;
+- **on** when any member is on (turning the group on also relights a strip that
+  was left dark);
 - **brightness** is the mean of the strips actually lit;
 - **colour** comes from the first lit strip (never an average, which would show
   a colour no strip is displaying);
 - **effect** is the most common one among the lit strips.
+
+The group resolves the palette, speed, density and direction **once** and sends
+the same values to every member, so one tap cannot leave the strips running
+three different variants of the same effect. Its Configure panel edits the
+group's own effect/look settings, in the same shape as a controller's.
+
+Two diagnostics stay on the controllers: **LED count** and **Timers**. Both
+describe one physical strip — three controllers can report three different
+counts and three different timer slots — so a merged number would be invented.
+The group's **Mode** sensor reports what most of the roof is doing.
 
 The `surplife.*` services accept the group too, so one call reaches the whole
 roof:
@@ -195,10 +208,8 @@ data:
   preset: christmas
 ```
 
-Each controller remains its own device with its full set of controls — effect
-select, per-LED look, palette, timers, clock sync. Those stay per-controller
-because they are properties of a strip, and grouping them would mean
-arbitrating between members that may disagree.
+Each controller remains its own device, so a single strip can still be adjusted
+on its own when one run needs to differ.
 
 To change which controllers are in the group, use **Reconfigure** on the group
 entry: membership lives in the entry's data, not its options. Reconfigure also

@@ -257,11 +257,19 @@ is recreated as a Home Assistant device:
    controller exists).
 3. Select the controllers and save.
 
-The result is one device and one light. Commands are forwarded to every member;
-state is derived from them (on if any member is on, brightness is the mean of the
-lit strips, colour from the first lit strip, effect the most common one). The
-`surplife.*` services accept the group entity and expand it, so holiday scenes
-become one call:
+The result is one device with the same controls as a single controller — power,
+colour, W, effects, effect speeds, palettes, per-LED looks, scenes, clock sync
+and refresh. Commands are forwarded to every member; state is derived from them
+(on if any member is on, brightness is the mean of the lit strips, colour from
+the first lit strip, effect the most common one). Palettes and effect parameters
+are resolved once for the group, so every strip receives the same values.
+
+**LED count** and **Timers** are the two diagnostic sensors a group does not
+get: they describe one physical strip, so a group of three has no single honest
+value. The group's **Mode** sensor reports what most of the roof is doing.
+
+The `surplife.*` services accept the group entity and expand it, so holiday
+scenes become one call:
 
 ```yaml
 service: surplife.apply_preset
@@ -274,8 +282,9 @@ data:
 Available presets: `halloween`, `christmas`, `thanksgiving`, `canada_day`,
 `valentines`, `new_years`, `warm_white`.
 
-Each controller keeps its own device and its own controls (effect, per-LED look,
-palette, timers, clock). Use **Reconfigure** on the group to change membership,
+Each controller keeps its own device and its own full control set, including the
+two per-strip diagnostics the group omits. Use **Reconfigure** on the group to
+change membership,
 or on a controller to correct its IP or name without losing entity ids. A stock
 `light.group` helper also still works if you only want on/off and colour, but it
 has no device page and the `surplife.*` services will not accept it.

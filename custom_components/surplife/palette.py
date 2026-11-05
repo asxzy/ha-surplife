@@ -36,11 +36,16 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, STATIC_EFFECT
 from .coordinator import SurplifeCoordinator
 from .effect_profile import PaletteMode, max_colours, profile_for
+from .groups import SurplifeGroupCoordinator
 from .protocol.spec import format_palette, parse_palette
 
 #: Longest palette string accepted. Eight colours of ``#rrggbb w100`` is about
 #: 120 characters, so this is generous while still bounded.
 MAX_PALETTE_LENGTH: Final = 255
+
+#: A controller and a group both present a ``runtime`` and the recolour command.
+ControlCoordinator = SurplifeCoordinator | SurplifeGroupCoordinator
+
 
 
 async def async_setup_entry(
@@ -49,11 +54,11 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the palette entity."""
-    coordinator: SurplifeCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: ControlCoordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_entities([SurplifeEffectPaletteText(coordinator)])
 
 
-class SurplifeEffectPaletteText(CoordinatorEntity[SurplifeCoordinator], TextEntity):
+class SurplifeEffectPaletteText(CoordinatorEntity[ControlCoordinator], TextEntity):
     """The ordered colour list an effect is using, editable in place.
 
     Setting it recolours the running effect instead of cancelling it, which is
@@ -74,7 +79,7 @@ class SurplifeEffectPaletteText(CoordinatorEntity[SurplifeCoordinator], TextEnti
     _attr_native_max = MAX_PALETTE_LENGTH
     _attr_mode = TextMode.TEXT
 
-    def __init__(self, coordinator: SurplifeCoordinator) -> None:
+    def __init__(self, coordinator: ControlCoordinator) -> None:
         """Initialise the palette entity."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.entry.entry_id}_effect_palette"

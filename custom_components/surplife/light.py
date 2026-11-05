@@ -31,6 +31,7 @@ from homeassistant.components.light import (
     LightEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -39,7 +40,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, STATIC_EFFECT
 from .coordinator import SurplifeCoordinator, SurplifeRuntime
 from .effect_profile import profile_for
-from .groups import SurplifeGroupLight, is_group_entry
+from .groups import SurplifeGroupCoordinator, is_group_entry
 from .protocol.constants import EFFECT_NAMES
 
 _LOGGER = logging.getLogger(__name__)
@@ -74,6 +75,14 @@ def _hexw(colour: tuple[int, ...]) -> str:
 SUPPORTED_COLOR_MODES = {ColorMode.RGBW, ColorMode.WHITE}
 
 
+#: Both a controller and a group present this surface to the entities, so the
+#: light below is written once and works for either. A group's coordinator
+#: forwards every ``async_set_*`` to its members, which is what keeps this file
+#: free of a second implementation of "recolour the effect" or of the
+#: optimistic colour bookkeeping.
+LightCoordinator = SurplifeCoordinator | SurplifeGroupCoordinator
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -81,13 +90,13 @@ async def async_setup_entry(
 ) -> None:
     """Set up the light entity for a controller, or for a group."""
     if is_group_entry(entry):
-        async_add_entities([SurplifeGroupLight(hass, entry)])
+        async_add_entities([SurplifeGroupLight(hass.data[DOMAIN][entry.entry_id])])
         return
     coordinator: SurplifeCoordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_entities([SurplifeLight(coordinator)])
 
 
-class SurplifeLight(CoordinatorEntity[SurplifeCoordinator], LightEntity):
+class SurplifeLight(CoordinatorEntity[LightCoordinator], LightEntity):
     """One 0xB6 controller as a Home Assistant light."""
 
     _attr_has_entity_name = True
@@ -103,7 +112,7 @@ class SurplifeLight(CoordinatorEntity[SurplifeCoordinator], LightEntity):
     #: be no way back to a plain colour from the card.
     _attr_effect_list: tuple[str, ...] = (STATIC_EFFECT, *EFFECT_NAMES.values())
 
-    def __init__(self, coordinator: SurplifeCoordinator) -> None:
+    def __init__(self, coordinator: LightCoordinator) -> None:
         """Initialise the light."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.entry.entry_id}_light"
@@ -118,6 +127,17 @@ class SurplifeLight(CoordinatorEntity[SurplifeCoordinator], LightEntity):
     @property
     def _runtime(self) -> SurplifeRuntime:
         return self.coordinator.runtime
+
+    @property
+    def _fully_on(self) -> bool:
+        """Whether everything this entity drives is powered.
+
+        On a controller that is just its own power flag. A group reports on when
+        *any* member is on, which is the right reading for the card's toggle but
+        the wrong one for deciding whether ``turn_on`` still has work to do — a
+        half-lit roof has to turn the dark strips back on.
+        """
+        return self._runtime.is_on
 
     @property
     def is_on(self) -> bool:
@@ -202,7 +222,7 @@ class SurplifeLight(CoordinatorEntity[SurplifeCoordinator], LightEntity):
         """
         effect = self._runtime.effect_name
         profile = profile_for(effect) if effect else None
-        return {
+        attributes: dict[str, Any] = {
             "surplife_entry_id": self.coordinator.entry.entry_id,
             "pattern": self._runtime.state.pattern if self._runtime.state else None,
             "palette": [
@@ -220,6 +240,7 @@ class SurplifeLight(CoordinatorEntity[SurplifeCoordinator], LightEntity):
             "effect_uses_density": profile.density if profile else None,
             "effect_uses_direction": profile.direction if profile else None,
         }
+        return attributes
 
     # -- commands ----------------------------------------------------------
 
@@ -232,10 +253,19 @@ class SurplifeLight(CoordinatorEntity[SurplifeCoordinator], LightEntity):
                 # Leave pattern mode: drive the remembered colour as a flat,
                 # static colour. Clearing the effect is what the next colour
                 # request needs in order to stop recolouring a pattern.
-                await self.coordinator.async_set_rgb(
-                    self._runtime.rgbw_mix[:3], self._runtime.brightness
+                #
+                # ``rgbw_mix`` is ``None`` when the strip is white-only, where
+                # the last colour is the right thing to restore rather than the
+                # white level -- a white request would otherwise be re-sent as
+                # an RGB zero, which is dark.
+                mix = self._runtime.rgbw_mix
+                rgb = (
+                    mix[:3]
+                    if mix is not None
+                    else (self._runtime.rgb or (255, 255, 255))
                 )
-                if not runtime.is_on:
+                await self.coordinator.async_set_rgb(rgb, self._runtime.brightness)
+                if not self._fully_on:
                     await self.coordinator.async_set_power(True)
                 return
             # No palette is passed: the coordinator restores the colours saved
@@ -243,14 +273,14 @@ class SurplifeLight(CoordinatorEntity[SurplifeCoordinator], LightEntity):
             # is showing. Passing one colour here is what made multi-colour
             # effects impossible to configure from the light card.
             await self.coordinator.async_set_effect(effect)
-            if not runtime.is_on:
+            if not self._fully_on:
                 await self.coordinator.async_set_power(True)
             return
 
         brightness = kwargs.get(ATTR_BRIGHTNESS, runtime.brightness)
         rgb = kwargs.get(ATTR_RGB_COLOR)
         rgbw = kwargs.get(ATTR_RGBW_COLOR)
-        was_on = runtime.is_on
+        was_on = self._fully_on
 
         # The controller drives white and colour through separate channels, so
         # ``white`` selects the warm-white channel rather than an RGB value.
@@ -297,3 +327,53 @@ class SurplifeLight(CoordinatorEntity[SurplifeCoordinator], LightEntity):
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the strip off."""
         await self.coordinator.async_set_power(False)
+
+
+class SurplifeGroupLight(SurplifeLight):
+    """The group's light: identical controls, one device for the whole roof.
+
+    Everything that makes a controller's light behave — the ``Static``
+    pseudo-effect, recolouring the running effect from the wheel, the optimistic
+    colour tracking — comes from :class:`SurplifeLight` unchanged. The only
+    difference is the device it belongs to and the membership attributes, which
+    are the contract the ``surplife.*`` services read to expand a group.
+    """
+
+    def __init__(self, coordinator: SurplifeGroupCoordinator) -> None:
+        """Initialise the group light from the group coordinator."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.entry.entry_id}_group_light"
+
+    @property
+    def group_coordinator(self) -> SurplifeGroupCoordinator:
+        """The group coordinator, typed."""
+        return self.coordinator
+
+    @property
+    def _fully_on(self) -> bool:
+        """Whether every member is powered, not merely one."""
+        return self.group_coordinator.all_members_on
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Expose the membership alongside the usual effect details.
+
+        ``surplife_group_members`` is what the services read to expand the group
+        into its controllers, so it is part of the contract rather than
+        decoration. ``entity_id`` mirrors what Home Assistant's own light group
+        publishes, for anyone debugging from the states page.
+        """
+        attributes = super().extra_state_attributes
+        # A group entry id is not a controller, and the services would try to
+        # resolve it. The member list is the honest answer, so it replaces the
+        # single-controller key rather than sitting next to it.
+        attributes.pop("surplife_entry_id", None)
+        members = self.group_coordinator.member_entry_ids
+        attributes["surplife_group_members"] = list(members)
+        attributes[ATTR_ENTITY_ID] = list(self.group_coordinator.member_entity_ids)
+        attributes["members"] = [
+            entry.title
+            for member in members
+            if (entry := self.hass.config_entries.async_get_entry(member))
+        ]
+        return attributes

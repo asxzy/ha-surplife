@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -16,6 +18,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import SurplifeCoordinator
+from .groups import SurplifeGroupCoordinator, is_group_entry
 
 
 async def async_setup_entry(
@@ -23,8 +26,18 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up diagnostic sensors."""
-    coordinator: SurplifeCoordinator = hass.data[DOMAIN][entry.entry_id]
+    """Set up diagnostic sensors.
+
+    A group gets the mode sensor only. LED count and hardware timers describe
+    *one* strip: three controllers can have three different counts and three
+    different timer slots, so there is no single number to report. The mode is
+    different — it is what the group is doing right now, which is exactly what
+    the derived runtime knows.
+    """
+    coordinator = hass.data[DOMAIN][entry.entry_id]
+    if is_group_entry(entry):
+        async_add_entities([SurplifeModeSensor(coordinator)])
+        return
     async_add_entities(
         [
             SurplifeLedCountSensor(coordinator),
@@ -34,13 +47,16 @@ async def async_setup_entry(
     )
 
 
-class _SurplifeSensor(CoordinatorEntity[SurplifeCoordinator], SensorEntity):
+Coordinator = SurplifeCoordinator | SurplifeGroupCoordinator
+
+
+class _SurplifeSensor(CoordinatorEntity[Coordinator], SensorEntity):
     """Shared device wiring for this integration's sensors."""
 
     _attr_has_entity_name = True
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
-    def __init__(self, coordinator: SurplifeCoordinator, key: str) -> None:
+    def __init__(self, coordinator: Coordinator, key: str) -> None:
         """Initialise the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.entry.entry_id}_{key}"
@@ -62,7 +78,7 @@ class SurplifeLedCountSensor(_SurplifeSensor):
     _attr_icon = "mdi:led-strip-variant"
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, coordinator: SurplifeCoordinator) -> None:
+    def __init__(self, coordinator: Coordinator) -> None:
         super().__init__(coordinator, "led_count")
 
     @property
@@ -83,9 +99,9 @@ class SurplifeModeSensor(_SurplifeSensor):
     _attr_translation_key = "mode"
     _attr_icon = "mdi:palette"
     _attr_device_class = SensorDeviceClass.ENUM
-    _attr_options = ["static", "segments", "scribble", "unknown"]
+    _attr_options: ClassVar[list[str]] = ["static", "segments", "scribble", "unknown"]
 
-    def __init__(self, coordinator: SurplifeCoordinator) -> None:
+    def __init__(self, coordinator: Coordinator) -> None:
         super().__init__(coordinator, "mode")
 
     @property
@@ -108,7 +124,7 @@ class SurplifeTimerSensor(_SurplifeSensor):
     _attr_translation_key = "timers"
     _attr_icon = "mdi:timer-outline"
 
-    def __init__(self, coordinator: SurplifeCoordinator) -> None:
+    def __init__(self, coordinator: Coordinator) -> None:
         super().__init__(coordinator, "timers")
 
     @property

@@ -28,8 +28,12 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import SurplifeCoordinator
+from .groups import SurplifeGroupCoordinator
 from .palette import SurplifeEffectPaletteText
 from .protocol.spec import parse_led_spec
+
+#: A controller and a group both present a ``runtime`` and the paint command.
+ControlCoordinator = SurplifeCoordinator | SurplifeGroupCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -51,7 +55,7 @@ async def async_setup_entry(
     * the **effect palette**, which is an everyday control and is on by default;
     * the **per-LED pattern**, which is an escape hatch and is off by default.
     """
-    coordinator: SurplifeCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: ControlCoordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_entities(
         [
             SurplifeEffectPaletteText(coordinator),
@@ -61,7 +65,7 @@ async def async_setup_entry(
 
 
 class SurplifeScribblePatternText(
-    CoordinatorEntity[SurplifeCoordinator], TextEntity, RestoreEntity
+    CoordinatorEntity[ControlCoordinator], TextEntity, RestoreEntity
 ):
     """A typed per-LED pattern that renders as soon as it is set."""
 
@@ -81,7 +85,7 @@ class SurplifeScribblePatternText(
     _attr_native_max = MAX_PATTERN_LENGTH
     _attr_mode = TextMode.TEXT
 
-    def __init__(self, coordinator: SurplifeCoordinator) -> None:
+    def __init__(self, coordinator: ControlCoordinator) -> None:
         """Initialise the text entity."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.entry.entry_id}_scribble_pattern"

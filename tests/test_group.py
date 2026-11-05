@@ -212,17 +212,48 @@ async def test_group_appears_as_a_light_and_a_device(
     assert device.name == "Soffit"
 
 
-async def test_group_does_not_get_controller_entities(
+async def test_group_gets_the_same_controls_as_a_controller(
     hass: HomeAssistant, group
 ) -> None:
-    """Only a light — no effect select, clock button or timer sensor.
+    """A group is a controller-shaped device, minus the per-strip diagnostics.
 
-    Those are properties of a strip. On a group they would have to arbitrate
-    between members that may already disagree, so they stay on the controllers.
+    Every control here is a command that applies to every member at once. LED
+    count and hardware timers are omitted because they describe one strip: three
+    controllers can disagree, and inventing a merged number would be a lie.
     """
     registry = er.async_get(hass)
     entities = er.async_entries_for_config_entry(registry, group.entry_id)
-    assert [entity.domain for entity in entities] == ["light"]
+    assert sorted(entity.domain for entity in entities) == [
+        "button",
+        "button",
+        "light",
+        "number",
+        "number",
+        "select",
+        "select",
+        "select",
+        "select",
+        "sensor",
+        "text",
+        "text",
+    ]
+    unique_ids = {entity.unique_id for entity in entities}
+    assert f"{group.entry_id}_led_count" not in unique_ids
+    assert f"{group.entry_id}_timers" not in unique_ids
+    assert f"{group.entry_id}_mode" in unique_ids
+
+
+async def test_group_sync_clock_button_reaches_every_member(
+    hass: HomeAssistant, group, clients
+) -> None:
+    """Pressing the group's own button is one command per strip."""
+    assert hass.states.get("button.soffit_sync_clock") is not None
+    await hass.services.async_call(
+        "button", "press", {ATTR_ENTITY_ID: "button.soffit_sync_clock"}, blocking=True
+    )
+    await hass.async_block_till_done()
+    for client in clients:
+        assert client.sync_clock.called
 
 
 async def test_group_advertises_the_same_controls_as_a_controller(
@@ -460,12 +491,405 @@ async def test_removing_a_controller_leaves_the_group_working(
 async def test_group_is_unavailable_when_no_member_is_available(
     hass: HomeAssistant, group
 ) -> None:
-    """Every member unavailable means the group is too, rather than claiming off."""
-    for entity_id in ("light.soffit_east", "light.soffit_west"):
-        hass.states.async_set(entity_id, STATE_UNAVAILABLE)
+    """Every member unavailable means the group is too, rather than claiming off.
+
+    The group derives its availability from the member coordinators, not from
+    their entity states: an unreachable strip still has a stale entity state,
+    so trusting that would report a roof of dead controllers as merely off.
+    """
+    group_coordinator = hass.data[DOMAIN][group.entry_id]
+    for member in group_coordinator.member_coordinators:
+        member.last_update_success = False
+    group_coordinator._member_updated()
     await hass.async_block_till_done()
 
     assert hass.states.get(_group_light(hass, group)).state == STATE_UNAVAILABLE
+
+    for member in group_coordinator.member_coordinators:
+        member.last_update_success = True
+    group_coordinator._member_updated()
+    await hass.async_block_till_done()
+
+    assert hass.states.get(_group_light(hass, group)).state != STATE_UNAVAILABLE
+
+
+# -- the group's control surface -------------------------------------------
+
+
+async def _group_runtime(hass: HomeAssistant, entry):
+    """The group coordinator's derived runtime."""
+    return hass.data[DOMAIN][entry.entry_id].runtime
+
+
+async def test_group_effect_select_applies_to_every_member(
+    hass: HomeAssistant, group, clients
+) -> None:
+    """The group's effect dropdown is one command per strip, with one palette."""
+    await hass.services.async_call(
+        "select",
+        "select_option",
+        {ATTR_ENTITY_ID: "select.soffit_effect", "option": "Chase"},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    for client in clients:
+        assert client.set_effect.called
+        args = client.set_effect.call_args
+        assert args.args[0] == client.set_effect.call_args.args[0]
+
+
+async def test_group_speed_slider_reaches_every_member(
+    hass: HomeAssistant, group, clients
+) -> None:
+    """Moving the group's slider keeps the strips in step rather than one ahead."""
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: _group_light(hass, group), "effect": "Chase"},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    await hass.services.async_call(
+        "number",
+        "set_value",
+        {ATTR_ENTITY_ID: "number.soffit_effect_speed", "value": 80},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    for client in clients:
+        assert client.set_effect.called
+        assert client.set_effect.call_args.kwargs["speed"] == 80
+
+
+async def test_group_palette_entity_colours_every_member(
+    hass: HomeAssistant, group, clients
+) -> None:
+    """A palette typed on the group must not leave members different colours."""
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: _group_light(hass, group), "effect": "Chase"},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    await hass.services.async_call(
+        "text",
+        "set_value",
+        {
+            ATTR_ENTITY_ID: "text.soffit_effect_colours",
+            "value": "#ff0000, #00ff00",
+        },
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    for client in clients:
+        palette = client.set_effect.call_args.args[1]
+        assert [tuple(colour[:3]) for colour in palette] == [
+            (255, 0, 0),
+            (0, 255, 0),
+        ], "every member must receive the same resolved palette"
+
+
+async def test_group_palette_is_saved_on_the_group_not_the_members(
+    hass: HomeAssistant, group, two_controllers
+) -> None:
+    """The group owns its own configured palettes."""
+    from custom_components.surplife.settings import EFFECTS_KEY
+
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: _group_light(hass, group), "effect": "Chase"},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+    await hass.services.async_call(
+        "text",
+        "set_value",
+        {ATTR_ENTITY_ID: "text.soffit_effect_colours", "value": "#ff0000, #00ff00"},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    assert group.options[EFFECTS_KEY]["Chase"]["colors"] == [
+        [255, 0, 0, 0],
+        [0, 255, 0, 0],
+    ]
+    for member in two_controllers:
+        assert EFFECTS_KEY not in member.options
+
+
+async def test_group_scene_select_applies_to_every_member(
+    hass: HomeAssistant, group, clients
+) -> None:
+    """A stored scene named on the group reaches all three strips."""
+    from custom_components.surplife.const import SERVICE_SAVE_SCENE
+
+    await hass.services.async_call(
+        DOMAIN,
+        SERVICE_SAVE_SCENE,
+        {
+            "name": "warm",
+            "mode": "rgb",
+            "colors": ["#ff0000"],
+            "brightness": 200,
+        },
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    await hass.services.async_call(
+        "select",
+        "select_option",
+        {ATTR_ENTITY_ID: "select.soffit_scene", "option": "warm"},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    for client in clients:
+        assert client.set_levels.called
+
+
+async def test_group_per_led_look_reaches_every_member(
+    hass: HomeAssistant, group, clients
+) -> None:
+    """Painting by look is a group command, sized per strip."""
+    looks = hass.states.get("select.soffit_per_led_look")
+    assert looks is not None
+    option = next(name for name in looks.attributes["options"] if name != "custom")
+
+    await hass.services.async_call(
+        "select",
+        "select_option",
+        {ATTR_ENTITY_ID: "select.soffit_per_led_look", "option": option},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    for client in clients:
+        assert client.set_scribble.called
+
+
+async def test_group_reports_the_most_common_effect(
+    hass: HomeAssistant, group, two_controllers
+) -> None:
+    """Two strips in step outvote one straggler."""
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: "light.soffit_east", "effect": "Chase"},
+        blocking=True,
+    )
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: "light.soffit_west", "effect": "Chase"},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    runtime = await _group_runtime(hass, group)
+    assert runtime.effect_name == "Chase"
+    assert hass.states.get(_group_light(hass, group)).attributes["effect"] == "Chase"
+
+
+async def test_group_reports_a_colour_only_when_a_member_is_lit(
+    hass: HomeAssistant, group
+) -> None:
+    """The group's runtime follows the members' power, not its own copy."""
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: _group_light(hass, group), "rgb_color": (255, 0, 0)},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+    runtime = await _group_runtime(hass, group)
+    assert runtime.is_on
+    assert runtime.rgbw_mix is not None
+    assert runtime.rgbw_mix[:3] == (255, 0, 0)
+
+    await hass.services.async_call(
+        "light", "turn_off", {ATTR_ENTITY_ID: _group_light(hass, group)}, blocking=True
+    )
+    await hass.async_block_till_done()
+    assert not (await _group_runtime(hass, group)).is_on
+
+
+async def test_group_turns_on_a_member_left_dark(
+    hass: HomeAssistant, group, clients
+) -> None:
+    """On means "any member", so turning the group on must fix a half-lit roof."""
+    await hass.services.async_call(
+        "light", "turn_off", {ATTR_ENTITY_ID: "light.soffit_east"}, blocking=True
+    )
+    await hass.services.async_call(
+        "light", "turn_on", {ATTR_ENTITY_ID: "light.soffit_west"}, blocking=True
+    )
+    await hass.async_block_till_done()
+    assert hass.states.get(_group_light(hass, group)).state == STATE_ON
+
+    await hass.services.async_call(
+        "light", "turn_on", {ATTR_ENTITY_ID: _group_light(hass, group)}, blocking=True
+    )
+    await hass.async_block_till_done()
+
+    for client in clients:
+        assert client.set_power.call_args_list[-1].args[0] is True
+
+
+async def test_a_dead_member_does_not_stop_the_rest_of_the_roof(
+    hass: HomeAssistant, group, clients
+) -> None:
+    """One unreachable strip must not make a group command fail."""
+    from homeassistant.exceptions import HomeAssistantError
+
+    dead = clients[WEST]
+    dead.set_levels = Mock(side_effect=HomeAssistantError("unreachable"))
+
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: _group_light(hass, group), "rgb_color": (0, 0, 255)},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    assert clients[EAST].set_levels.called, "the reachable strip was still commanded"
+
+
+async def test_a_command_fails_when_every_member_is_dead(
+    hass: HomeAssistant, group, clients
+) -> None:
+    """Silence from every strip is a real failure, not a success."""
+    import pytest
+    from homeassistant.exceptions import HomeAssistantError
+
+    for client in clients:
+        client.set_power = Mock(side_effect=HomeAssistantError("unreachable"))
+
+    with pytest.raises(HomeAssistantError):
+        await hass.services.async_call(
+            "light",
+            "turn_off",
+            {ATTR_ENTITY_ID: _group_light(hass, group)},
+            blocking=True,
+        )
+
+
+async def test_group_rename_keeps_the_group_light_and_members(
+    hass: HomeAssistant, group, clients
+) -> None:
+    """Member entity ids are resolved live, so a rename cannot break the fan-out."""
+    registry = er.async_get(hass)
+    registry.async_update_entity("light.soffit_east", new_entity_id="light.east_run")
+    await hass.async_block_till_done()
+
+    assert "light.east_run" in hass.states.get(_group_light(hass, group)).attributes[
+        "entity_id"
+    ]
+
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: _group_light(hass, group), "rgb_color": (0, 255, 0)},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+    for client in clients:
+        assert client.set_levels.called
+
+
+# -- the Configure panel on a group ----------------------------------------
+
+
+async def test_group_configure_panel_opens_and_applies(
+    hass: HomeAssistant, group, clients
+) -> None:
+    """Before the facade, a group's Configure gear led to a panel that no-opped.
+
+    ``_coordinator()`` returned ``None`` for a group, so every step silently
+    saved without touching a strip. The group now has a coordinator, so the same
+    panel is a real control.
+    """
+    from homeassistant.data_entry_flow import FlowResultType
+
+    result = await hass.config_entries.options.async_init(group.entry_id)
+    assert result["type"] is FlowResultType.MENU
+    assert set(result["menu_options"]) == {
+        "recolour",
+        "scribble",
+        "effect",
+        "look",
+        "interval",
+    }
+
+    # Pick an effect, then save its panel; the save must reach every strip.
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"next_step_id": "effect"}
+    )
+    assert result["step_id"] == "effect"
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"effect": "Wave"}
+    )
+    assert result["step_id"] == "effect_settings"
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"color_1": [0, 128, 255], "white_1": 0}
+    )
+    await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    from custom_components.surplife.settings import EFFECTS_KEY
+
+    assert EFFECTS_KEY in group.options
+    for client in clients:
+        assert client.set_effect.called
+
+
+async def test_group_recolour_aborts_when_nothing_is_running(
+    hass: HomeAssistant, group
+) -> None:
+    """The menu says so rather than showing pickers that would do nothing."""
+    from homeassistant.data_entry_flow import FlowResultType
+
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: _group_light(hass, group), "rgb_color": (255, 0, 0)},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    result = await hass.config_entries.options.async_init(group.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"next_step_id": "recolour"}
+    )
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "no_running_effect"
+
+
+async def test_group_configure_uses_the_member_led_count(
+    hass: HomeAssistant, group
+) -> None:
+    """The per-LED editor must size itself from the strips, not from entry data.
+
+    A group entry has no ``led_count`` of its own, so reading it there would
+    fall back to 35 even if the strips are longer or shorter.
+    """
+    group_coordinator = hass.data[DOMAIN][group.entry_id]
+    for member in group_coordinator.member_coordinators:
+        assert member.runtime.led_count > 0
+
+    result = await hass.config_entries.options.async_init(group.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"next_step_id": "scribble"}
+    )
+    assert result["description_placeholders"]["leds"] == "35"
 
 
 # -- naming ----------------------------------------------------------------

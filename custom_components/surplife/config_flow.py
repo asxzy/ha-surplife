@@ -1082,7 +1082,7 @@ class SurplifeOptionsFlow(OptionsFlow):
         Rows are added and removed by round trip, exactly like the effect panel,
         because Home Assistant fixes a form's schema when it is shown.
         """
-        led_count = int(self.config_entry.data.get(CONF_LED_COUNT, 35))
+        led_count = self._led_count()
         stored = scribble_runs(self._options)
 
         if user_input is not None:
@@ -1314,9 +1314,7 @@ class SurplifeOptionsFlow(OptionsFlow):
                     )
                 }
             ),
-            description_placeholders={
-                "count": str(self.config_entry.data.get(CONF_LED_COUNT, 35))
-            },
+            description_placeholders={"count": str(self._led_count())},
         )
 
     async def async_step_look_settings(
@@ -1397,6 +1395,24 @@ class SurplifeOptionsFlow(OptionsFlow):
         )
 
     # -- applying ----------------------------------------------------------
+
+    def _led_count(self) -> int:
+        """How many LEDs the editor is painting.
+
+        A controller stores this in its entry data, because it is read from the
+        device at discovery time. A group has no single count -- its members
+        could differ -- so it uses the smallest member's count, which is the
+        length every strip can show. That is the same rule the group
+        coordinator applies when it forwards a per-LED paint.
+
+        Falls back to 35, the value a never-polled controller reports.
+        """
+        coordinator = self._coordinator()
+        runtime = getattr(coordinator, "runtime", None)
+        state = getattr(runtime, "state", None)
+        if state is not None and state.led_count:
+            return int(state.led_count)
+        return int(self.config_entry.data.get(CONF_LED_COUNT, 35))
 
     def _coordinator(self) -> Any:
         """The live coordinator for this entry, if it is set up."""
