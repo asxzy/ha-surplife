@@ -207,6 +207,9 @@ class SurplifeGroupCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         """Initialise the facade from the group's config entry."""
         self.entry = entry
         self.runtime = SurplifeRuntime()
+        #: Whether the effect parameters have been seeded from the members.
+        #: After that the group owns them, exactly as a controller does.
+        self._seeded = False
         self._applied_options: dict[str, Any] | None = None
         self._member_unsubs: dict[str, Any] = {}
         self._unsub_entry_changed: Any = None
@@ -386,6 +389,7 @@ class SurplifeGroupCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
             any(member.last_update_success for member in members) if members else False
         )
 
+        previous = self.runtime
         derived = SurplifeRuntime()
         if active:
             effect = _most_common([runtime.effect_name for runtime in active])
@@ -394,14 +398,32 @@ class SurplifeGroupCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
             direction = _most_common([runtime.effect_direction for runtime in active])
 
             derived.effect_name = effect
-            derived.effect_speed = 50 if speed is None else speed
-            derived.effect_density = 50 if density is None else density
-            derived.effect_direction = 1 if direction is None else direction
-            derived.look = _most_common([runtime.look for runtime in active])
-            derived.scene = _most_common([runtime.scene for runtime in active])
             derived.commanded_non_effect = all(
                 runtime.commanded_non_effect for runtime in active
             )
+
+            # The animation parameters are **owned by the group**, not derived.
+            # A controller keeps speed/density/direction in its runtime until an
+            # effect is next applied, which is what makes "set the speed now,
+            # pick the effect later" work. Re-deriving them on every member
+            # change would silently discard a direction chosen while the strips
+            # were between effects. So they are seeded once from the members and
+            # then only changed by a command aimed at the group.
+            if self._seeded:
+                derived.effect_speed = previous.effect_speed
+                derived.effect_density = previous.effect_density
+                derived.effect_direction = previous.effect_direction
+                derived.palette = list(previous.palette)
+                derived.look = previous.look
+                derived.scene = previous.scene
+            else:
+                derived.effect_speed = 50 if speed is None else speed
+                derived.effect_density = 50 if density is None else density
+                derived.effect_direction = 1 if direction is None else direction
+                derived.palette = list(active[0].palette)
+                derived.look = _most_common([runtime.look for runtime in active])
+                derived.scene = _most_common([runtime.scene for runtime in active])
+                self._seeded = True
 
             # Colour: the first lit member's mix. An average of two colours is
             # a colour neither strip is showing, which would make the wheel lie
@@ -410,14 +432,6 @@ class SurplifeGroupCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
             derived.rgbw = sample.rgbw
             derived.rgb = sample.rgb
             derived.white_level = sample.white_level
-
-            # The palette that belongs to the effect the group is reporting, so
-            # a majority of strips showing Chase report Chase's own colours.
-            matching = [
-                runtime for runtime in active if runtime.effect_name == derived.effect_name
-            ]
-            if matching:
-                derived.palette = list(matching[0].palette)
 
             if lit:
                 levels = [runtime.brightness for runtime in lit]
@@ -536,6 +550,37 @@ class SurplifeGroupCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
         """Change brightness on every member, keeping each one's channel."""
         await self._fan_out("async_set_brightness", brightness)
 
+    async def async_set_direction(self, direction: int) -> None:
+        """Set a controller that turns the animation.
+
+        A controller has no method for this: its direction select writes
+        ``runtime.effect_direction`` and re-applies the effect itself. A group
+        cannot do that, because its runtime is rebuilt from the members on every
+        change. So the direction lives on the group (see :meth:`_derive`) and is
+        delivered the next time an effect is applied — or right now, if one is
+        showing.
+        """
+        self.runtime.effect_direction = direction
+        effect = self.runtime.effect_name
+        if effect is not None:
+            saved = effect_settings(self.entry.options, effect) or EffectSettings(
+                colors=tuple(self.runtime.palette),
+                speed=self.runtime.effect_speed,
+                density=self.runtime.effect_density,
+            )
+            options = with_effect(
+                dict(self.entry.options),
+                effect,
+                replace_settings(saved, direction=direction),
+            )
+            # Persist first: ``async_set_effect`` resolves its direction from the
+            # saved value, so saving afterwards would send the old one. Claim the
+            # save before it happens, because HA dispatches listeners eagerly.
+            self.expect_no_reapply(options)
+            self.hass.config_entries.async_update_entry(self.entry, options=options)
+            await self.async_set_effect(effect)
+        self.async_update_listeners()
+
     # -- effects -----------------------------------------------------------
 
     async def async_recolour_active_effect(
@@ -614,25 +659,42 @@ class SurplifeGroupCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
             direction if direction is not None else (saved.direction if saved else None)
         )
 
+        effective_speed = (
+            self.runtime.effect_speed if resolved_speed is None else resolved_speed
+        )
+        effective_density = (
+            self.runtime.effect_density
+            if resolved_density is None
+            else resolved_density
+        )
+        effective_direction = (
+            self.runtime.effect_direction
+            if resolved_direction is None
+            else resolved_direction
+        )
+        palette = list(palette_for(name, resolved_colours))
+
         await self._fan_out(
             "async_set_effect",
             name,
-            speed=(
-                self.runtime.effect_speed if resolved_speed is None else resolved_speed
-            ),
-            density=(
-                self.runtime.effect_density
-                if resolved_density is None
-                else resolved_density
-            ),
-            direction=(
-                self.runtime.effect_direction
-                if resolved_direction is None
-                else resolved_direction
-            ),
+            speed=effective_speed,
+            density=effective_density,
+            direction=effective_direction,
             option=option,
-            colors=list(palette_for(name, resolved_colours)),
+            colors=palette,
         )
+
+        # Adopt what was sent, exactly as a controller does, so the controls
+        # report the command immediately rather than on the next member poll.
+        runtime = self.runtime
+        runtime.effect_name = name
+        runtime.effect_speed = effective_speed
+        runtime.effect_density = effective_density
+        runtime.effect_direction = effective_direction
+        runtime.palette = palette
+        runtime.look = None
+        runtime.commanded_non_effect = False
+        self.async_update_listeners()
 
     # -- segments and per-LED ---------------------------------------------
 
@@ -688,6 +750,14 @@ class SurplifeGroupCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
                     member.device_name,
                     err,
                 )
+        # A per-LED paint is a non-effect mode: record it the way a controller
+        # does, so the effect select and look select read correctly before the
+        # next member poll arrives.
+        runtime = self.runtime
+        runtime.effect_name = None
+        runtime.commanded_non_effect = True
+        runtime.scene = None
+        runtime.look = look
         self._derive()
         self.async_update_listeners()
         if failures and len(failures) == len(members):
@@ -740,13 +810,36 @@ class SurplifeGroupCoordinator(DataUpdateCoordinator[SurplifeRuntime]):
             speed=speed if speed is not None else (saved.speed if saved else None),
             effect=effect if effect is not None else (saved.effect if saved else None),
         )
+
+        # Adopt what was painted. A look is a non-effect mode, so the effect
+        # name is cleared and the look recorded, matching a controller.
+        runtime = self.runtime
+        runtime.effect_name = None
+        runtime.commanded_non_effect = True
+        runtime.scene = None
+        runtime.look = name
+        runtime.effect_direction = (
+            direction
+            if direction is not None
+            else (saved.direction if saved else runtime.effect_direction)
+        )
+        self._derive()
+        self.async_update_listeners()
         return max(results, default=0)
 
     # -- scenes ------------------------------------------------------------
 
     async def async_mark_scene(self, name: str) -> None:
-        """Record which scene is showing on every member."""
+        """Record which scene is showing on every member, and on the group.
+
+        The group also keeps its own copy because its runtime is rebuilt from
+        the members: without this the scene select would fall back to ``none``
+        on the next member poll.
+        """
         await self._fan_out("async_mark_scene", name)
+        self.runtime.scene = name
+        self.runtime.look = None
+        self.async_update_listeners()
 
     async def async_set_scene(self, scene: Any) -> None:
         """Apply a scene to every member.

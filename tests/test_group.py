@@ -805,6 +805,82 @@ async def test_group_rename_keeps_the_group_light_and_members(
         assert client.set_levels.called
 
 
+async def test_group_direction_sticks_between_effects(
+    hass: HomeAssistant, group
+) -> None:
+    """A direction chosen while nothing is running must not be discarded.
+
+    A controller keeps ``effect_direction`` in its runtime until the next effect
+    is applied. The group's runtime is rebuilt from the members on every change,
+    so re-deriving it would silently undo the choice -- and the next effect
+    would run the old way.
+    """
+    await hass.services.async_call(
+        "light", "turn_off", {ATTR_ENTITY_ID: _group_light(hass, group)}, blocking=True
+    )
+    await hass.services.async_call(
+        "select",
+        "select_option",
+        {ATTR_ENTITY_ID: "select.soffit_direction", "option": "right_to_left"},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    # A member update re-derives the group runtime; the direction must survive.
+    group_coordinator = hass.data[DOMAIN][group.entry_id]
+    group_coordinator._member_updated()
+    await hass.async_block_till_done()
+
+    assert hass.states.get("select.soffit_direction").state == "right_to_left"
+    assert group_coordinator.runtime.effect_direction == 2
+
+
+async def test_group_direction_reaches_members_when_an_effect_runs(
+    hass: HomeAssistant, group, clients
+) -> None:
+    """The direction is delivered, not merely remembered."""
+    await hass.services.async_call(
+        "light",
+        "turn_on",
+        {ATTR_ENTITY_ID: _group_light(hass, group), "effect": "Chase"},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    for client in clients:
+        client.set_effect.reset_mock()
+
+    await hass.services.async_call(
+        "select",
+        "select_option",
+        {ATTR_ENTITY_ID: "select.soffit_direction", "option": "right_to_left"},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    for client in clients:
+        assert client.set_effect.called
+        assert client.set_effect.call_args.kwargs["direction"] == 2
+
+
+async def test_group_look_reports_itself_after_painting(
+    hass: HomeAssistant, group
+) -> None:
+    """A look must show in the dropdown, not read ``custom`` until the next poll."""
+    await hass.services.async_call(
+        "select",
+        "select_option",
+        {ATTR_ENTITY_ID: "select.soffit_per_led_look", "option": "stripes"},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    runtime = hass.data[DOMAIN][group.entry_id].runtime
+    assert runtime.look == "stripes"
+    assert runtime.effect_name is None
+    assert hass.states.get("select.soffit_per_led_look").state == "stripes"
+
+
 # -- the Configure panel on a group ----------------------------------------
 
 

@@ -202,6 +202,16 @@ direction *itself* and passes them explicitly to every member. Letting each
 member resolve its own saved settings would give three differently-coloured
 "Chase" patterns from one tap — the opposite of what a group control means.
 
+**The animation parameters are owned, not derived.** A controller keeps
+`speed`/`density`/`direction` in its runtime until the next effect is applied,
+which is what makes "set the speed now, pick the effect later" work. The group's
+runtime is rebuilt on every member change, so re-deriving those fields would
+silently undo a direction chosen between effects. They are seeded from the
+members once, then only changed by a command aimed at the group — and adopted
+immediately after a command, so the controls report what was just sent rather
+than waiting for the next member poll. Colour, effect name, on/off and
+brightness *are* derived, because those are observable facts about the strips.
+
 **A dead strip does not block the roof.** A fan-out command is sent to every
 member that answers; failures are logged, and the error is raised only when
 *every* member failed. That is the same trade a single controller already makes

@@ -165,9 +165,19 @@ class SurplifeDirectionSelect(CoordinatorEntity[ControlCoordinator], SelectEntit
         )
 
     async def async_select_option(self, option: str) -> None:
-        """Store the direction, and apply it if an effect is showing."""
+        """Store the direction, and apply it if an effect is showing.
+
+        On a controller the runtime is the source of truth and this method
+        re-applies the effect itself. A group's runtime is derived, so it
+        delegates: the facade keeps the value and delivers it. That is one
+        implementation of the rule rather than a second copy of it.
+        """
+        direction = 2 if option == "right_to_left" else 1
+        if isinstance(self.coordinator, SurplifeGroupCoordinator):
+            await self.coordinator.async_set_direction(direction)
+            return
         runtime = self.coordinator.runtime
-        runtime.effect_direction = 2 if option == "right_to_left" else 1
+        runtime.effect_direction = direction
         effect = runtime.effect_name
         if effect is not None:
             stored = effect_settings(self.coordinator.entry.options, effect)
