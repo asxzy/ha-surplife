@@ -706,3 +706,61 @@ async def test_controller_reconfigure_refuses_an_unreachable_host(
     assert hass.config_entries.async_get_entry(west.entry_id).data[
         CONF_HOST
     ] == WEST
+
+
+async def test_controller_reconfigure_prefills_the_stored_host(
+    hass: HomeAssistant, two_controllers
+) -> None:
+    """The form must not offer some other address than the one in use.
+
+    Getting this wrong is not cosmetic: submitting the prefilled value is how a
+    user renames a controller, and a wrong default turns that into a probe of an
+    address that does not exist, which fails with ``cannot_connect``.
+    """
+    from homeassistant import config_entries as ce
+
+    west = two_controllers[0]
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN,
+        context={"source": ce.SOURCE_RECONFIGURE, "entry_id": west.entry_id},
+    )
+    assert result["type"] == "form"
+    defaults = result["data_schema"]({})
+    assert defaults[CONF_HOST] == WEST
+    assert defaults[CONF_NAME] == "Soffit West"
+
+
+async def test_controller_reconfigure_renames_without_touching_the_wire(
+    hass: HomeAssistant, two_controllers
+) -> None:
+    """An unchanged address is not a move, so nothing is probed.
+
+    This is the path a user takes to rename a strip. Opening a socket here would
+    make renaming fail whenever the controller is briefly offline.
+    """
+    from homeassistant import config_entries as ce
+
+    west = two_controllers[0]
+    with patch(
+        "custom_components.surplife.config_flow.SurplifeClient", autospec=True
+    ) as factory:
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": ce.SOURCE_RECONFIGURE, "entry_id": west.entry_id},
+        )
+        defaults = result["data_schema"]({})
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_HOST: defaults[CONF_HOST], CONF_NAME: "Soffit West Renamed"},
+        )
+
+    await hass.async_block_till_done()
+    assert result["type"] == "abort"
+    assert result["reason"] == "reconfigure_successful"
+    assert not factory.called, "a rename must not probe the controller"
+    updated = hass.config_entries.async_get_entry(west.entry_id)
+    assert updated.title == "Soffit West Renamed"
+    assert updated.data[CONF_HOST] == WEST
+    # The device and entity survive the rename, which is the point of doing it
+    # here instead of deleting and re-adding.
+    assert hass.states.get("light.soffit_west") is not None

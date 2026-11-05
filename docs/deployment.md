@@ -20,7 +20,18 @@ Target in this installation: Home Assistant **2026.10.4** at
 
 ## Install
 
-### HACS
+### Marketplace (Home Assistant 2026.11 and later)
+
+Home Assistant 2026.11 replaced the HACS custom integration with the built-in
+**Marketplace** integration, which installs the same kind of GitHub repository
+without anything extra to set up.
+
+1. **Settings → Devices & Services → Add Integration → Marketplace**
+2. Add `https://github.com/asxzy/surplife` as a custom repository, category
+   **Integration**.
+3. Install, then restart Home Assistant.
+
+### HACS (older Home Assistant)
 
 1. HACS → Integrations → ⋮ → **Custom repositories**
 2. `https://github.com/asxzy/surplife`, category **Integration**
@@ -28,31 +39,43 @@ Target in this installation: Home Assistant **2026.10.4** at
 
 ### Deploying a new release from this checkout
 
-HACS owns the files under `/config/custom_components/surplife`, so writing them
-by hand leaves HACS's record disagreeing with the disk and the next HACS action
-undoes the change. Publish the release, then let HACS install it:
+The store owns the files under `/config/custom_components/surplife`, so writing
+them by hand leaves its record disagreeing with the disk and the next install
+undoes the change. Publish the release, then let the store install it:
 
 ```bash
 set -a && . ./.env && set +a
-python3 tools/ha_deploy.py           # refresh, download, restart, verify
+export HA_URL=http://192.168.1.10:8123     # not in .env; it is per-box
+python3 tools/ha_deploy.py           # refresh, install, restart, verify
 python3 tools/ha_deploy.py --status  # report only, change nothing
 ```
 
 It needs only `HA_URL` and `HA_TOKEN` from `.env` — a long-lived access token,
 no shell access to the box — so it works against a stock Home Assistant OS
-install. The sequence matters:
+install. The script detects which store is running: Marketplace if present,
+otherwise HACS. The two speak different websocket dialects, and the three names
+that differ are kept in one `Store` object so nothing else has to care:
 
-| Step | Why it is needed |
-|---|---|
-| `hacs/repository/refresh` | HACS caches its idea of the latest release; a release published minutes ago looks absent without this |
-| `hacs/repository/download` | HACS fetches the `surplife.zip` asset and extracts it into the domain directory |
-| restart | the running process still holds the old modules, so even a same-version reinstall needs a restart |
-| wait for a full boot | `/api/config` answers tens of seconds before platforms finish loading, so the entity count is the real signal |
+| Step | Marketplace | HACS | Why it is needed |
+|---|---|---|---|
+| refresh | `marketplace/repository/refresh` | `hacs/repository/refresh` | the store caches its idea of the latest release, so one published minutes ago looks absent without this |
+| install | `marketplace/repository/install` | `hacs/repository/download` | fetches the `surplife.zip` asset and extracts it into the domain directory |
+| restart | — | — | the running process still holds the old modules, so even a same-version reinstall needs a restart |
+| wait for a full boot | — | — | `/api/config` answers tens of seconds before platforms finish loading, so the entity count is the real signal |
 
-The script exits non-zero when HACS reports a version that does not match
-`manifest.json`, or when any `surplife` entry is not `loaded`. Both cases are
-worth failing loudly: HACS will happily report a release as installed while the
-files on disk are something else, and a half-loaded integration looks like an
+Two websocket details cost real debugging time and are now handled:
+
+- **Message ids must strictly increase.** Home Assistant rejects a repeated or
+  lower id with `{"code": "id_reuse"}`. The store probe runs first on the same
+  connection, so ids cannot be constants; `_Ids` hands out a monotonic counter.
+- **`max_msg_size=0` is required.** `repository/info` includes the repository
+  README, and this one is large enough to exceed aiohttp's 4 MiB default, which
+  fails as `MESSAGE_TOO_BIG` rather than as anything obviously size-related.
+
+The script exits non-zero when the store reports a version that does not match
+the deploy target, or when any `surplife` entry is not `loaded`. Both cases are
+worth failing loudly: the store will happily report a release as installed while
+the files on disk are something else, and a half-loaded integration looks like an
 empty integration rather than an error.
 
 ### Deploying one commit, without cutting a release
@@ -73,21 +96,21 @@ tag that is already published. `publish_dev_tag.py` refuses to run with
 uncommitted changes to tracked files, because the tag would then not match the
 code it names.
 
-**Why a tag and not a bare commit hash.** HACS with `zip_release: true` only
+**Why a tag and not a bare commit hash.** With `zip_release: true` the store only
 fetches *release assets* — it builds `releases/download/<ref>/surplife.zip`, and
-a SHA is not a release, so there is nothing to download. HACS does understand
+a SHA is not a release, so there is nothing to download. It does understand
 `archive/<sha>.zip`, but only on its repo-archive path, which `zip_release`
 disables. Publishing the commit as a prerelease keeps the predictable archive
 layout and still deploys exactly one commit.
 
-HACS hides prereleases from its update entity unless beta versions are enabled,
-so a dev deploy never advertises itself as an upgrade. `--tag` verifies that the
-installed version equals the tag you asked for, so a silent fallback to the
-latest stable release is a failure rather than a success.
+Prereleases are not advertised as an upgrade, so a dev deploy does not offer
+itself as an update. `--tag` verifies that the installed version equals the tag
+you asked for, so a silent fallback to the latest stable release is a failure
+rather than a success.
 
 > Do not deploy by copying files over SSH or by running code inside Home
-> Assistant. Both work once and then drift, because the next HACS action
-> overwrites the directory from its own record.
+> Assistant. Both work once and then drift, because the next install overwrites
+> the directory from its own record.
 
 ### Manual
 
@@ -96,13 +119,13 @@ rsync -a custom_components/surplife/ \
     root@192.168.1.10:/config/custom_components/surplife/
 ```
 
-Restart Home Assistant. Only for a box without HACS; if HACS manages this
-integration, use the deploy script instead.
+Restart Home Assistant. Only for a box with neither Marketplace nor HACS; if a
+store manages this integration, use the deploy script instead.
 
-### What HACS needs in a release archive
+### What the store needs in a release archive
 
 This integration sets `"zip_release": true` with `"filename": "surplife.zip"`, so
-HACS downloads that asset instead of the repository branch. HACS extracts the
+the store downloads that asset instead of the repository branch. It extracts the
 archive **directly** into `/config/custom_components/surplife/` and never strips
 a leading directory, so the archive must have the integration files at its
 **root**:
@@ -112,6 +135,7 @@ manifest.json
 __init__.py
 coordinator.py
 light.py
+groups.py
 protocol/
 translations/
 brand/
@@ -125,9 +149,9 @@ Do **not** wrap them in `custom_components/surplife/`. That produces
 
 Home Assistant looks only at `/config/custom_components/surplife/__init__.py`,
 finds nothing, and never loads the integration — no entities, no services, no
-config entry. HACS still reports the release as installed, because it tracks its
-own record rather than the files. The symptom is the confusing pair of "HACS
-says it is up to date" and "the integration is not there at all".
+config entry. The store still reports the release as installed, because it tracks
+its own record rather than the files. The symptom is the confusing pair of "the
+store says it is up to date" and "the integration is not there at all".
 
 Build the asset with the checked-in script, which enforces the layout and drops
 `__pycache__`, `*.pyc`, and AppleDouble `._*` files:
@@ -285,7 +309,7 @@ as `mon,wed,fri`.
 
 | Symptom | Likely cause |
 |---|---|
-| HACS says up to date but no entities/services exist | the release zip is nested; see "What HACS needs in a release archive" |
+| The store says up to date but no entities/services exist | the release zip is nested; see "What the store needs in a release archive" |
 | `cannot_connect` in the config flow | wrong IP, or port 5577 blocked |
 | Entity goes `unavailable` | device lost power or Wi-Fi; the coordinator's poll failed |
 | Colour reverts after a poll | expected if something *else* changed it — the device does not report colour, so HA cannot see external changes |

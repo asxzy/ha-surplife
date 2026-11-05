@@ -1,13 +1,19 @@
-"""Deploy the integration to Home Assistant through HACS, using an access token.
+"""Deploy the integration to Home Assistant through its add-on store.
 
-This is the supported deploy path: HACS owns the files under
+This is the supported deploy path: the store owns the files under
 ``/config/custom_components/surplife``, so writing them out of band would leave
-HACS's own record disagreeing with the disk. The only robust sequence is
+its own record disagreeing with the disk. The only robust sequence is
 
-    refresh HACS's view of the repo -> download the release -> restart
+    refresh its view of the repo -> install the release -> restart
 
 which is what this script does. It needs a long-lived access token, not shell
 access to the box, so it works against a stock Home Assistant OS install.
+
+**Two stores, one script.** Home Assistant 2026.11 replaced the HACS custom
+integration with the built-in ``marketplace`` integration. Both do the same job
+through a websocket API, but the command names and argument names differ, so the
+script detects which one is running and speaks that dialect. On an instance that
+has both, Marketplace wins: it is the one that owns installs from now on.
 
 Usage::
 
@@ -21,7 +27,7 @@ Environment:
     HA_URL    base URL, e.g. http://192.168.1.10:8123
     HA_TOKEN  long-lived access token
 
-Exit code is 0 only when HACS reports the installed version equal to the
+Exit code is 0 only when the store reports the installed version equal to the
 ``manifest.json`` version in this checkout and every ``surplife`` config entry is
 loaded.
 """
@@ -34,6 +40,7 @@ import json
 import os
 import sys
 import time
+from dataclasses import dataclass
 from pathlib import Path
 
 import aiohttp
@@ -41,8 +48,44 @@ import aiohttp
 REPO = Path(__file__).resolve().parent.parent
 MANIFEST = REPO / "custom_components" / "surplife" / "manifest.json"
 
-#: HACS's internal id for this repository, stable for its lifetime.
-HACS_REPOSITORY_ID = "1444830942"
+#: The store's internal id for this repository, stable for its lifetime. It is
+#: the GitHub repository id, which both HACS and Marketplace use.
+REPOSITORY_ID = "1444830942"
+
+
+@dataclass(frozen=True)
+class Store:
+    """The websocket dialect of whichever store owns the install.
+
+    ``info`` and ``refresh`` take the same shape in both, but ``refresh`` names
+    its argument ``repository`` while ``info`` names it ``repository_id``, and
+    the install command is called ``download`` on HACS and ``install`` on
+    Marketplace. Keeping the three names here means the rest of the script never
+    asks which one is running.
+    """
+
+    name: str
+    info: str
+    refresh: str
+    install: str
+    #: Marketplace spells the install target ``repository``; HACS does too, so
+    #: only the command name differs. Kept explicit rather than derived.
+    install_key: str = "repository"
+
+
+MARKETPLACE = Store(
+    name="Marketplace",
+    info="marketplace/repository/info",
+    refresh="marketplace/repository/refresh",
+    install="marketplace/repository/install",
+)
+
+HACS = Store(
+    name="HACS",
+    info="hacs/repository/info",
+    refresh="hacs/repository/refresh",
+    install="hacs/repository/download",
+)
 
 
 def _settings() -> tuple[str, str]:
@@ -61,24 +104,43 @@ def _expected_version() -> str:
     return json.loads(MANIFEST.read_text())["version"]
 
 
-async def _hacs_call(
+class _Ids:
+    """Monotonic websocket message ids.
+
+    Home Assistant rejects an id lower than one it has already seen with
+    ``id_reuse``, and the store probe runs before the real commands, so ids
+    cannot simply be constants.
+    """
+
+    def __init__(self) -> None:
+        self._next = 1
+
+    def take(self) -> int:
+        """The next id."""
+        ident = self._next
+        self._next += 1
+        return ident
+
+
+async def _call(
     ws: aiohttp.ClientWebSocketResponse,
-    ident: int,
+    ids: _Ids,
     kind: str,
     *,
     retries: int = 12,
     delay: float = 10.0,
     **kw,
 ):
-    """Run one HACS websocket command, retrying while HACS is still loading.
+    """Run one websocket command, retrying while the store is still loading.
 
-    Right after a restart the websocket answers ``auth_ok`` before the HACS
-    custom integration has registered its commands, so an immediate call fails
-    with ``unknown_command`` even though nothing is wrong. Retrying turns that
-    race into a short wait instead of a confusing error.
+    Right after a restart the websocket answers ``auth_ok`` before the store has
+    registered its commands, so an immediate call fails with ``unknown_command``
+    even though nothing is wrong. Retrying turns that race into a short wait
+    instead of a confusing error.
     """
+    error: dict | None = None
     for attempt in range(retries):
-        await ws.send_json({"id": ident, "type": kind, **kw})
+        await ws.send_json({"id": ids.take(), "type": kind, **kw})
         reply = await ws.receive_json()
         error = reply.get("error") or {}
         if error.get("code") == "unknown_command" and attempt < retries - 1:
@@ -88,9 +150,21 @@ async def _hacs_call(
     return False, None, error
 
 
-async def _connect(session: aiohttp.ClientSession, url: str, token: str):
+async def _detect_store(
+    ws: aiohttp.ClientWebSocketResponse, ids: _Ids
+) -> Store:
+    """Which store is running: Marketplace if present, otherwise HACS."""
+    ok, _, _ = await _call(ws, ids, "marketplace/info", retries=1)
+    return MARKETPLACE if ok else HACS
+
+
+async def _connect(
+    session: aiohttp.ClientSession, url: str, token: str
+) -> aiohttp.ClientWebSocketResponse:
     """Open an authenticated Home Assistant websocket."""
-    ws = await session.ws_connect(f"{url}/api/websocket", heartbeat=60)
+    ws = await session.ws_connect(
+        f"{url}/api/websocket", heartbeat=60, max_msg_size=0
+    )
     await ws.receive_json()
     await ws.send_json({"type": "auth", "access_token": token})
     reply = await ws.receive_json()
@@ -120,31 +194,48 @@ async def _wait_for_api(url: str, token: str, timeout: float = 180.0) -> bool:
     return False
 
 
+async def _repository(
+    ws: aiohttp.ClientWebSocketResponse, store: Store, ids: _Ids
+) -> dict | None:
+    """The store's record for this repository, or ``None``."""
+    ok, info, err = await _call(
+        ws, ids, store.info, repository_id=REPOSITORY_ID
+    )
+    if not ok or not info:
+        print(f"  info request failed: {err}", file=sys.stderr)
+        return None
+    return info
+
+
 async def _status(url: str, token: str) -> dict:
-    """Report what HACS has installed and whether the entries are loaded."""
+    """Report what the store has installed and whether the entries are loaded.
+
+    ``max_msg_size=0`` is deliberate: ``repository/info`` includes the README,
+    and this repository's is large enough to trip aiohttp's 4 MiB default.
+    """
     if not await _wait_for_api(url, token):
         sys.exit(f"Home Assistant at {url} is not answering")
-    async with (
-        aiohttp.ClientSession() as session,
-        session.ws_connect(f"{url}/api/websocket") as ws,
-    ):
-        await ws.receive_json()
-        await ws.send_json({"type": "auth", "access_token": token})
-        if (await ws.receive_json()).get("type") != "auth_ok":
-            sys.exit("websocket auth failed")
+    async with aiohttp.ClientSession() as session:
+        ws = await _connect(session, url, token)
+        try:
+            ids = _Ids()
+            store = await _detect_store(ws, ids)
+            info = await _repository(ws, store, ids)
+            if info is None:
+                sys.exit(
+                    f"{store.name} does not know repository {REPOSITORY_ID}; "
+                    "add it as a custom repository first"
+                )
 
-        _, info, err = await _hacs_call(
-            ws, 1, "hacs/repository/info", repository_id=HACS_REPOSITORY_ID
-        )
-        if err or not info:
-            sys.exit(f"HACS does not know repository {HACS_REPOSITORY_ID}: {err}")
-
-        _, entries, err = await _hacs_call(ws, 2, "config_entries/get")
-        if err:
-            sys.exit(f"could not list config entries: {err}")
+            _, entries, err = await _call(ws, ids, "config_entries/get")
+            if err:
+                sys.exit(f"could not list config entries: {err}")
+        finally:
+            await ws.close()
 
     ours = [e for e in entries if e.get("domain") == "surplife"]
     return {
+        "store": store.name,
         "installed": info.get("installed_version"),
         "available": info.get("available_version"),
         "pending": info.get("pending_upgrade"),
@@ -153,35 +244,35 @@ async def _status(url: str, token: str) -> dict:
 
 
 async def _sync(url: str, token: str, tag: str | None = None) -> None:
-    """Ask HACS to re-read the repo, then download a release.
+    """Refresh the store's view of the repo, then install a release.
 
-    ``tag`` selects which release to install. Without it HACS installs the
-    latest, which is the stable path. With it, a ``-dev`` prerelease can be
-    installed by name -- see :func:`_tag_for_commit` for why a commit is
-    deployed as a tag rather than as a bare SHA.
+    ``tag`` selects which release to install. Without it the store installs the
+    latest stable, which is the normal path. With it, a ``-dev`` prerelease can
+    be installed by name -- see :func:`_tag_for_commit` in
+    ``tools/publish_dev_tag.py`` for why a commit is deployed as a tag rather
+    than as a bare SHA.
     """
-    async with (
-        aiohttp.ClientSession() as session,
-        session.ws_connect(f"{url}/api/websocket", heartbeat=60) as ws,
-    ):
-        await ws.receive_json()
-        await ws.send_json({"type": "auth", "access_token": token})
-        if (await ws.receive_json()).get("type") != "auth_ok":
-            sys.exit("websocket auth failed")
+    async with aiohttp.ClientSession() as session:
+        ws = await _connect(session, url, token)
+        try:
+            ids = _Ids()
+            store = await _detect_store(ws, ids)
+            print(f"  store:        {store.name} (websocket)")
 
-        # Without the refresh, HACS serves its cached idea of the latest
-        # release, so a release published minutes ago looks absent.
-        steps: list[tuple[int, str, dict]] = [(1, "hacs/repository/refresh", {})]
-        if tag is None:
-            steps.append((2, "hacs/repository/download", {}))
-        else:
-            steps.append((2, "hacs/repository/download", {"version": tag}))
-
-        for ident, kind, extra in steps:
-            ok, _, err = await _hacs_call(
-                ws, ident, kind, repository=HACS_REPOSITORY_ID, **extra
+            # Without the refresh, the store serves its cached idea of the latest
+            # release, so a release published minutes ago looks absent.
+            ok, _, err = await _call(
+                ws, ids, store.refresh, repository=REPOSITORY_ID
             )
-            print(f"  {kind}: {'ok' if ok else err}")
+            print(f"  refresh:      {'ok' if ok else err}")
+
+            extra = {} if tag is None else {"version": tag}
+            ok, _, err = await _call(
+                ws, ids, store.install, **{store.install_key: REPOSITORY_ID}, **extra
+            )
+            print(f"  install:      {'ok' if ok else err}")
+        finally:
+            await ws.close()
 
 
 async def _restart(url: str, token: str) -> None:
@@ -191,11 +282,11 @@ async def _restart(url: str, token: str) -> None:
             f"{url}/api/services/homeassistant/restart",
             headers={"Authorization": f"Bearer {token}"},
         ) as response:
-            print(f"  restart: HTTP {response.status}")
+            print(f"  restart:      HTTP {response.status}")
     except (TimeoutError, aiohttp.ClientError):
         # The process tears the connection down as it restarts, so a dropped
         # socket here is the expected outcome rather than a failure.
-        print("  restart: connection dropped (expected)")
+        print("  restart:      connection dropped (expected)")
 
 
 async def _wait_until_loaded(url: str, token: str, timeout: float = 300.0) -> bool:
@@ -211,12 +302,14 @@ async def _wait_until_loaded(url: str, token: str, timeout: float = 300.0) -> bo
         while time.monotonic() < deadline:
             try:
                 async with session.get(
-                    f"{url}/api/states", headers=headers, timeout=aiohttp.ClientTimeout(15)
+                    f"{url}/api/states",
+                    headers=headers,
+                    timeout=aiohttp.ClientTimeout(15),
                 ) as response:
                     if response.status == 200:
                         count = len(await response.json())
                         if count > 3000:
-                            print(f"  loaded: {count} states")
+                            print(f"  loaded:       {count} states")
                             return True
             except (TimeoutError, aiohttp.ClientError):
                 pass
@@ -235,22 +328,24 @@ async def run(args: argparse.Namespace) -> int:
         print(f"checkout version: {_expected_version()}")
 
     before = await _status(url, token)
-    print(f"HACS installed:   {before['installed']}")
+    print(f"{before['store']} installed: {before['installed']}")
 
     if not args.status:
         await _sync(url, token, args.tag)
 
     after = await _status(url, token)
-    stale = after["installed"] != expected and after["installed"] != expected.lstrip("v")
+    stale = after["installed"] != expected and after["installed"] != expected.lstrip(
+        "v"
+    )
     if stale:
         print(
-            f"error: HACS reports {after['installed']} but the deploy targets "
-            f"{expected}; publish the tag first (see docs/deployment.md)",
+            f"error: {after['store']} reports {after['installed']} but the deploy "
+            f"targets {expected}; publish the tag first (see docs/deployment.md)",
             file=sys.stderr,
         )
         return 1
 
-    # HACS replaced files on disk, but the running process still holds the old
+    # The files on disk are new, but the running process still holds the old
     # modules, so even a same-version reinstall needs a restart to take effect.
     if not args.status:
         await _restart(url, token)
