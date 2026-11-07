@@ -551,7 +551,7 @@ python3 -m venv /tmp/venv_lmdb
 /tmp/venv_lmdb/bin/pip install lmdb
 
 # run (defaults to /Applications/Surplife.app)
-cd /Users/asxzy/src/surplife/docs/evidence
+cd /Users/asxzy/src/ha-surplife/docs/evidence
 /tmp/venv_lmdb/bin/python extract_device_db.py
 
 # or point at another install / skip LMDB

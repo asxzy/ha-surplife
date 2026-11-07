@@ -27,14 +27,14 @@ Home Assistant 2026.11 replaced the HACS custom integration with the built-in
 without anything extra to set up.
 
 1. **Settings → Devices & Services → Add Integration → Marketplace**
-2. Add `https://github.com/asxzy/surplife` as a custom repository, category
+2. Add `https://github.com/asxzy/ha-surplife` as a custom repository, category
    **Integration**.
 3. Install, then restart Home Assistant.
 
 ### HACS (older Home Assistant)
 
 1. HACS → Integrations → ⋮ → **Custom repositories**
-2. `https://github.com/asxzy/surplife`, category **Integration**
+2. `https://github.com/asxzy/ha-surplife`, category **Integration**
 3. Install, then restart Home Assistant.
 
 ### Deploying a new release from this checkout

@@ -50,7 +50,7 @@ MANIFEST = REPO / "custom_components" / "surplife" / "manifest.json"
 
 #: The store's internal id for this repository, stable for its lifetime. It is
 #: the GitHub repository id, which both HACS and Marketplace use.
-REPOSITORY_ID = "1444830942"
+REPOSITORY_ID = "1449019577"
 
 
 @dataclass(frozen=True)

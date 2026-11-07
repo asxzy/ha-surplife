@@ -6,10 +6,10 @@
   ],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/asxzy/surplife",
+  "documentation": "https://github.com/asxzy/ha-surplife",
   "integration_type": "device",
   "iot_class": "local_polling",
-  "issue_tracker": "https://github.com/asxzy/surplife/issues",
+  "issue_tracker": "https://github.com/asxzy/ha-surplife/issues",
   "requirements": [],
   "version": "0.1.8"
 }

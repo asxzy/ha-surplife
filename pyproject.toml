@@ -19,7 +19,7 @@ classifiers = [
 ]
 
 [project.urls]
-Repository = "https://github.com/asxzy/surplife"
+Repository = "https://github.com/asxzy/ha-surplife"
 
 [tool.setuptools]
 packages = [
