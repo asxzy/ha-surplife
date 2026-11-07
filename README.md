@@ -36,7 +36,7 @@ verify behaviour before disabling the old ones.
 ### Marketplace (Home Assistant 2026.11 and later, recommended)
 
 1. Settings → Devices & Services → **Add Integration** → *Marketplace*
-2. Add `https://github.com/asxzy/surplife` as an **Integration**
+2. Add `https://github.com/asxzy/ha-surplife` as an **Integration**
 3. Install **Surplife Permanent Lighting**, restart Home Assistant
 4. Settings → Devices & Services → **Add Integration** → *Surplife Permanent
    Lighting*
@@ -44,7 +44,7 @@ verify behaviour before disabling the old ones.
 ### HACS (older Home Assistant)
 
 1. HACS → Integrations → ⋮ → **Custom repositories**
-2. Add `https://github.com/asxzy/surplife` as an **Integration**
+2. Add `https://github.com/asxzy/ha-surplife` as an **Integration**
 3. Install **Surplife Permanent Lighting**, restart Home Assistant
 4. Settings → Devices & Services → **Add Integration** → *Surplife Permanent
    Lighting*
