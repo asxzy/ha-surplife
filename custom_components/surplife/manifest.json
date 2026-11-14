@@ -10,6 +10,6 @@
   "integration_type": "device",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/asxzy/ha-surplife/issues",
-  "requirements": [],
-  "version": "0.1.8"
+  "requirements": ["holidays==0.106", "babel==2.18.0"],
+  "version": "0.1.9"
 }

@@ -7,9 +7,11 @@ component that depends on unmerged `flux-led` branches therefore cannot
 coexist with the built-in integration, and breaks on every HA upgrade when the
 pin moves.
 
-Instead this component vendors a **stdlib-only protocol layer** and depends on
-nothing outside Home Assistant core. `manifest.json` has an empty `requirements`
-list, which is what makes it safe to install alongside the stock integration.
+Instead this component vendors a **stdlib-only protocol layer** and keeps its
+dependencies minimal. `manifest.json` declares one requirement, `holidays`,
+which resolves the lunar dates behind Chinese festivals for the daily theme
+service — the same library and version pin Home Assistant core's own `holiday`
+integration uses. Everything else is Home Assistant core.
 
 ## Layering
 

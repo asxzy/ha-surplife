@@ -517,6 +517,26 @@ apply_scene_for_date:
       selector:
         boolean:
 
+apply_theme:
+  name: Apply today's theme
+  description: >-
+    Generate a fresh display for a given date and apply it. The display follows
+    the holiday or season — including Chinese festivals such as Chinese New
+    Year, Dragon Boat and Mid-Autumn — and is drawn as one coherent style, not a
+    random mix of colours and effects. Every run is a new draw, so the same date
+    can look different from one call to the next. This is the "I'm feeling
+    lucky" counterpart to "Apply scene for a date", which is deterministic.
+  target:
+    entity:
+      integration: surplife
+      domain: light
+  fields:
+    date:
+      name: Date
+      description: Defaults to today in Home Assistant's time zone.
+      selector:
+        date:
+
 import_scenes:
   name: Import scenes
   description: >-

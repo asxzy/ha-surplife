@@ -42,6 +42,7 @@ from .const import (
     SERVICE_APPLY_LOOK,
     SERVICE_APPLY_SCENE,
     SERVICE_APPLY_SCENE_FOR_DATE,
+    SERVICE_APPLY_THEME,
     SERVICE_DELETE_SCENE,
     SERVICE_IMPORT_SCENES,
     SERVICE_SAVE_SCENE,
@@ -59,6 +60,7 @@ from .scenes import (
     select_for_date,
 )
 from .scribble_looks import LOOKS
+from .themes import festival_name, generate_scene, theme_for
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -112,6 +114,13 @@ APPLY_SCENE_FOR_DATE_SCHEMA = vol.Schema(
         vol.Optional(ATTR_DATE): cv.date,
         vol.Optional(ATTR_TOPIC): cv.string,
         vol.Optional(ATTR_RANDOMIZE, default=False): cv.boolean,
+    }
+)
+
+APPLY_THEME_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
+        vol.Optional(ATTR_DATE): cv.date,
     }
 )
 
@@ -278,6 +287,35 @@ async def async_setup_scene_services(hass: HomeAssistant) -> None:
         _LOGGER.debug("applied %s for %s", scene.name, day.isoformat())
 
     @_scene_error
+    async def _apply_theme(call: ServiceCall) -> None:
+        """Apply a freshly generated theme for a date.
+
+        Deliberately *not* seeded from the date: the whole point is that every
+        run is a new draw. ``apply_scene_for_date`` is the deterministic
+        counterpart and is left untouched.
+        """
+        from homeassistant.util import dt as dt_util
+
+        day = call.data.get(ATTR_DATE) or dt_util.now().date()
+        theme = theme_for(day)
+        resolved = festival_name(day)
+        scene = generate_scene(day)
+        # ``theme`` is the resolved calendar identity; the scene carries the
+        # drawn style. Both go in the log so a surprising display is traceable
+        # to the date it came from.
+        _LOGGER.debug(
+            "theme %s (%s) resolved%s; generated %s (%s) for %s",
+            theme.title,
+            theme.key,
+            f" from calendar {resolved!r}" if resolved else "",
+            scene.describe(),
+            scene.name,
+            day.isoformat(),
+        )
+        for coordinator in _coordinators(hass, call.data[ATTR_ENTITY_ID]):
+            await scene.async_apply(coordinator)
+
+    @_scene_error
     async def _import_scenes(call: ServiceCall) -> None:
         store = _store(hass)
         payload = call.data[ATTR_SCENES]
@@ -322,6 +360,7 @@ async def async_setup_scene_services(hass: HomeAssistant) -> None:
         (SERVICE_APPLY_SCENE_FOR_DATE, _apply_scene_for_date, APPLY_SCENE_FOR_DATE_SCHEMA),
         (SERVICE_IMPORT_SCENES, _import_scenes, IMPORT_SCENES_SCHEMA),
         (SERVICE_APPLY_LOOK, _apply_look, APPLY_LOOK_SCHEMA),
+        (SERVICE_APPLY_THEME, _apply_theme, APPLY_THEME_SCHEMA),
     ):
         hass.services.async_register(DOMAIN, service, handler, schema=schema)
 
@@ -335,6 +374,7 @@ def async_unload_scene_services(hass: HomeAssistant) -> None:
         SERVICE_APPLY_SCENE_FOR_DATE,
         SERVICE_IMPORT_SCENES,
         SERVICE_APPLY_LOOK,
+        SERVICE_APPLY_THEME,
     ):
         hass.services.async_remove(DOMAIN, service)
 
@@ -359,6 +399,7 @@ __all__ = [
     "APPLY_LOOK_SCHEMA",
     "APPLY_SCENE_FOR_DATE_SCHEMA",
     "APPLY_SCENE_SCHEMA",
+    "APPLY_THEME_SCHEMA",
     "DELETE_SCENE_SCHEMA",
     "IMPORT_SCENES_SCHEMA",
     "MAX_SCENES",

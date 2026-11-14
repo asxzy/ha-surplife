@@ -803,9 +803,99 @@ async def test_all_scene_services_registered(hass: HomeAssistant, entry) -> None
         "delete_scene",
         "apply_scene",
         "apply_scene_for_date",
+        "apply_theme",
         "import_scenes",
     ):
         assert hass.services.has_service(DOMAIN, service), f"{service} missing"
+
+
+# -- daily theme -----------------------------------------------------------
+
+
+async def test_apply_theme_is_registered_and_callable(
+    hass: HomeAssistant, entry, client
+) -> None:
+    """The one-call 'I'm feeling lucky' path, callable from an automation."""
+    client.set_effect.reset_mock()
+    client.set_scribble.reset_mock()
+    await hass.services.async_call(
+        DOMAIN,
+        "apply_theme",
+        {"entity_id": LIGHT, "date": dt.date(2026, 12, 25)},
+        blocking=True,
+    )
+    assert client.set_effect.call_count + client.set_scribble.call_count == 1
+
+
+async def test_apply_theme_defaults_to_today(
+    hass: HomeAssistant, entry, client
+) -> None:
+    """Omitting the date must not fail; it uses Home Assistant's today."""
+    client.set_effect.reset_mock()
+    client.set_scribble.reset_mock()
+    await hass.services.async_call(
+        DOMAIN, "apply_theme", {"entity_id": LIGHT}, blocking=True
+    )
+    assert client.set_effect.call_count + client.set_scribble.call_count == 1
+
+
+async def test_apply_theme_reaches_a_chinese_festival(
+    hass: HomeAssistant, entry, client
+) -> None:
+    """A lunar festival date resolves to a red-and-gold display."""
+    client.set_effect.reset_mock()
+    await hass.services.async_call(
+        DOMAIN,
+        "apply_theme",
+        {"entity_id": LIGHT, "date": dt.date(2026, 2, 17)},
+        blocking=True,
+    )
+    colors = client.set_effect.call_args.args[1]
+    flat = {tuple(color) for color in colors}
+    assert (255, 30, 30) in flat
+    assert (255, 200, 0) in flat
+
+
+async def test_apply_theme_leaves_stored_scenes_alone(
+    hass: HomeAssistant, entry, client, store
+) -> None:
+    """Generating a display must not write to the scene store."""
+    await hass.services.async_call(
+        DOMAIN, "save_scene", {"name": "blue", "colors": ["#0000ff"]}, blocking=True
+    )
+    before = set(store.names())
+    for _ in range(5):
+        await hass.services.async_call(
+            DOMAIN,
+            "apply_theme",
+            {"entity_id": LIGHT, "date": dt.date(2026, 6, 15)},
+            blocking=True,
+        )
+    assert set(store.names()) == before
+
+
+async def test_apply_theme_is_fresh_across_runs(
+    hass: HomeAssistant, entry, client
+) -> None:
+    """Repeated runs on one date are not the same display."""
+    seen: set[str] = set()
+    for _ in range(10):
+        await hass.services.async_call(
+            DOMAIN,
+            "apply_theme",
+            {"entity_id": LIGHT, "date": dt.date(2026, 6, 15)},
+            blocking=True,
+        )
+        seen.add(hass.data[DOMAIN][entry.entry_id].runtime.scene)
+    assert len(seen) > 1, f"every run produced the same display: {seen}"
+
+
+async def test_apply_theme_still_works_after_unload_of_the_last_entry(
+    hass: HomeAssistant, entry
+) -> None:
+    await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()
+    assert not hass.services.has_service(DOMAIN, "apply_theme")
 
 
 async def test_scene_services_unload_with_last_entry(

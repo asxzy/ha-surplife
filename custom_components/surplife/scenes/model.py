@@ -182,7 +182,9 @@ class Scene:
         name: Machine name; a slug, used as the service and select value.
         title: Human-readable label shown in the UI.
         mode: One of :data:`SCENE_MODES`; selects the payload used.
-        colors: Palette for ``rgb`` (first colour) and ``effect``.
+        colors: Palette for ``rgb`` (first colour) and ``effect``; ``None``
+            means no palette was declared, which a ``look`` scene leaves to the
+            look's own defaults.
         brightness: Home Assistant brightness 0-255.
         white: Warm-white level 0-255 for ``white`` mode.
         effect: Native effect name for ``effect`` mode.
@@ -204,7 +206,12 @@ class Scene:
     name: str
     title: str = ""
     mode: str = "rgb"
-    colors: tuple[Color | RGBW, ...] = (WHITE,)
+    #: ``None`` means "no palette declared", which is not the same as an empty
+    #: or all-white one: an all-white look palette is a real palette and must
+    #: reach the look's builder. Only the modes that actually need a palette
+    #: (``rgb``, ``effect``) fall back to the white default; ``look`` keeps
+    #: ``None`` so the look's own palette is used.
+    colors: tuple[Color | RGBW, ...] | None = None
     brightness: int = 255
     white: int = 0
     effect: str | None = None
@@ -239,7 +246,14 @@ class Scene:
                 f"mode must be one of {', '.join(SCENE_MODES)}, got {self.mode!r}"
             )
 
-        set_field(self, "colors", tuple(_as_color(color) for color in self.colors))
+        # ``None`` stays ``None``: it means "no palette declared", which a mode
+        # that needs one (``rgb``, ``effect``) resolves to the white default and
+        # a look scene leaves alone so the look's own palette applies.
+        set_field(
+            self,
+            "colors",
+            None if self.colors is None else tuple(_as_color(c) for c in self.colors),
+        )
         set_field(
             self,
             "segments",
@@ -260,7 +274,7 @@ class Scene:
         if self.direction not in DIRECTIONS:
             raise ValueError(f"direction must be l2r or r2l, got {self.direction!r}")
 
-        if self.mode == "rgb" and not self.colors:
+        if self.mode == "rgb" and self.colors == ():
             raise ValueError("rgb scenes need at least one colour")
         if self.mode == "effect":
             if not self.effect:
@@ -305,7 +319,9 @@ class Scene:
             return text
 
         detail = {
-            "rgb": lambda: ", ".join(_colour(color) for color in self.colors),
+            "rgb": lambda: ", ".join(
+                _colour(color) for color in self.colors or (WHITE,)
+            ),
             "white": lambda: f"warm white {self.white}",
             "effect": lambda: f"{self.effect} {self.speed}%/{self.density}%",
             "segments": lambda: f"{len(self.segments)} segments",
@@ -414,7 +430,7 @@ class Scene:
                 speed=self.speed,
                 density=self.density,
                 direction=DIRECTIONS[self.direction],
-                colors=list(self.colors),
+                colors=list(self.colors or (WHITE,)),
             )
         elif self.mode == "white":
             await coordinator.async_set_white(self.white)
@@ -430,7 +446,14 @@ class Scene:
                 speed=self.speed,
             )
         elif self.mode == "look":
-            leds = LOOKS[self.look or ""].build(coordinator.runtime.led_count)
+            # Only a scene that declares a palette overrides the look's colours;
+            # a scene built without one falls back to the look's own defaults, so
+            # a stored look scene is not pinned to the Scene colour default. An
+            # explicitly declared all-white palette is a real palette and does
+            # reach the builder, unlike the old ``!= (WHITE,)`` heuristic.
+            leds = LOOKS[self.look or ""].build(
+                coordinator.runtime.led_count, self.colors
+            )
             await coordinator.async_set_scribble(
                 leds,
                 effect=self.scribble_effect,
@@ -439,7 +462,7 @@ class Scene:
                 speed=self.speed,
             )
         else:
-            colour = self.colors[0]
+            colour = (self.colors or (WHITE,))[0]
             if len(colour) == 4:
                 red, green, blue, white = colour
                 # Scene definitions carry the W level as 0-100 (the wire unit);

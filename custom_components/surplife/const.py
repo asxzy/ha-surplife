@@ -44,6 +44,7 @@ SERVICE_DELETE_SCENE: Final = "delete_scene"
 SERVICE_APPLY_SCENE: Final = "apply_scene"
 SERVICE_APPLY_SCENE_FOR_DATE: Final = "apply_scene_for_date"
 SERVICE_IMPORT_SCENES: Final = "import_scenes"
+SERVICE_APPLY_THEME: Final = "apply_theme"
 
 ATTR_PATTERN: Final = "pattern"
 ATTR_COLORS: Final = "colors"
