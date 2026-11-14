@@ -226,6 +226,7 @@ async def test_group_gets_the_same_controls_as_a_controller(
     assert sorted(entity.domain for entity in entities) == [
         "button",
         "button",
+        "button",
         "light",
         "number",
         "number",
@@ -254,6 +255,20 @@ async def test_group_sync_clock_button_reaches_every_member(
     await hass.async_block_till_done()
     for client in clients:
         assert client.sync_clock.called
+
+
+async def test_group_new_theme_button_reaches_every_member(
+    hass: HomeAssistant, group, clients
+) -> None:
+    """The group's new-theme button draws once and paints every strip."""
+    button = "button.soffit_new_theme"
+    assert hass.states.get(button) is not None
+    await hass.services.async_call(
+        "button", "press", {ATTR_ENTITY_ID: button}, blocking=True
+    )
+    await hass.async_block_till_done()
+    for client in clients:
+        assert client.set_effect.called or client.set_scribble.called
 
 
 async def test_group_advertises_the_same_controls_as_a_controller(

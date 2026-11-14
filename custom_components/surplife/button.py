@@ -1,4 +1,4 @@
-"""Buttons: sync clock, and re-read the device."""
+"""Buttons: sync clock, re-read the device, and draw a fresh theme."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN
 from .coordinator import SurplifeCoordinator
 from .groups import SurplifeGroupCoordinator
+from .themes import generate_scene
 
 #: A controller and a group both present the command surface these buttons call.
 ControlCoordinator = SurplifeCoordinator | SurplifeGroupCoordinator
@@ -29,6 +30,7 @@ async def async_setup_entry(
         [
             SurplifeSyncClockButton(coordinator),
             SurplifeRefreshButton(coordinator),
+            SurplifeNewThemeButton(coordinator),
         ]
     )
 
@@ -83,3 +85,25 @@ class SurplifeRefreshButton(_SurplifeButton):
     async def async_press(self) -> None:
         """Re-read the state frame."""
         await self.coordinator.async_request_refresh()
+
+
+class SurplifeNewThemeButton(_SurplifeButton):
+    """Draw and apply a fresh theme for this strip.
+
+    Same operation as ``surplife.apply_theme`` aimed at this controller, but
+    from the device page: the draw comes from the unseeded generator, so every
+    press is a new one rather than a repeat of what is already showing.
+    """
+
+    _attr_translation_key = "new_theme"
+    _attr_icon = "mdi:palette"
+
+    def __init__(self, coordinator: ControlCoordinator) -> None:
+        super().__init__(coordinator, "new_theme")
+
+    async def async_press(self) -> None:
+        """Generate a fresh display and apply it to this controller."""
+        from homeassistant.util import dt as dt_util
+
+        scene = generate_scene(dt_util.now().date())
+        await scene.async_apply(self.coordinator)

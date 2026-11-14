@@ -11,7 +11,7 @@ import datetime as dt
 from unittest.mock import Mock, patch
 
 import pytest
-from homeassistant.const import CONF_HOST, CONF_NAME
+from homeassistant.const import ATTR_ENTITY_ID, CONF_HOST, CONF_NAME
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_registry as er
@@ -896,6 +896,52 @@ async def test_apply_theme_still_works_after_unload_of_the_last_entry(
     await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()
     assert not hass.services.has_service(DOMAIN, "apply_theme")
+
+
+# -- new theme button ------------------------------------------------------
+
+
+async def test_new_theme_button_is_registered(hass: HomeAssistant, entry) -> None:
+    """A controller gets the button, bound to its own device."""
+    state = hass.states.get("button.soffit_west_new_theme")
+    assert state is not None
+    assert state.name.endswith("New theme")
+
+
+async def test_new_theme_button_applies_a_fresh_theme(
+    hass: HomeAssistant, entry, client
+) -> None:
+    """Pressing the button draws a display and applies it to the strip."""
+    client.set_effect.reset_mock()
+    client.set_scribble.reset_mock()
+    await hass.services.async_call(
+        "button",
+        "press",
+        {ATTR_ENTITY_ID: "button.soffit_west_new_theme"},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    assert client.set_effect.call_count + client.set_scribble.call_count == 1
+    runtime = hass.data[DOMAIN][entry.entry_id].runtime
+    assert runtime.scene, "the button applied a display and recorded it"
+
+
+async def test_new_theme_button_is_fresh_on_every_press(
+    hass: HomeAssistant, entry, client
+) -> None:
+    """Two presses are two draws, not the same display twice."""
+    seen: set[str] = set()
+    for _ in range(8):
+        await hass.services.async_call(
+            "button",
+            "press",
+            {ATTR_ENTITY_ID: "button.soffit_west_new_theme"},
+            blocking=True,
+        )
+        await hass.async_block_till_done()
+        seen.add(hass.data[DOMAIN][entry.entry_id].runtime.scene)
+    assert len(seen) > 1, f"every press produced the same display: {seen}"
 
 
 async def test_scene_services_unload_with_last_entry(

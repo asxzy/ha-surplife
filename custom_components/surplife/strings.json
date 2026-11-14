@@ -497,6 +497,9 @@
       },
       "refresh": {
         "name": "Refresh"
+      },
+      "new_theme": {
+        "name": "New theme"
       }
     },
     "text": {
