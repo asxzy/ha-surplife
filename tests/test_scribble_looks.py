@@ -135,9 +135,37 @@ def test_chase_lights_a_leading_block_only() -> None:
     assert all(led.blink_mode == BLINK_FAST for led in lit)
 
 
-def test_wreath_alternates_lit_and_dark() -> None:
-    leds = build_look("wreath", 6, [(0, 200, 60), (255, 0, 0)])
-    assert [led.rgb is not None for led in leds] == [True, False] * 3
+def test_wreath_lights_every_led_in_alternating_pairs() -> None:
+    """Every LED carries a palette colour, two at a time.
+
+    The old lit/dark alternation threw half the strip away, which read as a
+    sparse string rather than a garland. The wreath now lights the whole strip
+    in palette pairs: no dark LEDs, the rhythm kept, and the whole palette
+    reachable.
+    """
+    palette = [(0, 200, 60), (255, 0, 0)]
+    leds = build_look("wreath", 6, palette)
+    assert all(led.rgb is not None for led in leds)
+    assert [led.rgb for led in leds] == [palette[0]] * 2 + [palette[1]] * 2 + [
+        palette[0]
+    ] * 2
+    assert all(led.blink_mode == BLINK_SLOW for led in leds)
+
+
+def test_wreath_wraps_a_longer_palette() -> None:
+    """A three-colour palette cycles through the pairs and wraps."""
+    palette = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]
+    leds = build_look("wreath", 8, palette)
+    assert [led.rgb for led in leds] == [
+        palette[0],
+        palette[0],
+        palette[1],
+        palette[1],
+        palette[2],
+        palette[2],
+        palette[0],
+        palette[0],
+    ]
 
 
 def test_candy_cane_is_two_colour_banding() -> None:

@@ -316,27 +316,34 @@ _SEASON_HUES: Final = {
     "winter": (175.0, 268.0),
 }
 
-#: Value floor for a generated stop. A high floor is what keeps the palette off
-#: white: at ``V = 0.86`` the most a stop can wash out is ``14%`` towards white,
-#: and ``S >= 0.62`` holds the chroma up. Together they cap the lightest
-#: generated channel pair well below a pastel.
-_MIN_VALUE: Final = 0.86
-_MIN_SATURATION: Final = 0.62
+#: Saturation floor for a generated stop. Anything lower washes out towards
+#: white, so the floor is high enough that the darkest stop in the widest value
+#: range still reads as a colour with a name rather than a tint.
+_MIN_SATURATION: Final = 0.78
+#: Value range for a generated stop. The floor is low enough to allow a real
+#: dark stop — the contrast against a bright one is what makes a palette read as
+#: designed — while the ceiling stays below pure white.
+_MIN_VALUE: Final = 0.30
+_MAX_VALUE: Final = 1.0
+#: How far a stop may stray from the palette's mean saturation and value. Wide
+#: enough that the stops are visibly different in depth, not three near-copies.
+_SATURATION_JITTER: Final = 0.10
+_VALUE_JITTER: Final = 0.26
 
 #: Hue offsets for the harmonic schemes. Each entry is a way of building a
 #: three-stop palette that reads as one style rather than three unrelated
 #: colours. The offsets are the *shape*; the base hue is what the season
 #: supplies. Every season draws from every scheme, so the choice of shape is
-#: itself part of the freshness. A wide scheme (a split complement, a triad)
-#: places its stops far apart on purpose — that contrast is what makes a
-#: palette read as designed rather than as one colour in three tints — and the
-#: season's identity comes from the base hue, which is always drawn inside the
-#: season's arc. This is how "one coherent style" and "a summer palette is not
-#: a winter palette" are both true.
+#: itself part of the freshness. A wide scheme places its stops far apart on
+#: purpose — that contrast is what makes a palette read as designed rather than
+#: as one colour in three tints — and the season's identity comes from the base
+#: hue, which is always drawn inside the season's arc. This is how "one
+#: coherent style" and "a summer palette is not a winter palette" are both true.
+#: Only the wide shapes are offered: an analogous step is the single-hue
+#: "three tints" scheme that made the output read as plain, so it is dropped.
 _HARMONIES: Final = {
     "split": (0.0, 150.0, -150.0),  # base plus both shoulders
     "triad": (0.0, 120.0, -120.0),  # three evenly spaced hues
-    "analogous": (0.0, 38.0, 76.0),  # one hue family, stepped
 }
 
 
@@ -350,10 +357,11 @@ def _season_palette(season: str, rng: random.Random) -> tuple[Paint, ...]:
     """A vivid, harmonised palette that belongs to the season.
 
     The season supplies a hue arc; a base hue is drawn inside it and a harmonic
-    scheme places the other two stops relative to it. Saturation is high and
-    value is floored, so the result is a colour a person calls by name rather
-    than a tint. The scheme, the base hue and the per-stop lightness jitter are
-    all drawn, so two runs in the same season differ while staying in season.
+    scheme places the other two stops relative to it. Saturation is held high
+    and value spans a wide band, so the palette has both bright and dark stops
+    and every stop keeps real chroma. The scheme, the base hue and the per-stop
+    saturation/value jitter are all drawn, so two runs in the same season differ
+    while staying in season.
     """
     low, high = _SEASON_HUES[season]
     scheme = rng.choice(tuple(_HARMONIES))
@@ -365,16 +373,24 @@ def _season_palette(season: str, rng: random.Random) -> tuple[Paint, ...]:
     # reach would allow) is what makes two runs in one season actually differ
     # in hue instead of differing only in saturation and value jitter.
     base_hue = rng.uniform(low, high)
+    # The palette's depth is drawn first, then jittered per stop. The jitter is
+    # bounded by the floors, so a washed-out or clipped stop is impossible by
+    # construction rather than by a post-hoc clamp.
     saturation = rng.uniform(_MIN_SATURATION, 1.0)
-    value = rng.uniform(_MIN_VALUE, 1.0)
-    # The jitter is bounded by the floors, so a dark or pale stop is impossible
-    # by construction rather than by a post-hoc clamp.
+    value = rng.uniform(_MIN_VALUE, _MAX_VALUE)
     stops: list[Color] = []
     for offset in offsets:
         stop_saturation = min(
-            1.0, max(_MIN_SATURATION, saturation + rng.uniform(-0.06, 0.06))
+            1.0,
+            max(
+                _MIN_SATURATION,
+                saturation + rng.uniform(-_SATURATION_JITTER, _SATURATION_JITTER),
+            ),
         )
-        stop_value = max(_MIN_VALUE, min(1.0, value + rng.uniform(-0.08, 0.08)))
+        stop_value = max(
+            _MIN_VALUE,
+            min(_MAX_VALUE, value + rng.uniform(-_VALUE_JITTER, _VALUE_JITTER)),
+        )
         stops.append(_hsv_to_rgb(base_hue + offset, stop_saturation, stop_value))
     return (stops[0], stops[1], stops[2])
 
@@ -507,7 +523,7 @@ _HOLIDAY_STYLES: Final = {
 #: Per-LED looks a seasonal theme may draw. Every entry is a look whose builder
 #: renders *every* colour it is given: ``gradient`` interpolates across all
 #: stops, ``stripes`` cycles the palette in blocks of three, and ``wreath``
-#: alternates lit and dark LEDs in palette order. A single-colour look
+#: lights every LED in alternating palette pairs. A single-colour look
 #: (``firefly``, ``chase``) would drop the accent, and ``twinkle`` blinks fast,
 #: so none of them is offered.
 _SEASON_LOOKS: Final = {

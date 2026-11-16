@@ -72,6 +72,40 @@ def _channels(colour: Paint) -> tuple[int, ...]:
     return (*colour, 0)
 
 
+def _hsv_of(red: int, green: int, blue: int) -> tuple[float, float, float]:
+    """HSV of an RGB triple, with the hues and values scaled to degrees/1.0."""
+    hue, saturation, value = colorsys.rgb_to_hsv(
+        red / 255.0, green / 255.0, blue / 255.0
+    )
+    return hue * 360.0, saturation, value
+
+
+def _hsv_to_rgb(hue: float, saturation: float, value: float) -> tuple[int, int, int]:
+    """One RGB triple from HSV, hue in degrees and S/V in 0.0-1.0."""
+    red, green, blue = colorsys.hsv_to_rgb((hue % 360.0) / 360.0, saturation, value)
+    return round(red * 255), round(green * 255), round(blue * 255)
+
+
+def _blend_hsv(
+    first: tuple[float, float, float], second: tuple[float, float, float], blend: float
+) -> tuple[float, float, float]:
+    """Interpolate two HSV stops along the shorter hue arc.
+
+    Linear RGB interpolation is what makes a gradient go muddy: blending red
+    and green through the cube's diagonal passes through the colour cube's
+    desaturated centre. Interpolating in HSV instead keeps chroma up, and the
+    shorter-arc rule stops the sweep taking the long way round the wheel and
+    dragging in a hue that belongs to neither stop.
+    """
+    hue_a, sat_a, val_a = first
+    hue_b, sat_b, val_b = second
+    delta = (hue_b - hue_a) % 360.0
+    if delta > 180.0:
+        delta -= 360.0
+    hue = (hue_a + delta * blend) % 360.0
+    return hue, sat_a + (sat_b - sat_a) * blend, val_a + (val_b - val_a) * blend
+
+
 def _cycle(palette: Sequence[Paint], index: int) -> Paint:
     """Pick a palette colour by position, wrapping around."""
     return palette[index % len(palette)]
@@ -93,7 +127,14 @@ def _candy_cane(palette: Sequence[Paint], count: int) -> list[ScribbleLED]:
 
 
 def _gradient(palette: Sequence[Paint], count: int) -> list[ScribbleLED]:
-    """Smooth interpolation across the palette, white channel included."""
+    """Smooth interpolation across the palette, white channel included.
+
+    The blend runs in HSV rather than RGB. A linear RGB lerp between two
+    saturated stops passes through the colour cube's neutral centre, so the
+    midpoint comes out brown or grey; blending hue along the shorter arc keeps
+    every step saturated. The W channel is carried linearly, since it is a
+    level rather than a hue.
+    """
     stops = [_channels(colour) for colour in palette]
     if len(stops) == 1:
         return _solid(palette, count)
@@ -104,10 +145,14 @@ def _gradient(palette: Sequence[Paint], count: int) -> list[ScribbleLED]:
         lower = min(int(position), len(stops) - 2)
         blend = position - lower
         first, second = stops[lower], stops[lower + 1]
-        blended = tuple(
-            round(a + (b - a) * blend) for a, b in zip(first, second, strict=True)
+        hue, saturation, value = _blend_hsv(
+            _hsv_of(first[0], first[1], first[2]),
+            _hsv_of(second[0], second[1], second[2]),
+            blend,
         )
-        leds.append(_paint(blended))  # type: ignore[arg-type]
+        white = round(first[3] + (second[3] - first[3]) * blend)
+        blended = (*_hsv_to_rgb(hue, saturation, value), white)
+        leds.append(_paint(blended))
     return leds
 
 
@@ -166,13 +211,17 @@ def _chase(palette: Sequence[Paint], count: int) -> list[ScribbleLED]:
 
 
 def _wreath(palette: Sequence[Paint], count: int) -> list[ScribbleLED]:
-    """Half-lit alternating blocks — a garland look."""
+    """Palette colours in alternating pairs — a garland look.
+
+    Every LED carries a palette colour. The earlier lit/dark alternation threw
+    half the strip away, which reads as a sparse string rather than a garland;
+    pairing the colours keeps the same rhythm while letting the whole palette
+    reach the strip.
+    """
     leds: list[ScribbleLED] = []
     for index in range(count):
-        if index % 2 == 0:
-            leds.append(_paint(_cycle(palette, index // 2), blink_mode=BLINK_SLOW))
-        else:
-            leds.append(ScribbleLED())
+        colour = _cycle(palette, (index // 2) % len(palette))
+        leds.append(_paint(colour, blink_mode=BLINK_SLOW))
     return leds
 
 
@@ -292,7 +341,7 @@ LOOK_LIST: Final[tuple[Look, ...]] = (
     Look(
         name="wreath",
         title="Garland",
-        description="Alternating lit and dark LEDs, slowly breathing.",
+        description="Palette colours in alternating pairs, slowly breathing.",
         palette=(GREEN, RED),
         builder=_wreath,
     ),
