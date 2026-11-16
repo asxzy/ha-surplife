@@ -13,6 +13,7 @@ the ``holidays`` library's data shows up here rather than in a surprise.
 
 from __future__ import annotations
 
+import colorsys
 import datetime as dt
 import random
 
@@ -180,6 +181,135 @@ def test_chinese_new_year_is_red_and_gold() -> None:
         colours = {tuple(color) for color in scene.colors}
         assert (255, 30, 30) in colours
         assert (255, 200, 0) in colours
+
+
+def _saturation(colour: tuple[int, ...]) -> float:
+    """HSV saturation, 0.0-1.0, ignoring any W channel."""
+    red, green, blue = (channel / 255 for channel in colour[:3])
+    return colorsys.rgb_to_hsv(red, green, blue)[1]
+
+
+@pytest.mark.parametrize(
+    "day",
+    [
+        dt.date(2026, 3, 20),
+        dt.date(2026, 6, 15),
+        dt.date(2026, 9, 20),
+        dt.date(2026, 12, 20),
+    ],
+)
+def test_seasonal_palettes_are_vivid_not_pale(day: dt.date) -> None:
+    """A seasonal stop is a colour with a name, not a tint of one.
+
+    The complaint this pins: the old literals were close enough to white that a
+    whole display read as "off". Every generated stop must hold real chroma.
+    """
+    for _ in range(200):
+        scene = generate_scene(day, random.Random())
+        assert len(scene.colors) == 3
+        for colour in scene.colors:
+            assert tuple(colour) != (255, 255, 255)
+            assert _saturation(tuple(colour)) >= 0.5
+
+
+@pytest.mark.parametrize(
+    "day",
+    [
+        dt.date(2026, 3, 20),
+        dt.date(2026, 6, 15),
+        dt.date(2026, 9, 20),
+        dt.date(2026, 12, 20),
+    ],
+)
+def test_seasonal_palettes_are_harmonised(day: dt.date) -> None:
+    """The three stops belong to one scheme, so the display reads as a style.
+
+    The hue of each stop, relative to the first, must match one of the declared
+    harmonic shapes exactly (up to hue wrap and 8-bit rounding). A palette of
+    unrelated hues fails here even though it passes the saturation check.
+    """
+    from custom_components.surplife.themes import _HARMONIES
+
+    for _ in range(200):
+        scene = generate_scene(day, random.Random())
+        hues = []
+        for colour in scene.colors:
+            red, green, blue = (channel / 255 for channel in colour[:3])
+            hues.append(colorsys.rgb_to_hsv(red, green, blue)[0] * 360.0)
+        relative = [(hue - hues[0]) % 360.0 for hue in hues]
+        # Rounding to 8-bit RGB moves a hue by at most about a degree.
+        matched = any(
+            all(
+                min(abs(rel - offset), 360.0 - abs(rel - offset)) <= 1.5
+                for rel, offset in zip(relative, offsets, strict=True)
+            )
+            for offsets in _HARMONIES.values()
+        )
+        assert matched, f"hues {relative} match no harmonic shape"
+
+
+@pytest.mark.parametrize(
+    "season, day",
+    [
+        ("spring", dt.date(2026, 3, 20)),
+        ("summer", dt.date(2026, 6, 15)),
+        ("autumn", dt.date(2026, 9, 20)),
+        ("winter", dt.date(2026, 12, 20)),
+    ],
+)
+def test_every_season_draws_every_scheme_it_declares(season: str, day: dt.date) -> None:
+    """The scheme draw is not accidentally pinned to one shape.
+
+    Every season draws from every declared harmony, so the choice of shape is
+    itself part of the freshness rather than a constant.
+    """
+    from custom_components.surplife.themes import _HARMONIES
+
+    seen = set()
+    for _ in range(600):
+        scene = generate_scene(day, random.Random())
+        hues = []
+        for colour in scene.colors:
+            red, green, blue = (channel / 255 for channel in colour[:3])
+            hues.append(colorsys.rgb_to_hsv(red, green, blue)[0] * 360.0)
+        relative = [(hue - hues[0]) % 360.0 for hue in hues]
+        for name, offsets in _HARMONIES.items():
+            if all(
+                min(abs(rel - offset), 360.0 - abs(rel - offset)) <= 1.5
+                for rel, offset in zip(relative, offsets, strict=True)
+            ):
+                seen.add(name)
+    assert seen == set(_HARMONIES), f"{season} drew {seen}, expected {set(_HARMONIES)}"
+
+
+def test_seasonal_palettes_stay_inside_their_hue_arc() -> None:
+    """A winter palette is not a summer palette, however it is drawn."""
+    from custom_components.surplife.themes import _SEASON_HUES
+
+    for season, day in (
+        ("spring", dt.date(2026, 3, 20)),
+        ("summer", dt.date(2026, 6, 15)),
+        ("autumn", dt.date(2026, 9, 20)),
+        ("winter", dt.date(2026, 12, 20)),
+    ):
+        low, high = _SEASON_HUES[season]
+        # A harmonic offset can carry a stop past the arc's edge, so the check
+        # is that the *base* stop (the first drawn) is inside it.
+        for _ in range(200):
+            scene = generate_scene(day, random.Random())
+            red, green, blue = (c / 255 for c in scene.colors[0][:3])
+            hue = colorsys.rgb_to_hsv(red, green, blue)[0] * 360.0
+            assert low - 1.0 <= hue <= high + 1.0, f"{season} drew hue {hue:.1f}"
+
+
+def test_holiday_palettes_avoid_pure_white() -> None:
+    """A holiday keeps its identity but never falls back to white."""
+    from custom_components.surplife.themes import _HOLIDAY_STYLES
+
+    for palette, *_ in _HOLIDAY_STYLES.values():
+        for colour in palette:
+            assert tuple(colour) != (255, 255, 255)
+            assert _saturation(tuple(colour)) >= 0.5
 
 
 # -- 3. fresh every run ----------------------------------------------------
