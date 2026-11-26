@@ -83,3 +83,8 @@ ATTR_RANDOMIZE: Final = "randomize"
 ATTR_DATE: Final = "date"
 ATTR_SCENES: Final = "scenes"
 ATTR_REPLACE_ALL: Final = "replace_all"
+
+#: Theme generation flags.
+ATTR_FIXED_PATTERNS: Final = "fixed_patterns"
+CONF_FIXED_PATTERNS: Final = "fixed_patterns"
+DEFAULT_FIXED_PATTERNS: Final = False

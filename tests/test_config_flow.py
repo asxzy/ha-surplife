@@ -314,3 +314,36 @@ async def test_discovered_device_without_a_name_gets_a_distinct_fallback(
     # silently break the test again.
     assert result["title"].endswith(HOST.rsplit(".", 1)[-1])
     assert result["title"] != "Surplife"
+
+
+async def test_options_flow_offers_a_fixed_patterns_choice(hass: HomeAssistant) -> None:
+    """The Configure menu exposes the theme setting and saves it."""
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.surplife.const import CONF_FIXED_PATTERNS, DOMAIN
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="Soffit West",
+        data={CONF_HOST: HOST, CONF_NAME: "Soffit West", "led_count": 35},
+        unique_id="AABBCCDDEEFF",
+    )
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] is FlowResultType.MENU
+    assert "theme" in result["menu_options"]
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"next_step_id": "theme"}
+    )
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "theme"
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {CONF_FIXED_PATTERNS: True}
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["data"][CONF_FIXED_PATTERNS] is True

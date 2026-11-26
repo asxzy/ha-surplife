@@ -50,6 +50,7 @@ async def test_menu_offers_the_panels(options_flow) -> None:
         "scribble",
         "effect",
         "look",
+        "theme",
         "interval",
     }
 

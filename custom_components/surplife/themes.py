@@ -23,6 +23,16 @@ Three rules, from the request:
    process RNG with no seed. Two calls in a row are expected to differ; the
    *date* constrains what can be drawn, not which drawing is chosen.
 
+There are two drawing modes:
+
+* **free** (the default) draws a fresh harmonic palette and motion for every
+  day, so even an ordinary weekday can look different on every press;
+* **fixed** restricts the draw to this module's hand-authored styles — the
+  fixed holiday/festival styles on their dates, and a fixed season style on
+  every other day. A caller that wants recognisable, repeatable patterns
+  instead of an arbitrary new palette per run passes ``fixed_patterns=True``
+  to :func:`generate_scene`.
+
 **Why the generation is not a stored set.** The candidate palettes and
 motions below are ingredients, not scenes. Nothing is persisted, nothing is
 looked up by name, and the number of possible outputs is the product of the
@@ -533,8 +543,43 @@ _SEASON_LOOKS: Final = {
     "winter": ("gradient", "stripes", "wreath"),
 }
 
+#: Fixed season styles for the ``fixed_patterns`` mode. These are hand-authored
+#: rather than drawn, so an ordinary day gets a recognisable, repeatable pattern
+#: instead of a new harmonic palette on every press. Each is a deterministic
+#: look/effect recipe in the same shape as a holiday style: (palette, effect,
+#: look, motion). The palettes are the season's own anchors, so spring stays
+#: green, summer gold, autumn rust and winter blue.
+_FIXED_SEASON_STYLES: Final = {
+    "spring": (
+        ((40, 200, 90), (120, 230, 140), (30, 150, 200)),
+        None,
+        "wreath",
+        "calm",
+    ),
+    "summer": (
+        ((255, 200, 40), (255, 130, 40), (255, 230, 120)),
+        None,
+        "gradient",
+        "flow",
+    ),
+    "autumn": (
+        ((220, 90, 20), (180, 40, 20), (255, 170, 40)),
+        None,
+        "stripes",
+        "flow",
+    ),
+    "winter": (
+        ((60, 150, 240), (120, 200, 255), (200, 220, 255)),
+        None,
+        "wreath",
+        "calm",
+    ),
+}
 
-def _draw_style(theme: Theme, rng: random.Random) -> Style:
+
+def _draw_style(
+    theme: Theme, rng: random.Random, *, fixed_patterns: bool = False
+) -> Style:
     """Draw one coherent style for a theme.
 
     A holiday uses its own palette and motion. A season draws a palette from
@@ -543,6 +588,12 @@ def _draw_style(theme: Theme, rng: random.Random) -> Style:
     sparkling one gets a twinkle or firefly. The palette and the motion are
     chosen together, which is what stops the result reading as stacked
     randomness.
+
+    With ``fixed_patterns`` the draw is restricted to the hand-authored styles:
+    the holiday style on a holiday, and :data:`_FIXED_SEASON_STYLES` for the
+    season on every other day. The palette, pattern and motion are then fixed;
+    :func:`generate_scene` draws the remaining speed/density/direction from a
+    date-seeded RNG so the whole scene is reproducible.
     """
     if theme.holiday and theme.holiday in _HOLIDAY_STYLES:
         holiday = _HOLIDAY_STYLES[theme.holiday]
@@ -551,6 +602,12 @@ def _draw_style(theme: Theme, rng: random.Random) -> Style:
         )
 
     season = theme.season
+    if fixed_patterns:
+        fixed = _FIXED_SEASON_STYLES[season]
+        return Style(
+            palette=fixed[0], effect=fixed[1], look=fixed[2], motion=fixed[3]
+        )
+
     palette = _season_palette(season, rng)
     motion = rng.choice(("calm", "flow", "sparkle"))
     # A seasonal theme uses a per-LED look, because that is where the palette
@@ -583,7 +640,12 @@ def _scene_name(theme: Theme, style: Style) -> str:
     return label
 
 
-def generate_scene(day: dt.date, rng: random.Random | None = None) -> Scene:
+def generate_scene(
+    day: dt.date,
+    rng: random.Random | None = None,
+    *,
+    fixed_patterns: bool = False,
+) -> Scene:
     """Generate one display for ``day``.
 
     Args:
@@ -592,6 +654,11 @@ def generate_scene(day: dt.date, rng: random.Random | None = None) -> Scene:
             module's own :class:`random.Random`, which is *not* seeded from the
             date, so every call is a fresh draw. A caller that wants a
             reproducible draw (a test, a preview) passes its own generator.
+        fixed_patterns: When true, restrict the draw to this module's
+            hand-authored styles — the fixed holiday styles on their dates and
+            a fixed season style on every other day. The result is identical
+            across runs for the same date, rather than a fresh palette each
+            time.
 
     Returns:
         A :class:`Scene` that applies one coherent style. The scene is never
@@ -599,7 +666,13 @@ def generate_scene(day: dt.date, rng: random.Random | None = None) -> Scene:
     """
     rng = rng or random.Random()
     theme = theme_for(day)
-    style = _draw_style(theme, rng)
+    style = _draw_style(theme, rng, fixed_patterns=fixed_patterns)
+    # In fixed mode the whole scene is a fixed pattern, not just the palette and
+    # pattern: speed, density and direction are drawn from a date-seeded RNG so
+    # the same date always renders identically. This mirrors the stability of
+    # :func:`.scenes.select_for_date` while keeping the free mode unseeded.
+    if fixed_patterns:
+        rng = random.Random(f"surplife-fixed-theme:{day.isoformat()}")
     speed, density, scribble_effect = _speed_density(style.motion, rng)
     direction = rng.choice(("l2r", "r2l"))
     name = _scene_name(theme, style)

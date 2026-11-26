@@ -950,3 +950,68 @@ async def test_scene_services_unload_with_last_entry(
     await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()
     assert not hass.services.has_service(DOMAIN, "save_scene")
+
+
+# -- fixed-pattern theme option ---------------------------------------------
+
+
+async def test_apply_theme_fixed_patterns_repeats_for_one_date(
+    hass: HomeAssistant, entry, client
+) -> None:
+    """The service's fixed_patterns field makes repeated calls identical."""
+    seen: set[str] = set()
+    for _ in range(6):
+        await hass.services.async_call(
+            DOMAIN,
+            "apply_theme",
+            {
+                "entity_id": LIGHT,
+                "date": dt.date(2026, 6, 15),
+                "fixed_patterns": True,
+            },
+            blocking=True,
+        )
+        seen.add(hass.data[DOMAIN][entry.entry_id].runtime.scene)
+    assert seen == {"summer_day_flow"}
+
+
+async def test_apply_theme_fixed_patterns_defaults_to_false(
+    hass: HomeAssistant, entry, client
+) -> None:
+    """Omitting the field keeps the fresh, random draw."""
+    seen: set[str] = set()
+    for _ in range(10):
+        await hass.services.async_call(
+            DOMAIN,
+            "apply_theme",
+            {"entity_id": LIGHT, "date": dt.date(2026, 6, 15)},
+            blocking=True,
+        )
+        seen.add(hass.data[DOMAIN][entry.entry_id].runtime.scene)
+    assert len(seen) > 1
+
+
+async def test_new_theme_button_honours_fixed_patterns_option(
+    hass: HomeAssistant, entry, client
+) -> None:
+    """The device-page button reads the saved option as its default."""
+    from custom_components.surplife.const import CONF_FIXED_PATTERNS
+
+    hass.config_entries.async_update_entry(
+        entry, options={**entry.options, CONF_FIXED_PATTERNS: True}
+    )
+    await hass.async_block_till_done()
+
+    seen: set[str] = set()
+    for _ in range(6):
+        await hass.services.async_call(
+            "button",
+            "press",
+            {ATTR_ENTITY_ID: "button.soffit_west_new_theme"},
+            blocking=True,
+        )
+        await hass.async_block_till_done()
+        seen.add(hass.data[DOMAIN][entry.entry_id].runtime.scene)
+    # Today's date is not fixed in the test, but the fixed draw is deterministic
+    # for whatever today is, so all presses must land on the same scene.
+    assert len(seen) == 1

@@ -20,6 +20,7 @@ from .const import (
     ATTR_DIRECTION,
     ATTR_EFFECT,
     ATTR_END,
+    ATTR_FIXED_PATTERNS,
     ATTR_LOOK,
     ATTR_MODE,
     ATTR_NAME,
@@ -121,6 +122,7 @@ APPLY_THEME_SCHEMA = vol.Schema(
     {
         vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
         vol.Optional(ATTR_DATE): cv.date,
+        vol.Optional(ATTR_FIXED_PATTERNS, default=False): cv.boolean,
     }
 )
 
@@ -297,20 +299,22 @@ async def async_setup_scene_services(hass: HomeAssistant) -> None:
         from homeassistant.util import dt as dt_util
 
         day = call.data.get(ATTR_DATE) or dt_util.now().date()
+        fixed = call.data.get(ATTR_FIXED_PATTERNS, False)
         theme = theme_for(day)
         resolved = festival_name(day)
-        scene = generate_scene(day)
+        scene = generate_scene(day, fixed_patterns=fixed)
         # ``theme`` is the resolved calendar identity; the scene carries the
         # drawn style. Both go in the log so a surprising display is traceable
         # to the date it came from.
         _LOGGER.debug(
-            "theme %s (%s) resolved%s; generated %s (%s) for %s",
+            "theme %s (%s) resolved%s; generated %s (%s) for %s (fixed=%s)",
             theme.title,
             theme.key,
             f" from calendar {resolved!r}" if resolved else "",
             scene.describe(),
             scene.name,
             day.isoformat(),
+            fixed,
         )
         for coordinator in _coordinators(hass, call.data[ATTR_ENTITY_ID]):
             await scene.async_apply(coordinator)

@@ -256,6 +256,35 @@ automation runs more than once.
 Add `topic: hoa_safe` to restrict the pick to scenes carrying that tag — useful
 when some scenes are too bright or too colourful for a given context.
 
+### 3.5 Generated themes, and the fixed-pattern option
+
+`surplife.apply_theme` (and the device page's **New theme** button) generates a
+display from the date rather than from a stored scene. It resolves the holiday,
+festival or season for that day and draws one coherent style.
+
+By default the draw is **fresh**: every call produces a new harmonic palette and
+motion, so the same date can look different from one call to the next. That is
+deliberate — it is the "I'm feeling lucky" counterpart to
+`apply_scene_for_date`, which is deterministic.
+
+If you want recognisable, repeatable patterns instead, turn on **Use fixed
+patterns only** in *Configure → Choose how new themes are drawn*. In that mode a
+theme uses only the hand-authored styles: the fixed holiday/festival palette on
+its date, and a fixed season palette + look on every other day. Speed, density
+and direction are seeded from the date, so the same date always renders the same
+way.
+
+The `apply_theme` service takes the same choice per call, so an automation is not
+locked to the saved preference:
+
+```yaml
+service: surplife.apply_theme
+target:
+  entity_id: light.soffit_west
+data:
+  fixed_patterns: true   # holidays/seasons only; same date, same display
+```
+
 ## 4. Storage
 
 One store for the whole integration, at `.storage/surplife.scenes`:

@@ -523,9 +523,11 @@ apply_theme:
     Generate a fresh display for a given date and apply it. The display follows
     the holiday or season — including Chinese festivals such as Chinese New
     Year, Dragon Boat and Mid-Autumn — and is drawn as one coherent style, not a
-    random mix of colours and effects. Every run is a new draw, so the same date
-    can look different from one call to the next. This is the "I'm feeling
-    lucky" counterpart to "Apply scene for a date", which is deterministic.
+    random mix of colours and effects. By default every run is a new draw, so
+    the same date can look different from one call to the next. Set "fixed
+    patterns" to restrict the draw to the hand-authored holiday and season
+    styles instead. This is the "I'm feeling lucky" counterpart to "Apply scene
+    for a date", which is deterministic.
   target:
     entity:
       integration: surplife
@@ -536,6 +538,15 @@ apply_theme:
       description: Defaults to today in Home Assistant's time zone.
       selector:
         date:
+    fixed_patterns:
+      name: Fixed patterns only
+      description: >-
+        Draw only the hand-authored holiday and season styles. The same date
+        then always produces the same palette, pattern and motion instead of a
+        fresh random draw. Defaults to off.
+      default: false
+      selector:
+        boolean:
 
 import_scenes:
   name: Import scenes

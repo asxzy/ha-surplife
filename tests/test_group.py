@@ -271,6 +271,28 @@ async def test_group_new_theme_button_reaches_every_member(
         assert client.set_effect.called or client.set_scribble.called
 
 
+async def test_group_new_theme_button_honours_fixed_patterns(
+    hass: HomeAssistant, group, clients
+) -> None:
+    """The group's button reads the same fixed-patterns option as a controller."""
+    from custom_components.surplife.const import CONF_FIXED_PATTERNS, DOMAIN
+
+    hass.config_entries.async_update_entry(
+        group, options={**group.options, CONF_FIXED_PATTERNS: True}
+    )
+    await hass.async_block_till_done()
+
+    await hass.services.async_call(
+        "button", "press", {ATTR_ENTITY_ID: "button.soffit_new_theme"}, blocking=True
+    )
+    await hass.async_block_till_done()
+    # Every member gets the same, fixed draw.
+    for client in clients:
+        assert client.set_effect.called or client.set_scribble.called
+    runtime = hass.data[DOMAIN][group.entry_id].runtime
+    assert runtime.scene
+
+
 async def test_group_advertises_the_same_controls_as_a_controller(
     hass: HomeAssistant, group
 ) -> None:
@@ -917,6 +939,7 @@ async def test_group_configure_panel_opens_and_applies(
         "scribble",
         "effect",
         "look",
+        "theme",
         "interval",
     }
 

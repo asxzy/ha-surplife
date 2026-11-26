@@ -1,9 +1,9 @@
 # Surplife Permanent Lighting for Home Assistant
 
-A Home Assistant custom component that unlocks the **full** capability of
-Surplife / Zengge **0xB6** outdoor permanent lighting controllers
-(`AK001-ZJ21413`) on the local network — the feature set the stock `flux_led`
-integration deliberately does not expose.
+A HACS custom component that unlocks the **full** capability of Surplife /
+Zengge **0xB6** outdoor permanent lighting controllers (`AK001-ZJ21413`) on the
+local network — the feature set the stock `flux_led` integration deliberately
+does not expose.
 
 The stock integration drives these controllers fine for on/off, RGB, warm
 white and brightness, but it only offers the *generic* LEDENET effect list
@@ -26,22 +26,17 @@ Home Assistant pins `flux-led` in the stock `flux_led` manifest. A custom
 component that depends on unmerged `flux-led` branches cannot coexist with the
 built-in integration and breaks on every HA upgrade. This component instead
 **vendors a small, stdlib-only protocol layer** (framing, state parsing,
-commands, discovery, client) and depends on nothing outside HA core.
+commands, discovery, client) and keeps its Python dependencies to one:
+`holidays`, which works out the lunar dates behind Chinese festivals for the
+daily theme service. It is the same library Home Assistant's own `holiday`
+integration uses.
 
 It is designed to run **alongside** the existing `flux_led` entries so you can
 verify behaviour before disabling the old ones.
 
 ## Install
 
-### Marketplace (Home Assistant 2026.11 and later, recommended)
-
-1. Settings → Devices & Services → **Add Integration** → *Marketplace*
-2. Add `https://github.com/asxzy/ha-surplife` as an **Integration**
-3. Install **Surplife Permanent Lighting**, restart Home Assistant
-4. Settings → Devices & Services → **Add Integration** → *Surplife Permanent
-   Lighting*
-
-### HACS (older Home Assistant)
+### HACS (recommended)
 
 1. HACS → Integrations → ⋮ → **Custom repositories**
 2. Add `https://github.com/asxzy/ha-surplife` as an **Integration**
@@ -103,10 +98,6 @@ data:
   repeat: everyday
 ```
 
-A full walkthrough — including the calendar automation, timers and the
-symptoms that look like bugs but are not — is in
-[`docs/usage.md`](docs/usage.md).
-
 ## Per-LED ("scribble") painting
 
 The wire protocol takes a full per-LED pattern; the app calls this
@@ -158,6 +149,13 @@ target:
 data:
   randomize: true    # stable per day: seeded from the date, not an RNG
 ```
+
+A generated **theme** is the counterpart to a stored scene: it resolves the
+holiday, festival or season for a date and draws one coherent style, so the roof
+follows the calendar without you authoring anything. Each call is a fresh draw
+by default; turn on **Use fixed patterns only** in Configure (or pass
+`fixed_patterns: true` to `surplife.apply_theme`) to use only the hand-authored
+holiday and season styles, where the same date always looks the same.
 
 Full details in [`docs/scenes_and_looks.md`](docs/scenes_and_looks.md).
 
@@ -228,7 +226,6 @@ adds.
 - [`docs/protocol_0xB6.md`](docs/protocol_0xB6.md) — verified wire protocol
 - [`docs/device_db.md`](docs/device_db.md) — shipped device-database evidence
 - [`docs/app_evidence.md`](docs/app_evidence.md) — app UI labels and limits
-- [`docs/usage.md`](docs/usage.md) — **how to use it**, day to day
 - [`docs/scenes_and_looks.md`](docs/scenes_and_looks.md) — scenes, looks, calendar
 - [`docs/architecture.md`](docs/architecture.md) — component design
 

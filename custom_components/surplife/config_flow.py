@@ -37,10 +37,12 @@ from homeassistant.helpers.selector import (
 
 from .const import (
     CONF_FIRMWARE_INFO,
+    CONF_FIXED_PATTERNS,
     CONF_HW_VERSION,
     CONF_LED_COUNT,
     CONF_MAC,
     CONF_MODEL_INFO,
+    DEFAULT_FIXED_PATTERNS,
     DEFAULT_NAME,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
@@ -91,6 +93,7 @@ STEP_RECOLOUR = "recolour"
 STEP_LOOK = "look"
 STEP_LOOK_SETTINGS = "look_settings"
 STEP_SCRIBBLE = "scribble"
+STEP_THEME = "theme"
 
 #: Most group rows the per-LED editor will show. Twenty is comfortably more
 #: than a 35-LED strip needs for a legible pattern, and bounds the form.
@@ -636,7 +639,14 @@ class SurplifeOptionsFlow(OptionsFlow):
         """Offer what to configure."""
         return self.async_show_menu(
             step_id="init",
-            menu_options=[STEP_RECOLOUR, STEP_SCRIBBLE, STEP_EFFECT, STEP_LOOK, STEP_INTERVAL],
+            menu_options=[
+                STEP_RECOLOUR,
+                STEP_SCRIBBLE,
+                STEP_EFFECT,
+                STEP_LOOK,
+                STEP_THEME,
+                STEP_INTERVAL,
+            ],
             description_placeholders=self._overview(),
         )
 
@@ -650,6 +660,36 @@ class SurplifeOptionsFlow(OptionsFlow):
             "looks_configured": str(len(looks)),
             "looks_total": str(len(LOOKS)),
         }
+
+    # -- theme -------------------------------------------------------------
+
+    async def async_step_theme(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Choose whether generated themes draw only fixed patterns.
+
+        This is the default for the device page's New theme button. The
+        ``apply_theme`` service can override it per call with its
+        ``fixed_patterns`` field, so an automation is not locked to the saved
+        preference.
+        """
+        if user_input is not None:
+            return self.async_create_entry(
+                title="", data={**self._options, **user_input}
+            )
+        return self.async_show_form(
+            step_id=STEP_THEME,
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_FIXED_PATTERNS,
+                        default=self._options.get(
+                            CONF_FIXED_PATTERNS, DEFAULT_FIXED_PATTERNS
+                        ),
+                    ): BooleanSelector(),
+                }
+            ),
+        )
 
     # -- poll interval -----------------------------------------------------
 

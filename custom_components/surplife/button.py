@@ -9,7 +9,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import CONF_FIXED_PATTERNS, DEFAULT_FIXED_PATTERNS, DOMAIN
 from .coordinator import SurplifeCoordinator
 from .groups import SurplifeGroupCoordinator
 from .themes import generate_scene
@@ -102,8 +102,19 @@ class SurplifeNewThemeButton(_SurplifeButton):
         super().__init__(coordinator, "new_theme")
 
     async def async_press(self) -> None:
-        """Generate a fresh display and apply it to this controller."""
+        """Generate a fresh display and apply it to this controller.
+
+        The button honours the integration's ``fixed_patterns`` option, set in
+        the Configure panel, so a user who wants recognisable holiday/season
+        patterns rather than a new random palette on every press gets them
+        from the device page too.
+        """
         from homeassistant.util import dt as dt_util
 
-        scene = generate_scene(dt_util.now().date())
+        fixed = bool(
+            self.coordinator.entry.options.get(
+                CONF_FIXED_PATTERNS, DEFAULT_FIXED_PATTERNS
+            )
+        )
+        scene = generate_scene(dt_util.now().date(), fixed_patterns=fixed)
         await scene.async_apply(self.coordinator)

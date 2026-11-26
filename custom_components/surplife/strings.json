@@ -72,6 +72,7 @@
           "scribble": "Paint the strip LED by LED",
           "effect": "Configure an effect",
           "look": "Configure a per-LED look",
+          "theme": "Choose how new themes are drawn",
           "interval": "Change the poll interval"
         }
       },
@@ -128,6 +129,13 @@
           "speed": "Speed",
           "density": "Density",
           "direction": "Direction"
+        }
+      },
+      "theme": {
+        "title": "New theme patterns",
+        "description": "Choose what the device page's New theme button draws. With fixed patterns on, a theme uses only the hand-authored holiday and season styles, so the same date always looks the same. With it off, each press draws a fresh palette and motion. The apply_theme service can override this per call.",
+        "data": {
+          "fixed_patterns": "Use fixed patterns only"
         }
       },
       "interval": {
@@ -442,11 +450,15 @@
     },
     "apply_theme": {
       "name": "Apply today's theme",
-      "description": "Generate a fresh display for a given date and apply it. Follows the holiday or season, including Chinese festivals, as one coherent style. Every run is a new draw; the same date can look different from one call to the next.",
+      "description": "Generate a fresh display for a given date and apply it. Follows the holiday or season, including Chinese festivals, as one coherent style. By default every run is a new draw; the same date can look different from one call to the next.",
       "fields": {
         "date": {
           "name": "Date",
           "description": "Defaults to today in Home Assistant's time zone."
+        },
+        "fixed_patterns": {
+          "name": "Fixed patterns only",
+          "description": "Draw only the hand-authored holiday and season styles, so the same date always looks the same. Defaults to off."
         }
       }
     },

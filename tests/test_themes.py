@@ -374,3 +374,71 @@ def test_theme_metadata_is_human_readable() -> None:
     assert theme.title
     assert theme.key == theme.key.lower()
     assert " " not in theme.key
+
+
+# -- fixed-pattern mode ------------------------------------------------------
+
+
+def test_fixed_patterns_repeat_for_the_same_date() -> None:
+    """The fixed draw is deterministic: no palette/motion RNG is involved."""
+    for day in (
+        dt.date(2026, 12, 25),
+        dt.date(2026, 2, 17),
+        dt.date(2026, 6, 15),
+        dt.date(2026, 12, 20),
+    ):
+        first = generate_scene(day, random.Random(1), fixed_patterns=True)
+        for seed in (2, 3, 4, 5):
+            assert generate_scene(day, random.Random(seed), fixed_patterns=True) == first
+
+
+def test_fixed_patterns_on_a_holiday_use_the_holiday_style() -> None:
+    """A fixed holiday keeps its recognisable palette and effect."""
+    scene = generate_scene(dt.date(2026, 12, 25), random.Random(), fixed_patterns=True)
+    assert scene.mode == "effect"
+    assert scene.effect == "Flowing Water"
+    colours = {tuple(colour) for colour in scene.colors}
+    assert (255, 0, 0) in colours
+    assert (0, 180, 60) in colours
+
+
+@pytest.mark.parametrize(
+    "day, look",
+    [
+        (dt.date(2026, 3, 20), "wreath"),
+        (dt.date(2026, 6, 15), "gradient"),
+        (dt.date(2026, 9, 20), "stripes"),
+        (dt.date(2026, 12, 20), "wreath"),
+    ],
+)
+def test_fixed_patterns_on_an_ordinary_day_use_a_fixed_look(
+    day: dt.date, look: str
+) -> None:
+    """Non-holidays get a hand-authored, season-specific look."""
+    scene = generate_scene(day, random.Random(), fixed_patterns=True)
+    assert scene.mode == "look"
+    assert scene.look == look
+    assert len(scene.colors) == 3
+
+
+def test_fixed_patterns_still_produce_a_valid_scene() -> None:
+    """The fixed mode goes through the same validation as the free draw."""
+    for day in (
+        dt.date(2026, 1, 1),
+        dt.date(2026, 7, 4),
+        dt.date(2026, 10, 31),
+        dt.date(2026, 6, 15),
+    ):
+        scene = generate_scene(day, random.Random(), fixed_patterns=True)
+        assert scene.mode in SCENE_MODES
+        assert scene.name
+        assert scene.title
+
+
+def test_free_mode_is_still_fresh() -> None:
+    """The default stays random; opting into fixed must not change it."""
+    seen = {
+        generate_scene(dt.date(2026, 6, 15), random.Random()).name for _ in range(50)
+    }
+    assert len(seen) > 1
+
